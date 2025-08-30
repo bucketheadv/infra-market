@@ -31,10 +31,7 @@
           @click="handleMenuClick"
           @openChange="handleOpenChange"
         >
-          <!-- 调试信息 -->
-          <div style="display: none;">
-            selectedKeys: {{ selectedKeys }}, openKeys: {{ openKeys }}
-          </div>
+
           <!-- 仪表盘 -->
           <a-menu-item key="dashboard">
             <DashboardOutlined />
@@ -45,7 +42,7 @@
           
           <!-- 动态菜单 -->
           <template v-for="menu in validMenus" :key="menu.id">
-            <a-sub-menu v-if="menu.children && menu.children.length > 0" :key="menu.id">
+            <a-sub-menu v-if="menu.children && menu.children.length > 0" :key="menu.id.toString()">
               <template #title>
                 <component :is="getIconComponent(menu.icon)" v-if="menu.icon" />
                 <span>{{ menu.name }}</span>
@@ -53,14 +50,14 @@
               <template v-for="child in menu.children" :key="child.id">
                 <a-menu-item 
                   v-if="child && child.path && child.name"
-                  :key="child.id"
+                  :key="child.id.toString()"
                 >
                   <component :is="getIconComponent(child.icon)" v-if="child.icon" />
                   <span>{{ child.name }}</span>
                 </a-menu-item>
               </template>
             </a-sub-menu>
-            <a-menu-item v-else :key="menu.id">
+            <a-menu-item v-else :key="menu.id.toString()">
               <component :is="getIconComponent(menu.icon)" v-if="menu.icon" />
               <span>{{ menu.name }}</span>
             </a-menu-item>
