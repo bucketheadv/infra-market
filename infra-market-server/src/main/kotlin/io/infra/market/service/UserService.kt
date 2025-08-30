@@ -11,7 +11,7 @@ import io.infra.market.repository.dao.UserRoleDao
 import io.infra.market.repository.entity.User
 import io.infra.market.repository.entity.UserRole
 import io.infra.market.util.DateTimeUtil
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
+import io.infra.market.util.AesUtil
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -20,8 +20,6 @@ class UserService(
     private val userDao: UserDao,
     private val userRoleDao: UserRoleDao
 ) {
-    
-    private val passwordEncoder = BCryptPasswordEncoder()
     
     fun getUsers(query: UserQueryDto): ApiResponse<PageResultDto<UserDto>> {
         // 使用DAO的page方法进行分页查询
@@ -33,7 +31,7 @@ class UserService(
                 username = user.username ?: "",
                 email = user.email,
                 phone = user.phone,
-                status = user.status.code,
+                status = user.status,
                 createTime = DateTimeUtil.formatDateTime(user.createTime),
                 updateTime = DateTimeUtil.formatDateTime(user.updateTime)
             )
@@ -57,7 +55,7 @@ class UserService(
             username = user.username ?: "",
             email = user.email,
             phone = user.phone,
-            status = user.status.code,
+            status = user.status,
             createTime = DateTimeUtil.formatDateTime(user.createTime),
             updateTime = DateTimeUtil.formatDateTime(user.updateTime)
         )
@@ -83,14 +81,14 @@ class UserService(
         }
         
         // 加密密码
-        val encodedPassword = passwordEncoder.encode(form.password ?: "123456")
+        val encodedPassword = AesUtil.encrypt(form.password ?: "123456")
         
         val user = User(
             username = form.username,
             password = encodedPassword,
             email = form.email,
             phone = form.phone,
-            status = StatusEnum.ACTIVE
+            status = StatusEnum.ACTIVE.code
         )
         
         userDao.save(user)
@@ -109,7 +107,7 @@ class UserService(
             username = user.username ?: "",
             email = user.email,
             phone = user.phone,
-            status = user.status.code,
+            status = user.status,
             createTime = DateTimeUtil.formatDateTime(user.createTime),
             updateTime = DateTimeUtil.formatDateTime(user.updateTime)
         )
@@ -149,7 +147,7 @@ class UserService(
         
         // 如果提供了新密码，则更新密码
         if (!form.password.isNullOrBlank()) {
-            user.password = passwordEncoder.encode(form.password)
+            user.password = AesUtil.encrypt(form.password)
         }
         
         userDao.updateById(user)
@@ -169,7 +167,7 @@ class UserService(
             username = user.username ?: "",
             email = user.email,
             phone = user.phone,
-            status = user.status.code,
+            status = user.status,
             createTime = DateTimeUtil.formatDateTime(user.createTime),
             updateTime = DateTimeUtil.formatDateTime(user.updateTime)
         )
@@ -181,7 +179,7 @@ class UserService(
         val user = userDao.findByUid(id) ?: return ApiResponse.error("用户不存在")
         
         // 软删除：将状态设置为已删除
-        user.status = StatusEnum.DELETED
+        user.status = StatusEnum.DELETED.code
         userDao.updateById(user)
         
         return ApiResponse.success()
@@ -190,8 +188,7 @@ class UserService(
     fun updateUserStatus(id: Long, status: String): ApiResponse<Unit> {
         val user = userDao.findByUid(id) ?: return ApiResponse.error("用户不存在")
         
-        val statusEnum = StatusEnum.fromCode(status) ?: return ApiResponse.error("无效的状态值")
-        user.status = statusEnum
+        user.status = status
         userDao.updateById(user)
         
         return ApiResponse.success()
@@ -202,7 +199,7 @@ class UserService(
         
         // 生成随机密码
         val newPassword = generateRandomPassword()
-        user.password = passwordEncoder.encode(newPassword)
+        user.password = AesUtil.encrypt(newPassword)
         userDao.updateById(user)
         
         return ApiResponse.success(mapOf("password" to newPassword))

@@ -33,7 +33,7 @@ class RoleDao : ServiceImpl<RoleMapper, Role>() {
         return mapper.selectOneByQuery(query)
     }
     
-    fun findByStatus(status: StatusEnum): List<Role> {
+    fun findByStatus(status: String): List<Role> {
         val query = query().whereWith {
             Role::status.eq(status)
         }
@@ -57,11 +57,8 @@ class RoleDao : ServiceImpl<RoleMapper, Role>() {
         }
         
         if (!query.status.isNullOrBlank()) {
-            val status = StatusEnum.fromCode(query.status)
-            if (status != null) {
-                queryBuilder.whereWith {
-                    Role::status.eq(status)
-                }
+            queryBuilder.whereWith {
+                Role::status.eq(query.status)
             }
         }
         

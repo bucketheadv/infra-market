@@ -30,7 +30,7 @@ class RoleService(
                 name = role.name ?: "",
                 code = role.code ?: "",
                 description = role.description,
-                status = role.status.code,
+                status = role.status,
                 createTime = DateTimeUtil.formatDateTime(role.createTime),
                 updateTime = DateTimeUtil.formatDateTime(role.updateTime)
             )
@@ -47,7 +47,7 @@ class RoleService(
     }
     
     fun getAllRoles(): ApiResponse<List<RoleDto>> {
-        val roles = roleDao.findByStatus(StatusEnum.ACTIVE)
+        val roles = roleDao.findByStatus(StatusEnum.ACTIVE.code)
         
         val roleDtos = roles.map { role ->
             RoleDto(
@@ -55,7 +55,7 @@ class RoleService(
                 name = role.name ?: "",
                 code = role.code ?: "",
                 description = role.description,
-                status = role.status.code,
+                status = role.status,
                 createTime = DateTimeUtil.formatDateTime(role.createTime),
                 updateTime = DateTimeUtil.formatDateTime(role.updateTime)
             )
@@ -72,7 +72,7 @@ class RoleService(
             name = role.name ?: "",
             code = role.code ?: "",
             description = role.description,
-            status = role.status.code,
+            status = role.status,
             createTime = DateTimeUtil.formatDateTime(role.createTime),
             updateTime = DateTimeUtil.formatDateTime(role.updateTime)
         )
@@ -91,7 +91,7 @@ class RoleService(
             name = form.name,
             code = form.code,
             description = form.description,
-            status = StatusEnum.ACTIVE
+            status = StatusEnum.ACTIVE.code
         )
         
         roleDao.save(role)
@@ -110,7 +110,7 @@ class RoleService(
             name = role.name ?: "",
             code = role.code ?: "",
             description = role.description,
-            status = role.status.code,
+            status = role.status,
             createTime = DateTimeUtil.formatDateTime(role.createTime),
             updateTime = DateTimeUtil.formatDateTime(role.updateTime)
         )
@@ -148,7 +148,7 @@ class RoleService(
             name = role.name ?: "",
             code = role.code ?: "",
             description = role.description,
-            status = role.status.code,
+            status = role.status,
             createTime = DateTimeUtil.formatDateTime(role.createTime),
             updateTime = DateTimeUtil.formatDateTime(role.updateTime)
         )
@@ -160,7 +160,7 @@ class RoleService(
         val role = roleDao.getById(id) ?: return ApiResponse.error("角色不存在")
         
         // 软删除：将状态设置为已删除
-        role.status = StatusEnum.DELETED
+        role.status = StatusEnum.DELETED.code
         roleDao.updateById(role)
         
         return ApiResponse.success()
@@ -169,8 +169,7 @@ class RoleService(
     fun updateRoleStatus(id: Long, status: String): ApiResponse<Unit> {
         val role = roleDao.getById(id) ?: return ApiResponse.error("角色不存在")
         
-        val statusEnum = StatusEnum.fromCode(status) ?: return ApiResponse.error("无效的状态值")
-        role.status = statusEnum
+        role.status = status
         roleDao.updateById(role)
         
         return ApiResponse.success()

@@ -90,9 +90,9 @@ CREATE TABLE IF NOT EXISTS `role_permission` (
 
 -- 插入管理员用户
 INSERT INTO `user_info` (`username`, `password`, `email`, `phone`, `status`) VALUES
-('admin', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', 'admin@infra-market.com', '13800138000', 'active'),
-('user1', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', 'user1@infra-market.com', '13800138001', 'active'),
-('user2', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', 'user2@infra-market.com', '13800138002', 'active');
+('admin', 'rNBNQUWYDUjYu7j8MP0hZg==', 'admin@infra-market.com', '13800138000', 'active'),
+('user1', 'rNBNQUWYDUjYu7j8MP0hZg==', 'user1@infra-market.com', '13800138001', 'active'),
+('user2', 'rNBNQUWYDUjYu7j8MP0hZg==', 'user2@infra-market.com', '13800138002', 'active');
 
 -- 插入角色
 INSERT INTO `role_info` (`name`, `code`, `description`, `status`) VALUES
@@ -176,6 +176,7 @@ INSERT INTO `role_permission` (`role_id`, `permission_id`)
 SELECT 4, id FROM `permission_info` WHERE status = 'active' AND code IN (
     'server:list', 'network:list', 'product:list'
 );
+
 
 
 

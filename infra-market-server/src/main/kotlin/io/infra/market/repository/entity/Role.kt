@@ -1,7 +1,6 @@
 package io.infra.market.repository.entity
 
 import com.mybatisflex.annotation.Table
-import io.infra.market.enums.StatusEnum
 import io.infra.structure.db.model.activerecord.BaseActiveRecordEntity
 
 /**
@@ -14,5 +13,5 @@ data class Role(
     var name: String? = null,
     var code: String? = null,
     var description: String? = null,
-    var status: StatusEnum = StatusEnum.ACTIVE
+    var status: String = "active"
 ) : BaseActiveRecordEntity<Role, Long>()

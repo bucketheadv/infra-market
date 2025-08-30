@@ -27,7 +27,7 @@ class PermissionDao : ServiceImpl<PermissionMapper, Permission>() {
         return mapper.selectOneByQuery(query)
     }
     
-    fun findByStatus(status: StatusEnum): List<Permission> {
+    fun findByStatus(status: String): List<Permission> {
         val query = query().whereWith {
             Permission::status.eq(status)
         }
@@ -51,20 +51,14 @@ class PermissionDao : ServiceImpl<PermissionMapper, Permission>() {
         }
         
         if (!query.type.isNullOrBlank()) {
-            val type = PermissionTypeEnum.fromCode(query.type)
-            if (type != null) {
-                queryBuilder.whereWith {
-                    Permission::type.eq(type)
-                }
+            queryBuilder.whereWith {
+                Permission::type.eq(query.type)
             }
         }
         
         if (!query.status.isNullOrBlank()) {
-            val status = StatusEnum.fromCode(query.status)
-            if (status != null) {
-                queryBuilder.whereWith {
-                    Permission::status.eq(status)
-                }
+            queryBuilder.whereWith {
+                Permission::status.eq(query.status)
             }
         }
         

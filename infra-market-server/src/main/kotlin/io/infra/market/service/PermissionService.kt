@@ -26,12 +26,12 @@ class PermissionService(
                 id = permission.id ?: 0,
                 name = permission.name ?: "",
                 code = permission.code ?: "",
-                type = permission.type.code,
+                type = permission.type,
                 parentId = permission.parentId,
                 path = permission.path,
                 icon = permission.icon,
                 sort = permission.sort,
-                status = permission.status.code,
+                status = permission.status,
                 createTime = DateTimeUtil.formatDateTime(permission.createTime),
                 updateTime = DateTimeUtil.formatDateTime(permission.updateTime)
             )
@@ -48,19 +48,19 @@ class PermissionService(
     }
     
     fun getPermissionTree(): ApiResponse<List<PermissionDto>> {
-        val permissions = permissionDao.findByStatus(StatusEnum.ACTIVE)
+        val permissions = permissionDao.findByStatus(StatusEnum.ACTIVE.code)
         
         val permissionDtos = permissions.map { permission ->
             PermissionDto(
                 id = permission.id ?: 0,
                 name = permission.name ?: "",
                 code = permission.code ?: "",
-                type = permission.type.code,
+                type = permission.type,
                 parentId = permission.parentId,
                 path = permission.path,
                 icon = permission.icon,
                 sort = permission.sort,
-                status = permission.status.code,
+                status = permission.status,
                 createTime = DateTimeUtil.formatDateTime(permission.createTime),
                 updateTime = DateTimeUtil.formatDateTime(permission.updateTime)
             )
@@ -79,12 +79,12 @@ class PermissionService(
             id = permission.id ?: 0,
             name = permission.name ?: "",
             code = permission.code ?: "",
-            type = permission.type.code,
+            type = permission.type,
             parentId = permission.parentId,
             path = permission.path,
             icon = permission.icon,
             sort = permission.sort,
-            status = permission.status.code,
+            status = permission.status,
             createTime = DateTimeUtil.formatDateTime(permission.createTime),
             updateTime = DateTimeUtil.formatDateTime(permission.updateTime)
         )
@@ -98,17 +98,15 @@ class PermissionService(
             return ApiResponse.error("权限编码已存在")
         }
         
-        val type = PermissionTypeEnum.fromCode(form.type) ?: return ApiResponse.error("无效的权限类型")
-        
         val permission = Permission(
             name = form.name,
             code = form.code,
-            type = type,
+            type = form.type,
             parentId = form.parentId,
             path = form.path,
             icon = form.icon,
             sort = form.sort,
-            status = StatusEnum.ACTIVE
+            status = StatusEnum.ACTIVE.code
         )
         
         permissionDao.save(permission)
@@ -117,12 +115,12 @@ class PermissionService(
             id = permission.id ?: 0,
             name = permission.name ?: "",
             code = permission.code ?: "",
-            type = permission.type.code,
+            type = permission.type,
             parentId = permission.parentId,
             path = permission.path,
             icon = permission.icon,
             sort = permission.sort,
-            status = permission.status.code,
+            status = permission.status,
             createTime = DateTimeUtil.formatDateTime(permission.createTime),
             updateTime = DateTimeUtil.formatDateTime(permission.updateTime)
         )
@@ -139,10 +137,8 @@ class PermissionService(
             return ApiResponse.error("权限编码已存在")
         }
         
-        val type = PermissionTypeEnum.fromCode(form.type) ?: return ApiResponse.error("无效的权限类型")
-        
         permission.name = form.name
-        permission.type = type
+        permission.type = form.type
         permission.parentId = form.parentId
         permission.path = form.path
         permission.icon = form.icon
@@ -154,12 +150,12 @@ class PermissionService(
             id = permission.id ?: 0,
             name = permission.name ?: "",
             code = permission.code ?: "",
-            type = permission.type.code,
+            type = permission.type,
             parentId = permission.parentId,
             path = permission.path,
             icon = permission.icon,
             sort = permission.sort,
-            status = permission.status.code,
+            status = permission.status,
             createTime = DateTimeUtil.formatDateTime(permission.createTime),
             updateTime = DateTimeUtil.formatDateTime(permission.updateTime)
         )
@@ -171,7 +167,7 @@ class PermissionService(
         val permission = permissionDao.getById(id) ?: return ApiResponse.error("权限不存在")
         
         // 软删除：将状态设置为已删除
-        permission.status = StatusEnum.DELETED
+        permission.status = StatusEnum.DELETED.code
         permissionDao.updateById(permission)
         
         return ApiResponse.success()
@@ -180,8 +176,7 @@ class PermissionService(
     fun updatePermissionStatus(id: Long, status: String): ApiResponse<Unit> {
         val permission = permissionDao.getById(id) ?: return ApiResponse.error("权限不存在")
         
-        val statusEnum = StatusEnum.fromCode(status) ?: return ApiResponse.error("无效的状态值")
-        permission.status = statusEnum
+        permission.status = status
         permissionDao.updateById(permission)
         
         return ApiResponse.success()

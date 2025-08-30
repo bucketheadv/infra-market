@@ -10,7 +10,7 @@ import io.infra.market.repository.dao.UserRoleDao
 import io.infra.market.repository.dao.RolePermissionDao
 import io.infra.market.repository.dao.PermissionDao
 import io.infra.market.util.DateTimeUtil
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
+import io.infra.market.util.AesUtil
 import org.springframework.stereotype.Service
 import java.util.UUID
 
@@ -22,18 +22,16 @@ class AuthService(
     private val permissionDao: PermissionDao
 ) {
     
-    private val passwordEncoder = BCryptPasswordEncoder()
-    
     fun login(request: LoginRequest): ApiResponse<LoginResponse> {
         val user = userDao.findByUsername(request.username) ?: return ApiResponse.error("用户名或密码错误")
         
         // 验证密码
-        if (!passwordEncoder.matches(request.password, user.password ?: "")) {
+        if (!AesUtil.matches(request.password, user.password ?: "")) {
             return ApiResponse.error("用户名或密码错误")
         }
         
         // 检查用户状态
-        if (user.status != StatusEnum.ACTIVE) {
+        if (user.status != StatusEnum.ACTIVE.code) {
             return ApiResponse.error("用户已被禁用")
         }
         
@@ -48,7 +46,7 @@ class AuthService(
             username = user.username ?: "",
             email = user.email,
             phone = user.phone,
-            status = user.status.code,
+            status = user.status,
             createTime = DateTimeUtil.formatDateTime(user.createTime),
             updateTime = DateTimeUtil.formatDateTime(user.updateTime)
         )
@@ -70,7 +68,7 @@ class AuthService(
         val user = userDao.findByUid(userId) ?: return ApiResponse.error("用户不存在")
         
         // 检查用户状态
-        if (user.status != StatusEnum.ACTIVE) {
+        if (user.status != StatusEnum.ACTIVE.code) {
             return ApiResponse.error("用户已被禁用")
         }
         
@@ -81,7 +79,7 @@ class AuthService(
             username = user.username ?: "",
             email = user.email,
             phone = user.phone,
-            status = user.status.code,
+            status = user.status,
             createTime = DateTimeUtil.formatDateTime(user.createTime),
             updateTime = DateTimeUtil.formatDateTime(user.updateTime)
         )
@@ -111,7 +109,7 @@ class AuthService(
             
             for (permissionId in permissionIds) {
                 val permission = permissionDao.getById(permissionId)
-                if (permission != null && permission.status == StatusEnum.ACTIVE) {
+                if (permission != null && permission.status == StatusEnum.ACTIVE.code) {
                     permissions.add(permission.code ?: "")
                 }
             }

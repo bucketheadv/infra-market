@@ -62,11 +62,8 @@ class UserDao : ServiceImpl<UserMapper, User>() {
         }
         
         if (!query.status.isNullOrBlank()) {
-            val status = StatusEnum.fromCode(query.status)
-            if (status != null) {
-                queryBuilder.whereWith {
-                    User::status.eq(status)
-                }
+            queryBuilder.whereWith {
+                User::status.eq(query.status)
             }
         }
         
