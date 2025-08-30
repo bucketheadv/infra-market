@@ -66,6 +66,8 @@
         :loading="loading"
         :pagination="pagination"
         row-key="id"
+        class="role-table"
+        :row-class-name="getRowClassName"
         @change="handleTableChange"
       >
         <template #bodyCell="{ column, record }">
@@ -76,23 +78,39 @@
           </template>
           
           <template v-else-if="column.key === 'action'">
-            <a-space>
-              <a-button type="link" size="small" @click="handleEdit(record)">
+            <a-space size="small">
+              <a-button 
+                type="link" 
+                size="small" 
+                class="action-btn edit-btn"
+                @click="handleEdit(record)"
+              >
+                <EditOutlined />
                 编辑
               </a-button>
               <a-button
                 type="link"
                 size="small"
-                :danger="record.status === 'active'"
+                class="action-btn status-btn"
+                :class="{ 'disable-btn': record.status === 'active' }"
                 @click="handleToggleStatus(record)"
               >
+                <CheckCircleOutlined v-if="record.status === 'active'" />
+                <StopOutlined v-else />
                 {{ record.status === 'active' ? '禁用' : '启用' }}
               </a-button>
               <a-popconfirm
                 title="确定要删除这个角色吗？"
+                ok-text="确定"
+                cancel-text="取消"
                 @confirm="handleDelete(record)"
               >
-                <a-button type="link" size="small" danger>
+                <a-button 
+                  type="link" 
+                  size="small" 
+                  class="action-btn delete-btn"
+                >
+                  <DeleteOutlined />
                   删除
                 </a-button>
               </a-popconfirm>
@@ -112,6 +130,10 @@ import {
   PlusOutlined,
   SearchOutlined,
   ReloadOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  CheckCircleOutlined,
+  StopOutlined,
 } from '@ant-design/icons-vue'
 import { roleApi } from '@/api/role'
 import type { Role, PageParams } from '@/types'
@@ -141,6 +163,7 @@ const columns = [
     dataIndex: 'id',
     key: 'id',
     width: 80,
+    align: 'center',
   },
   {
     title: '角色名称',
@@ -254,6 +277,11 @@ const handleDelete = async (record: Role) => {
   }
 }
 
+// 获取行样式类名
+const getRowClassName = (record: Role, index: number) => {
+  return index % 2 === 0 ? 'table-row-even' : 'table-row-odd'
+}
+
 onMounted(() => {
   fetchRoles()
 })
@@ -275,6 +303,185 @@ onMounted(() => {
 
 .search-form .ant-form-item {
   margin-bottom: 16px;
+}
+
+/* 表格样式优化 */
+.role-table {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.role-table :deep(.ant-table) {
+  border-radius: 8px;
+}
+
+.role-table :deep(.ant-table-thead > tr > th) {
+  background: #ffffff;
+  border-bottom: 1px solid #e8e8e8;
+  font-weight: 500;
+  color: #333333;
+  padding: 16px 12px;
+  font-size: 14px;
+  text-align: center;
+}
+
+.role-table :deep(.ant-table-thead > tr > th:first-child) {
+  border-top-left-radius: 8px;
+}
+
+.role-table :deep(.ant-table-thead > tr > th:last-child) {
+  border-top-right-radius: 8px;
+}
+
+.role-table :deep(.ant-table-tbody > tr > td) {
+  padding: 16px 12px;
+  border-bottom: 1px solid #f0f0f0;
+  transition: all 0.3s ease;
+  text-align: left;
+}
+
+/* ID列居中显示 */
+.role-table :deep(.ant-table-tbody > tr > td:first-child) {
+  text-align: center;
+}
+
+.role-table :deep(.ant-table-tbody > tr:hover > td) {
+  background-color: #fafafa !important;
+}
+
+.table-row-even {
+  background-color: #ffffff;
+}
+
+.table-row-odd {
+  background-color: #fafbfc;
+}
+
+/* 标签样式优化 */
+.status-tag {
+  border-radius: 6px;
+  font-weight: 500;
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
+/* 操作按钮美化 */
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  font-size: 12px;
+  height: 32px;
+  font-weight: 500;
+}
+
+.action-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.edit-btn {
+  color: #1890ff;
+}
+
+.edit-btn:hover {
+  background-color: #e6f7ff;
+  color: #1890ff;
+}
+
+.status-btn {
+  color: #52c41a;
+}
+
+.status-btn:hover {
+  background-color: #f6ffed;
+  color: #52c41a;
+}
+
+.disable-btn {
+  color: #faad14;
+}
+
+.disable-btn:hover {
+  background-color: #fffbe6;
+  color: #faad14;
+}
+
+.delete-btn {
+  color: #ff4d4f;
+}
+
+.delete-btn:hover {
+  background-color: #fff2f0;
+  color: #ff4d4f;
+}
+
+/* 分页样式优化 */
+.role-table :deep(.ant-pagination) {
+  margin-top: 16px;
+  text-align: right;
+}
+
+.role-table :deep(.ant-pagination-item) {
+  border-radius: 4px;
+  border: 1px solid #d9d9d9;
+  transition: all 0.3s ease;
+  margin: 0 2px;
+}
+
+.role-table :deep(.ant-pagination-item:hover) {
+  border-color: #1890ff;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(24, 144, 255, 0.2);
+}
+
+.role-table :deep(.ant-pagination-item-active) {
+  background: #1890ff;
+  border-color: #1890ff;
+  box-shadow: 0 2px 4px rgba(24, 144, 255, 0.3);
+}
+
+.role-table :deep(.ant-pagination-item-active a) {
+  color: white;
+}
+
+.role-table :deep(.ant-pagination-prev),
+.role-table :deep(.ant-pagination-next) {
+  border-radius: 4px;
+  border: 1px solid #d9d9d9;
+  transition: all 0.3s ease;
+  margin: 0 2px;
+}
+
+.role-table :deep(.ant-pagination-prev:hover),
+.role-table :deep(.ant-pagination-next:hover) {
+  border-color: #1890ff;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(24, 144, 255, 0.2);
+}
+
+.role-table :deep(.ant-pagination-options) {
+  margin-left: 16px;
+}
+
+.role-table :deep(.ant-pagination-options .ant-select) {
+  border-radius: 4px;
+}
+
+.role-table :deep(.ant-pagination-options .ant-select:hover) {
+  border-color: #1890ff;
+}
+
+.role-table :deep(.ant-pagination-options .ant-input) {
+  border-radius: 4px;
+}
+
+.role-table :deep(.ant-pagination-options .ant-input:hover) {
+  border-color: #1890ff;
 }
 
 @media (max-width: 768px) {

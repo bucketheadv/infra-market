@@ -5,20 +5,37 @@
       <div class="header-right">
         <a-dropdown>
           <a class="user-dropdown">
-            <a-avatar>
-              {{ user?.username?.charAt(0)?.toUpperCase() }}
-            </a-avatar>
-            <span class="username">{{ user?.username }}</span>
+            <div class="user-info">
+              <a-avatar class="user-avatar">
+                {{ user?.username?.charAt(0)?.toUpperCase() }}
+              </a-avatar>
+              <div class="user-details">
+                <span class="username">{{ user?.username }}</span>
+                <span class="user-role">管理员</span>
+              </div>
+            </div>
+            <DownOutlined class="dropdown-icon" />
           </a>
           <template #overlay>
-            <a-menu>
-              <a-menu-item @click="handleChangePassword">
+            <a-menu class="user-menu">
+              <div class="menu-header">
+                <a-avatar class="menu-avatar">
+                  {{ user?.username?.charAt(0)?.toUpperCase() }}
+                </a-avatar>
+                <div class="menu-user-info">
+                  <div class="menu-username">{{ user?.username }}</div>
+                  <div class="menu-role">管理员</div>
+                </div>
+              </div>
+              <a-menu-divider />
+              <a-menu-item key="change-password" @click="handleChangePassword">
                 <KeyOutlined />
-                修改密码
+                <span>修改密码</span>
               </a-menu-item>
-              <a-menu-item @click="handleLogout">
+              <a-menu-divider />
+              <a-menu-item key="logout" @click="handleLogout" class="logout-item">
                 <LogoutOutlined />
-                退出登录
+                <span>退出登录</span>
               </a-menu-item>
             </a-menu>
           </template>
@@ -96,6 +113,7 @@ import {
   LogoutOutlined,
   QuestionOutlined,
   KeyOutlined,
+  DownOutlined,
 } from '@ant-design/icons-vue'
 
 const router = useRouter()
@@ -290,9 +308,21 @@ const handleLogout = async () => {
 }
 
 .logo {
-  font-size: 18px;
-  font-weight: bold;
-  color: #1890ff;
+  font-size: 20px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 2px 4px rgba(102, 126, 234, 0.1);
+  letter-spacing: 0.5px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.logo:hover {
+  transform: scale(1.05);
+  text-shadow: 0 4px 8px rgba(102, 126, 234, 0.2);
 }
 
 .header-right {
@@ -304,18 +334,145 @@ const handleLogout = async () => {
   display: flex;
   align-items: center;
   cursor: pointer;
-  padding: 8px 12px;
-  border-radius: 6px;
-  transition: background-color 0.3s;
+  padding: 8px 16px;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  min-width: 160px;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
 }
 
 .user-dropdown:hover {
-  background-color: #f5f5f5;
+  background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.user-avatar {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  font-weight: bold;
+  margin-right: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10px);
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 .username {
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+.user-role {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.dropdown-icon {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 12px;
+  transition: transform 0.3s ease;
   margin-left: 8px;
+}
+
+.user-dropdown:hover .dropdown-icon {
+  transform: rotate(180deg);
+}
+
+/* 用户菜单美化 */
+.user-menu {
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0;
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.menu-header {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px 12px 0 0;
+  margin: -1px -1px 0 -1px;
+}
+
+.menu-avatar {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  font-weight: bold;
+  margin-right: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.menu-user-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.menu-username {
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+.menu-role {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.user-menu :deep(.ant-menu-item) {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  margin: 0;
+  border-radius: 0;
+  transition: all 0.3s ease;
   color: #333;
+}
+
+.user-menu :deep(.ant-menu-item:hover) {
+  background: linear-gradient(135deg, #f8f9ff 0%, #f0f2ff 100%);
+  color: #667eea;
+  transform: translateX(4px);
+}
+
+.user-menu :deep(.ant-menu-item .anticon) {
+  font-size: 16px;
+  color: inherit;
+}
+
+.user-menu :deep(.ant-menu-divider) {
+  margin: 4px 0;
+  border-color: #f0f0f0;
+}
+
+.logout-item {
+  color: #ff4d4f !important;
+}
+
+.logout-item:hover {
+  background: linear-gradient(135deg, #fff2f0 0%, #ffe7e6 100%) !important;
+  color: #ff4d4f !important;
 }
 
 .sider {

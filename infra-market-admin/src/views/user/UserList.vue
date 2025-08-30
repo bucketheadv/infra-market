@@ -57,36 +57,60 @@
         :loading="loading"
         :pagination="pagination"
         row-key="id"
+        class="user-table"
+        :row-class-name="getRowClassName"
         @change="handleTableChange"
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'status'">
-            <a-tag :color="record.status === 'active' ? 'green' : 'red'">
+            <a-tag :color="record.status === 'active' ? 'green' : 'red'" class="status-tag">
               {{ record.status === 'active' ? '启用' : '禁用' }}
             </a-tag>
           </template>
           
           <template v-else-if="column.key === 'action'">
-            <a-space>
-              <a-button type="link" size="small" @click="handleEdit(record)">
+            <a-space size="small">
+              <a-button 
+                type="link" 
+                size="small" 
+                class="action-btn edit-btn"
+                @click="handleEdit(record)"
+              >
+                <EditOutlined />
                 编辑
               </a-button>
-              <a-button type="link" size="small" @click="handleResetPassword(record)">
+              <a-button 
+                type="link" 
+                size="small" 
+                class="action-btn reset-btn"
+                @click="handleResetPassword(record)"
+              >
+                <KeyOutlined />
                 重置密码
               </a-button>
               <a-button
                 type="link"
                 size="small"
-                :danger="record.status === 'active'"
+                class="action-btn status-btn"
+                :class="{ 'disable-btn': record.status === 'active' }"
                 @click="handleToggleStatus(record)"
               >
+                <CheckCircleOutlined v-if="record.status === 'active'" />
+                <StopOutlined v-else />
                 {{ record.status === 'active' ? '禁用' : '启用' }}
               </a-button>
               <a-popconfirm
                 title="确定要删除这个用户吗？"
+                ok-text="确定"
+                cancel-text="取消"
                 @confirm="handleDelete(record)"
               >
-                <a-button type="link" size="small" danger>
+                <a-button 
+                  type="link" 
+                  size="small" 
+                  class="action-btn delete-btn"
+                >
+                  <DeleteOutlined />
                   删除
                 </a-button>
               </a-popconfirm>
@@ -106,6 +130,11 @@ import {
   PlusOutlined,
   SearchOutlined,
   ReloadOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  CheckCircleOutlined,
+  StopOutlined,
+  KeyOutlined,
 } from '@ant-design/icons-vue'
 import { userApi } from '@/api/user'
 import type { User, PageParams } from '@/types'
@@ -134,21 +163,31 @@ const columns = [
     dataIndex: 'id',
     key: 'id',
     width: 80,
+    align: 'center',
   },
   {
     title: '用户名',
     dataIndex: 'username',
     key: 'username',
+    width: 150,
   },
   {
     title: '邮箱',
     dataIndex: 'email',
     key: 'email',
+    width: 200,
   },
   {
     title: '手机号',
     dataIndex: 'phone',
     key: 'phone',
+    width: 150,
+  },
+  {
+    title: '角色',
+    dataIndex: 'roles',
+    key: 'roles',
+    width: 200,
   },
   {
     title: '状态',
@@ -165,7 +204,7 @@ const columns = [
   {
     title: '操作',
     key: 'action',
-    width: 200,
+    width: 280,
     fixed: 'right',
   },
 ]
@@ -257,6 +296,11 @@ const handleDelete = async (record: User) => {
   }
 }
 
+// 获取行样式类名
+const getRowClassName = (record: User, index: number) => {
+  return index % 2 === 0 ? 'table-row-even' : 'table-row-odd'
+}
+
 onMounted(() => {
   fetchUsers()
 })
@@ -280,6 +324,194 @@ onMounted(() => {
   margin-bottom: 16px;
 }
 
+/* 表格样式优化 */
+.user-table {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.user-table :deep(.ant-table) {
+  border-radius: 8px;
+}
+
+.user-table :deep(.ant-table-thead > tr > th) {
+  background: #ffffff;
+  border-bottom: 1px solid #e8e8e8;
+  font-weight: 500;
+  color: #333333;
+  padding: 16px 12px;
+  font-size: 14px;
+  text-align: center;
+}
+
+.user-table :deep(.ant-table-thead > tr > th:first-child) {
+  border-top-left-radius: 8px;
+}
+
+.user-table :deep(.ant-table-thead > tr > th:last-child) {
+  border-top-right-radius: 8px;
+}
+
+.user-table :deep(.ant-table-tbody > tr > td) {
+  padding: 16px 12px;
+  border-bottom: 1px solid #f0f0f0;
+  transition: all 0.3s ease;
+  text-align: left;
+}
+
+/* ID列居中显示 */
+.user-table :deep(.ant-table-tbody > tr > td:first-child) {
+  text-align: center;
+}
+
+.user-table :deep(.ant-table-tbody > tr:hover > td) {
+  background-color: #fafafa !important;
+}
+
+.table-row-even {
+  background-color: #ffffff;
+}
+
+.table-row-odd {
+  background-color: #fafbfc;
+}
+
+/* 标签样式优化 */
+.status-tag {
+  border-radius: 6px;
+  font-weight: 500;
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
+/* 操作按钮美化 */
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  font-size: 12px;
+  height: 32px;
+  font-weight: 500;
+}
+
+.action-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.edit-btn {
+  color: #1890ff;
+}
+
+.edit-btn:hover {
+  background-color: #e6f7ff;
+  color: #1890ff;
+}
+
+.reset-btn {
+  color: #722ed1;
+}
+
+.reset-btn:hover {
+  background-color: #f9f0ff;
+  color: #722ed1;
+}
+
+.status-btn {
+  color: #52c41a;
+}
+
+.status-btn:hover {
+  background-color: #f6ffed;
+  color: #52c41a;
+}
+
+.disable-btn {
+  color: #faad14;
+}
+
+.disable-btn:hover {
+  background-color: #fffbe6;
+  color: #faad14;
+}
+
+.delete-btn {
+  color: #ff4d4f;
+}
+
+.delete-btn:hover {
+  background-color: #fff2f0;
+  color: #ff4d4f;
+}
+
+/* 分页样式优化 */
+.user-table :deep(.ant-pagination) {
+  margin-top: 16px;
+  text-align: right;
+}
+
+.user-table :deep(.ant-pagination-item) {
+  border-radius: 4px;
+  border: 1px solid #d9d9d9;
+  transition: all 0.3s ease;
+  margin: 0 2px;
+}
+
+.user-table :deep(.ant-pagination-item:hover) {
+  border-color: #1890ff;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(24, 144, 255, 0.2);
+}
+
+.user-table :deep(.ant-pagination-item-active) {
+  background: #1890ff;
+  border-color: #1890ff;
+  box-shadow: 0 2px 4px rgba(24, 144, 255, 0.3);
+}
+
+.user-table :deep(.ant-pagination-item-active a) {
+  color: white;
+}
+
+.user-table :deep(.ant-pagination-prev),
+.user-table :deep(.ant-pagination-next) {
+  border-radius: 4px;
+  border: 1px solid #d9d9d9;
+  transition: all 0.3s ease;
+  margin: 0 2px;
+}
+
+.user-table :deep(.ant-pagination-prev:hover),
+.user-table :deep(.ant-pagination-next:hover) {
+  border-color: #1890ff;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(24, 144, 255, 0.2);
+}
+
+.user-table :deep(.ant-pagination-options) {
+  margin-left: 16px;
+}
+
+.user-table :deep(.ant-pagination-options .ant-select) {
+  border-radius: 4px;
+}
+
+.user-table :deep(.ant-pagination-options .ant-select:hover) {
+  border-color: #1890ff;
+}
+
+.user-table :deep(.ant-pagination-options .ant-input) {
+  border-radius: 4px;
+}
+
+.user-table :deep(.ant-pagination-options .ant-input:hover) {
+  border-color: #1890ff;
+}
+
 @media (max-width: 768px) {
   .user-list {
     padding: 16px;
@@ -291,6 +523,11 @@ onMounted(() => {
   
   .search-form .ant-form-item {
     margin-bottom: 12px;
+  }
+  
+  .user-table :deep(.ant-table-thead > tr > th),
+  .user-table :deep(.ant-table-tbody > tr > td) {
+    padding: 12px 8px;
   }
 }
 </style>
