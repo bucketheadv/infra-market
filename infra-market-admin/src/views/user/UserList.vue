@@ -79,15 +79,21 @@
                 <EditOutlined />
                 编辑
               </a-button>
-              <a-button 
-                type="link" 
-                size="small" 
-                class="action-btn reset-btn"
-                @click="handleResetPassword(record)"
+              <a-popconfirm
+                title="确定要重置该用户的密码吗？"
+                ok-text="确定重置"
+                cancel-text="取消"
+                @confirm="handleResetPassword(record)"
               >
-                <KeyOutlined />
-                重置密码
-              </a-button>
+                <a-button 
+                  type="link" 
+                  size="small" 
+                  class="action-btn reset-btn"
+                >
+                  <KeyOutlined />
+                  重置密码
+                </a-button>
+              </a-popconfirm>
               <a-button
                 type="link"
                 size="small"
@@ -315,10 +321,19 @@ onMounted(() => {
 
 .search-form {
   margin-bottom: 16px;
-  padding: 16px;
-  background: #fafafa;
-  border-radius: 6px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.08);
 }
+
+
+
+
+
+
 
 .search-form .ant-form-item {
   margin-bottom: 16px;
@@ -326,9 +341,11 @@ onMounted(() => {
 
 /* 表格样式优化 */
 .user-table {
-  border-radius: 8px;
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.1);
+  background: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .user-table :deep(.ant-table) {

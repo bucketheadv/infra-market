@@ -296,10 +296,15 @@ onMounted(() => {
 
 .search-form {
   margin-bottom: 16px;
-  padding: 16px;
-  background: #fafafa;
-  border-radius: 6px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.08);
 }
+
+
 
 .search-form .ant-form-item {
   margin-bottom: 16px;
@@ -307,9 +312,11 @@ onMounted(() => {
 
 /* 表格样式优化 */
 .role-table {
-  border-radius: 8px;
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.1);
+  background: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .role-table :deep(.ant-table) {

@@ -301,67 +301,145 @@ const handleLogout = async () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #fff;
-  padding: 0 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 0 32px;
+  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
   flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+  height: 64px;
+  z-index: 10;
+}
+
+.header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, 
+    rgba(255, 255, 255, 0.1) 0%, 
+    rgba(255, 255, 255, 0.05) 50%, 
+    rgba(255, 255, 255, 0.1) 100%);
+  pointer-events: none;
+}
+
+.header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(255, 255, 255, 0.2) 50%, 
+    transparent 100%);
 }
 
 .logo {
-  font-size: 20px;
-  font-weight: 700;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  text-shadow: 0 2px 4px rgba(102, 126, 234, 0.1);
-  letter-spacing: 0.5px;
-  transition: all 0.3s ease;
+  font-size: 22px;
+  font-weight: 800;
+  color: #ffffff;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  letter-spacing: 1px;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo::before {
+  content: '🚀';
+  font-size: 24px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+  transition: all 0.4s ease;
 }
 
 .logo:hover {
-  transform: scale(1.05);
-  text-shadow: 0 4px 8px rgba(102, 126, 234, 0.2);
+  transform: scale(1.05) translateY(-1px);
+  text-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.logo:hover::before {
+  transform: rotate(15deg) scale(1.1);
 }
 
 .header-right {
   display: flex;
   align-items: center;
+  position: relative;
+  z-index: 1;
 }
 
 .user-dropdown {
   display: flex;
   align-items: center;
   cursor: pointer;
-  padding: 8px 16px;
-  border-radius: 12px;
-  transition: all 0.3s ease;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border: none;
-  min-width: 160px;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  padding: 10px 20px;
+  border-radius: 16px;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  min-width: 180px;
+  backdrop-filter: blur(20px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.user-dropdown::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(255, 255, 255, 0.2) 50%, 
+    transparent 100%);
+  transition: left 0.6s ease;
+}
+
+.user-dropdown:hover::before {
+  left: 100%;
 }
 
 .user-dropdown:hover {
-  background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
 .user-info {
   display: flex;
   align-items: center;
   flex: 1;
+  position: relative;
+  z-index: 1;
 }
 
 .user-avatar {
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.1) 100%);
+  color: #ffffff;
   font-weight: bold;
-  margin-right: 12px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  margin-right: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
   backdrop-filter: blur(10px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.user-dropdown:hover .user-avatar {
+  transform: scale(1.1);
+  border-color: rgba(255, 255, 255, 0.6);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .user-details {
@@ -371,144 +449,446 @@ const handleLogout = async () => {
 }
 
 .username {
-  color: white;
-  font-weight: 600;
-  font-size: 14px;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 15px;
   line-height: 1.2;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
 }
 
 .user-role {
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.9);
   font-size: 12px;
   line-height: 1.2;
+  font-weight: 500;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.user-dropdown:hover .username {
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.user-dropdown:hover .user-role {
+  color: rgba(255, 255, 255, 1);
 }
 
 .dropdown-icon {
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.9);
   font-size: 12px;
-  transition: transform 0.3s ease;
-  margin-left: 8px;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-left: 12px;
+  position: relative;
+  z-index: 1;
 }
 
 .user-dropdown:hover .dropdown-icon {
-  transform: rotate(180deg);
+  transform: rotate(180deg) scale(1.1);
+  color: #ffffff;
 }
 
 /* 用户菜单美化 */
 .user-menu {
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   padding: 0;
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(20px);
   background: rgba(255, 255, 255, 0.95);
+  overflow: hidden;
+  position: relative;
+}
+
+.user-menu::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(102, 126, 234, 0.3) 50%, 
+    transparent 100%);
 }
 
 .menu-header {
   display: flex;
   align-items: center;
-  padding: 16px;
+  padding: 20px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 12px 12px 0 0;
+  border-radius: 16px 16px 0 0;
   margin: -1px -1px 0 -1px;
+  position: relative;
+  overflow: hidden;
+}
+
+.menu-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, 
+    rgba(255, 255, 255, 0.1) 0%, 
+    rgba(255, 255, 255, 0.05) 50%, 
+    rgba(255, 255, 255, 0.1) 100%);
+  pointer-events: none;
 }
 
 .menu-avatar {
-  background: rgba(255, 255, 255, 0.2);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.1) 100%);
   color: white;
   font-weight: bold;
-  margin-right: 12px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  margin-right: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 1;
 }
 
 .menu-user-info {
   display: flex;
   flex-direction: column;
+  position: relative;
+  z-index: 1;
 }
 
 .menu-username {
   color: white;
-  font-weight: 600;
-  font-size: 14px;
+  font-weight: 700;
+  font-size: 15px;
   line-height: 1.2;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .menu-role {
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.9);
   font-size: 12px;
   line-height: 1.2;
+  font-weight: 500;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .user-menu :deep(.ant-menu-item) {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 16px;
+  padding: 14px 20px;
   margin: 0;
   border-radius: 0;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   color: #333;
+  position: relative;
+  overflow: hidden;
+}
+
+.user-menu :deep(.ant-menu-item::before) {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(102, 126, 234, 0.1) 50%, 
+    transparent 100%);
+  transition: left 0.6s ease;
+}
+
+.user-menu :deep(.ant-menu-item:hover::before) {
+  left: 100%;
 }
 
 .user-menu :deep(.ant-menu-item:hover) {
   background: linear-gradient(135deg, #f8f9ff 0%, #f0f2ff 100%);
   color: #667eea;
   transform: translateX(4px);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
 }
 
 .user-menu :deep(.ant-menu-item .anticon) {
   font-size: 16px;
   color: inherit;
+  transition: all 0.3s ease;
+}
+
+.user-menu :deep(.ant-menu-item:hover .anticon) {
+  transform: scale(1.1);
 }
 
 .user-menu :deep(.ant-menu-divider) {
-  margin: 4px 0;
-  border-color: #f0f0f0;
+  margin: 6px 0;
+  border-color: rgba(0, 0, 0, 0.06);
+  height: 1px;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(0, 0, 0, 0.06) 50%, 
+    transparent 100%);
 }
 
 .logout-item {
   color: #ff4d4f !important;
+  position: relative;
+}
+
+.logout-item::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(255, 77, 79, 0.2) 50%, 
+    transparent 100%);
 }
 
 .logout-item:hover {
   background: linear-gradient(135deg, #fff2f0 0%, #ffe7e6 100%) !important;
   color: #ff4d4f !important;
+  box-shadow: 0 2px 8px rgba(255, 77, 79, 0.1);
 }
 
 .sider {
-  background: #fff;
+  background: #ffffff;
   border-right: 1px solid #f0f0f0;
   height: calc(100vh - 64px);
   overflow-y: auto;
   flex-shrink: 0;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
+  position: relative;
+  z-index: 5;
+  margin-top: -1px;
 }
 
-/* 菜单选中样式 */
-.sider :deep(.ant-menu-item-selected) {
-  background-color: #e6f7ff !important;
-  border-right: 3px solid #1890ff !important;
-  color: #1890ff !important;
+.sider::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.2) 50%, transparent 100%);
 }
 
-.sider :deep(.ant-menu-item-selected .anticon) {
-  color: #1890ff !important;
+/* 滚动条美化 */
+.sider::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sider::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+}
+
+.sider::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+  transition: all 0.3s ease;
+}
+
+.sider::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* 菜单整体样式 */
+.sider :deep(.ant-menu) {
+  background: transparent;
+  border-right: none;
+  color: #666;
+}
+
+.sider :deep(.ant-menu-inline) {
+  border-right: none;
+}
+
+/* 菜单项基础样式 */
+.sider :deep(.ant-menu-item) {
+  margin: 4px 12px;
+  border-radius: 8px;
+  height: 48px;
+  line-height: 48px;
+  color: #666;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.sider :deep(.ant-menu-item::before) {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(102, 126, 234, 0.05) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  border-radius: 8px;
+}
+
+.sider :deep(.ant-menu-item:hover::before) {
+  opacity: 1;
 }
 
 .sider :deep(.ant-menu-item:hover) {
-  background-color: #f5f5f5 !important;
+  color: #667eea;
+  background: rgba(102, 126, 234, 0.1);
+  transform: translateX(4px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+}
+
+/* 菜单项选中样式 */
+.sider :deep(.ant-menu-item-selected) {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+  transform: translateX(4px);
+  border-right: none !important;
+}
+
+.sider :deep(.ant-menu-item-selected::before) {
+  display: none;
+}
+
+.sider :deep(.ant-menu-item-selected .anticon) {
+  color: #ffffff !important;
+}
+
+/* 菜单项图标样式 */
+.sider :deep(.ant-menu-item .anticon) {
+  font-size: 16px;
+  margin-right: 12px;
+  transition: all 0.3s ease;
+  color: inherit;
+}
+
+.sider :deep(.ant-menu-item:hover .anticon) {
+  transform: scale(1.1);
+}
+
+/* 子菜单样式 */
+.sider :deep(.ant-menu-submenu) {
+  margin: 4px 12px;
+}
+
+.sider :deep(.ant-menu-submenu-title) {
+  margin: 0;
+  border-radius: 8px;
+  height: 48px;
+  line-height: 48px;
+  color: #666;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.sider :deep(.ant-menu-submenu-title::before) {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(102, 126, 234, 0.05) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  border-radius: 8px;
+}
+
+.sider :deep(.ant-menu-submenu-title:hover::before) {
+  opacity: 1;
+}
+
+.sider :deep(.ant-menu-submenu-title:hover) {
+  color: #667eea;
+  background: rgba(102, 126, 234, 0.1);
+  transform: translateX(4px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
 }
 
 .sider :deep(.ant-menu-submenu-selected > .ant-menu-submenu-title) {
-  color: #1890ff !important;
+  color: #667eea !important;
+  background: rgba(102, 126, 234, 0.1);
 }
 
 .sider :deep(.ant-menu-submenu-selected > .ant-menu-submenu-title .anticon) {
-  color: #1890ff !important;
+  color: #667eea !important;
+}
+
+/* 子菜单展开箭头 */
+.sider :deep(.ant-menu-submenu-arrow) {
+  color: #999;
+  transition: all 0.3s ease;
+}
+
+.sider :deep(.ant-menu-submenu-title:hover .ant-menu-submenu-arrow) {
+  color: #667eea;
+}
+
+.sider :deep(.ant-menu-submenu-open > .ant-menu-submenu-title .ant-menu-submenu-arrow) {
+  color: #667eea;
+}
+
+/* 子菜单内容区域 */
+.sider :deep(.ant-menu-sub) {
+  background: rgba(102, 126, 234, 0.05);
+  border-radius: 8px;
+  margin: 4px 0;
+  padding: 4px 0;
+}
+
+.sider :deep(.ant-menu-sub .ant-menu-item) {
+  margin: 2px 8px;
+  height: 40px;
+  line-height: 40px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.sider :deep(.ant-menu-sub .ant-menu-item .anticon) {
+  font-size: 14px;
+  margin-right: 8px;
+}
+
+/* 菜单分组标题 */
+.sider :deep(.ant-menu-item-group-title) {
+  color: #999;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 16px 16px 8px 16px;
+  margin: 0;
+}
+
+/* 响应式优化 */
+@media (max-width: 768px) {
+  .sider :deep(.ant-menu-item),
+  .sider :deep(.ant-menu-submenu-title) {
+    height: 44px;
+    line-height: 44px;
+    margin: 2px 8px;
+  }
+  
+  .sider :deep(.ant-menu-sub .ant-menu-item) {
+    height: 36px;
+    line-height: 36px;
+    margin: 1px 6px;
+  }
 }
 
 .main-content {
   background: #f0f2f5;
   min-height: calc(100vh - 64px);
   overflow-y: auto;
+  position: relative;
+  z-index: 1;
 }
 </style>
