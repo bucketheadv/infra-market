@@ -1,0 +1,162 @@
+# Infra Market 项目 Cursor 规则
+
+## 项目概述
+这是一个基于 Kotlin + Spring Boot + MyBatis-Flex 的基础设施市场项目。
+
+## 技术栈
+- **语言**: Kotlin
+- **框架**: Spring Boot
+- **ORM**: MyBatis-Flex
+- **数据库**: MySQL
+- **构建工具**: Maven
+- **其他**: Hutool, Apache POI
+
+## 代码规范
+
+### 1. 包结构规范
+```
+src/main/kotlin/io/infra/market/
+├── controller/          # 控制器层
+├── service/            # 服务层
+├── dao/               # 数据访问层
+│   ├── dao/           # DAO实现类
+│   ├── entity/        # 实体类
+│   └── mapper/        # Mapper接口
+├── dto/               # 数据传输对象
+├── config/            # 配置类
+└── util/              # 工具类
+```
+
+### 2. 命名规范
+- **类名**: 使用 PascalCase，如 `UserController`, `UserService`
+- **函数名**: 使用 camelCase，如 `findByUid`, `getUserList`
+- **变量名**: 使用 camelCase，如 `userDao`, `userList`
+- **常量**: 使用 UPPER_SNAKE_CASE，如 `MAX_RETRY_COUNT`
+- **包名**: 使用小写，如 `io.infra.market.controller`
+
+### 3. 注解使用规范
+- 控制器类使用 `@RestController` 和 `@RequestMapping`
+- 服务类使用 `@Service`
+- DAO类使用 `@Repository`
+- 实体类使用 `@Table` 和 `@Column`
+- 配置类使用 `@Configuration`
+
+### 4. 实体类规范
+```kotlin
+@Table("table_name")
+data class EntityName(
+    var fieldName: String? = null
+) : BaseActiveRecordEntity<EntityName, Long>()
+```
+
+### 5. 控制器规范
+```kotlin
+@RestController
+@RequestMapping("/api/resource")
+class ResourceController(
+    private val resourceService: ResourceService
+) {
+    @GetMapping("/list")
+    fun getList(): List<Resource> {
+        return resourceService.findAll()
+    }
+    
+    @PostMapping
+    fun create(@RequestBody resource: Resource): Resource {
+        return resourceService.save(resource)
+    }
+}
+```
+
+### 6. DAO层规范
+```kotlin
+@Repository
+class ResourceDao : ServiceImpl<ResourceMapper, Resource>() {
+    fun findByCondition(condition: String): List<Resource> {
+        val query = query().whereWith {
+            Resource::field.eq(condition)
+        }
+        return mapper.selectListByQuery(query)
+    }
+}
+```
+
+### 7. 异常处理
+- 使用统一的异常处理机制
+- 自定义业务异常继承 `RuntimeException`
+- 在控制器中使用 `@ExceptionHandler` 处理异常
+
+### 8. 日志规范
+- 使用 SLF4J + Logback
+- 日志级别：DEBUG, INFO, WARN, ERROR
+- 关键业务操作必须记录日志
+- 敏感信息不要记录到日志中
+
+### 9. 数据库规范
+- 表名使用下划线命名，如 `user_info`
+- 字段名使用下划线命名，如 `user_name`
+- 主键统一使用 `id`，类型为 `BIGINT`
+- 创建时间和更新时间字段：`create_time`, `update_time`
+
+### 10. API设计规范
+- RESTful API设计
+- 使用HTTP状态码表示操作结果
+- 统一响应格式
+- 支持分页查询
+- 参数验证使用 `@Valid`
+
+### 11. 代码质量要求
+- 函数长度不超过50行
+- 类长度不超过500行
+- 圈复杂度不超过10
+- 代码覆盖率不低于80%
+- 使用Kotlin的空安全特性
+
+### 12. 性能优化
+- 使用连接池管理数据库连接
+- 合理使用缓存（Redis）
+- 避免N+1查询问题
+- 大数据量查询使用分页
+- 异步处理耗时操作
+
+### 13. 安全规范
+- 输入参数验证
+- SQL注入防护（使用MyBatis-Flex的参数化查询）
+- XSS防护
+- 敏感信息加密存储
+- 接口权限控制
+
+### 14. 测试规范
+- 单元测试覆盖核心业务逻辑
+- 集成测试覆盖API接口
+- 使用 `@SpringBootTest` 进行集成测试
+- 测试数据使用 `@TestConfiguration`
+
+### 15. 文档规范
+- 类和方法必须有文档注释
+- API接口使用Swagger注解
+- 重要业务逻辑添加注释
+- 复杂算法需要详细说明
+
+## 开发工具配置
+- IDE: IntelliJ IDEA
+- 代码格式化: Kotlin官方格式化规则
+- 代码检查: ktlint
+- 版本控制: Git
+
+## 提交规范
+- feat: 新功能
+- fix: 修复bug
+- docs: 文档更新
+- style: 代码格式调整
+- refactor: 代码重构
+- test: 测试相关
+- chore: 构建过程或辅助工具的变动
+
+## 注意事项
+1. 遵循Kotlin最佳实践
+2. 充分利用Spring Boot自动配置
+3. 合理使用MyBatis-Flex的DSL查询
+4. 保持代码简洁和可读性
+5. 定期进行代码审查
+6. 及时更新依赖版本
