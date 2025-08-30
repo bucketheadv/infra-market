@@ -199,11 +199,8 @@ class UserService(
         val user = userDao.findByUid(id) ?: return ApiResponse.error("用户不存在")
         
         // 验证状态值是否有效
-        val statusEnum = StatusEnum.fromCode(status)
-        if (statusEnum == null) {
-            return ApiResponse.error("无效的状态值")
-        }
-        
+        StatusEnum.fromCode(status) ?: return ApiResponse.error("无效的状态值")
+
         // 检查是否为超级管理员
         if (user.username == "admin" && status == StatusEnum.DELETED.code) {
             return ApiResponse.error("不能删除超级管理员用户")

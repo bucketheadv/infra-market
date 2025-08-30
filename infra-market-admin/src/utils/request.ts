@@ -30,9 +30,8 @@ request.interceptors.response.use(
   (response: AxiosResponse) => {
     const { data } = response
     
-    // 如果响应成功但业务状态码不是200
+    // 如果响应成功但业务状态码不是200，直接返回错误，让组件处理
     if (data.code !== 200) {
-      message.error(data.message || '请求失败')
       return Promise.reject(new Error(data.message || '请求失败'))
     }
     

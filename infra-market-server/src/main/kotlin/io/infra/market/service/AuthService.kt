@@ -5,8 +5,8 @@ import io.infra.market.dto.LoginRequest
 import io.infra.market.dto.LoginResponse
 import io.infra.market.dto.UserDto
 import io.infra.market.dto.PermissionDto
+import io.infra.market.dto.ChangePasswordRequest
 import io.infra.market.enums.StatusEnum
-import io.infra.market.enums.PermissionTypeEnum
 import io.infra.market.repository.dao.UserDao
 import io.infra.market.repository.dao.UserRoleDao
 import io.infra.market.repository.dao.RolePermissionDao
@@ -66,21 +66,14 @@ class AuthService(
         return ApiResponse.success(response)
     }
     
-    fun logout(userId: Long?): ApiResponse<Unit> {
-        if (userId == null) {
-            return ApiResponse.error("无效的token")
-        }
-        
+    fun logout(userId: Long): ApiResponse<Unit> {
         // 从Redis中删除token
         tokenService.deleteToken(userId)
         
         return ApiResponse.success()
     }
     
-    fun getCurrentUser(userId: Long?): ApiResponse<LoginResponse> {
-        if (userId == null) {
-            return ApiResponse.error("无效的token")
-        }
+    fun getCurrentUser(userId: Long): ApiResponse<LoginResponse> {
         
         val user = userDao.findByUid(userId) ?: return ApiResponse.error("用户不存在")
         
@@ -110,10 +103,7 @@ class AuthService(
         return ApiResponse.success(response)
     }
     
-    fun getUserMenus(userId: Long?): ApiResponse<List<PermissionDto>> {
-        if (userId == null) {
-            return ApiResponse.error("无效的token")
-        }
+    fun getUserMenus(userId: Long): ApiResponse<List<PermissionDto>> {
         
         val user = userDao.findByUid(userId) ?: return ApiResponse.error("用户不存在")
         
@@ -124,15 +114,15 @@ class AuthService(
         
         // 获取用户角色
         val userRoles = userRoleDao.findByUserId(user.id ?: 0)
-        val roleIds = userRoles.map { it.roleId }.filterNotNull()
-        
+        val roleIds = userRoles.mapNotNull { it.roleId }
+
         if (roleIds.isEmpty()) {
             return ApiResponse.success(emptyList())
         }
         
         // 批量获取角色权限 - 避免N+1查询
         val rolePermissions = rolePermissionDao.findByRoleIds(roleIds)
-        val permissionIds = rolePermissions.map { it.permissionId }.filterNotNull().toSet()
+        val permissionIds = rolePermissions.mapNotNull { it.permissionId }.toSet()
         
         if (permissionIds.isEmpty()) {
             return ApiResponse.success(emptyList())
@@ -209,10 +199,7 @@ class AuthService(
         return permission.copy(children = sortedChildren)
     }
     
-    fun refreshToken(userId: Long?): ApiResponse<Map<String, String>> {
-        if (userId == null) {
-            return ApiResponse.error("无效的token")
-        }
+    fun refreshToken(userId: Long): ApiResponse<Map<String, String>> {
         
         val user = userDao.findByUid(userId) ?: return ApiResponse.error("用户不存在")
         
@@ -227,22 +214,51 @@ class AuthService(
         return ApiResponse.success(mapOf("token" to newToken))
     }
     
-    fun logout(): ApiResponse<Unit> {
-        // 这里简化处理，实际应该清除token
+    fun changePassword(userId: Long, request: ChangePasswordRequest): ApiResponse<Unit> {
+        
+        val user = userDao.findByUid(userId) ?: return ApiResponse.error("用户不存在")
+        
+        // 检查用户状态
+        if (user.status != StatusEnum.ACTIVE.code) {
+            return ApiResponse.error("用户已被禁用")
+        }
+        
+        // 验证旧密码
+        if (!AesUtil.matches(request.oldPassword, user.password ?: "")) {
+            return ApiResponse.error("原密码错误")
+        }
+        
+        // 验证新密码不能与旧密码相同
+        if (request.oldPassword == request.newPassword) {
+            return ApiResponse.error("新密码不能与原密码相同")
+        }
+        
+        // 验证新密码长度
+        if (request.newPassword.length < 6) {
+            return ApiResponse.error("新密码长度不能少于6位")
+        }
+        
+        // 加密新密码
+        val encryptedNewPassword = AesUtil.encrypt(request.newPassword)
+        
+        // 更新密码
+        user.password = encryptedNewPassword
+        userDao.updateById(user)
+        
         return ApiResponse.success()
     }
     
     private fun getUserPermissions(userId: Long): List<String> {
         val userRoles = userRoleDao.findByUserId(userId)
-        val roleIds = userRoles.map { it.roleId }.filterNotNull()
-        
+        val roleIds = userRoles.mapNotNull { it.roleId }
+
         if (roleIds.isEmpty()) {
             return emptyList()
         }
         
         // 批量获取角色权限 - 避免N+1查询
         val rolePermissions = rolePermissionDao.findByRoleIds(roleIds)
-        val permissionIds = rolePermissions.map { it.permissionId }.filterNotNull().toSet()
+        val permissionIds = rolePermissions.mapNotNull { it.permissionId }.toSet()
         
         if (permissionIds.isEmpty()) {
             return emptyList()

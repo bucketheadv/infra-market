@@ -5,7 +5,6 @@ import io.infra.market.dto.PageResultDto
 import io.infra.market.dto.PermissionDto
 import io.infra.market.dto.PermissionFormDto
 import io.infra.market.dto.PermissionQueryDto
-import io.infra.market.enums.PermissionTypeEnum
 import io.infra.market.enums.StatusEnum
 import io.infra.market.repository.dao.PermissionDao
 import io.infra.market.repository.dao.RolePermissionDao

@@ -26,4 +26,9 @@ export const authApi = {
   refreshToken(): Promise<ApiResponse<{ token: string }>> {
     return request.post('/auth/refresh/token')
   },
+
+  // 修改密码
+  changePassword(data: { oldPassword: string; newPassword: string }): Promise<ApiResponse<void>> {
+    return request.post('/auth/change/password', data)
+  },
 }

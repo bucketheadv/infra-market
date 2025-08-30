@@ -21,3 +21,11 @@ data class ApiResponse<T>(
 data class BatchRequest(
     val ids: List<Long>
 )
+
+/**
+ * 修改密码DTO
+ */
+data class ChangePasswordRequest(
+    val oldPassword: String,
+    val newPassword: String
+)

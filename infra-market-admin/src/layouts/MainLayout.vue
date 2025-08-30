@@ -12,6 +12,10 @@
           </a>
           <template #overlay>
             <a-menu>
+              <a-menu-item @click="handleChangePassword">
+                <KeyOutlined />
+                修改密码
+              </a-menu-item>
               <a-menu-item @click="handleLogout">
                 <LogoutOutlined />
                 退出登录
@@ -91,6 +95,7 @@ import {
   FileTextOutlined,
   LogoutOutlined,
   QuestionOutlined,
+  KeyOutlined,
 } from '@ant-design/icons-vue'
 
 const router = useRouter()
@@ -232,6 +237,11 @@ const handleOpenChange = (keys: string[]) => {
   if (!isUpdatingFromRoute.value) {
     openKeys.value = keys
   }
+}
+
+// 修改密码
+const handleChangePassword = () => {
+  router.push('/change-password')
 }
 
 // 退出登录

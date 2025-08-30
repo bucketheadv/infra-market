@@ -1,6 +1,8 @@
 package io.infra.market.controller
 
 import io.infra.market.dto.LoginRequest
+import io.infra.market.dto.ChangePasswordRequest
+import io.infra.market.dto.ApiResponse
 import io.infra.market.service.AuthService
 import io.infra.market.util.AuthThreadLocal
 import org.springframework.web.bind.annotation.GetMapping
@@ -24,14 +26,18 @@ class AuthController(
     fun login(@RequestBody request: LoginRequest) = authService.login(request)
     
     @GetMapping("/current/user")
-    fun getCurrentUser() = authService.getCurrentUser(AuthThreadLocal.getCurrentUserId())
+    fun getCurrentUser() = authService.getCurrentUser(AuthThreadLocal.getCurrentUserId()!!)
     
     @GetMapping("/user/menus")
-    fun getUserMenus() = authService.getUserMenus(AuthThreadLocal.getCurrentUserId())
+    fun getUserMenus() = authService.getUserMenus(AuthThreadLocal.getCurrentUserId()!!)
     
     @PostMapping("/refresh/token")
-    fun refreshToken() = authService.refreshToken(AuthThreadLocal.getCurrentUserId())
+    fun refreshToken() = authService.refreshToken(AuthThreadLocal.getCurrentUserId()!!)
     
     @PostMapping("/logout")
-    fun logout() = authService.logout(AuthThreadLocal.getCurrentUserId())
+    fun logout() = authService.logout(AuthThreadLocal.getCurrentUserId()!!)
+    
+    @PostMapping("/change/password")
+    fun changePassword(@RequestBody request: ChangePasswordRequest) = 
+        authService.changePassword(AuthThreadLocal.getCurrentUserId()!!, request)
 }

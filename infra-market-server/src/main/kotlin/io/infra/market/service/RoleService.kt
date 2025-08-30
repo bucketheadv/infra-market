@@ -188,11 +188,8 @@ class RoleService(
         val role = roleDao.getById(id) ?: return ApiResponse.error("角色不存在")
         
         // 验证状态值是否有效
-        val statusEnum = StatusEnum.fromCode(status)
-        if (statusEnum == null) {
-            return ApiResponse.error("无效的状态值")
-        }
-        
+        StatusEnum.fromCode(status) ?: return ApiResponse.error("无效的状态值")
+
         // 检查是否为系统角色
         if (role.code == "admin" && status == StatusEnum.DELETED.code) {
             return ApiResponse.error("不能删除系统角色")
