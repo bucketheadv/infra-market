@@ -124,32 +124,7 @@ INSERT INTO `permission_info` (`name`, `code`, `type`, `parent_id`, `path`, `ico
 ('权限创建', 'permission:create', 'button', 14, NULL, NULL, 2, 'active'),
 ('权限编辑', 'permission:update', 'button', 14, NULL, NULL, 3, 'active'),
 ('权限删除', 'permission:delete', 'button', 14, NULL, NULL, 4, 'active'),
-('权限状态', 'permission:status', 'button', 14, NULL, NULL, 5, 'active'),
-
--- 基础设施管理
-('基础设施', 'infra:manage', 'menu', NULL, '/infra', 'CloudServerOutlined', 2, 'active'),
-('服务器管理', 'server:manage', 'menu', 20, '/infra/servers', 'DesktopOutlined', 1, 'active'),
-('服务器列表', 'server:list', 'button', 21, NULL, NULL, 1, 'active'),
-('服务器创建', 'server:create', 'button', 21, NULL, NULL, 2, 'active'),
-('服务器编辑', 'server:update', 'button', 21, NULL, NULL, 3, 'active'),
-('服务器删除', 'server:delete', 'button', 21, NULL, NULL, 4, 'active'),
-('网络管理', 'network:manage', 'menu', 20, '/infra/networks', 'ApiOutlined', 2, 'active'),
-('网络列表', 'network:list', 'button', 26, NULL, NULL, 1, 'active'),
-('网络创建', 'network:create', 'button', 26, NULL, NULL, 2, 'active'),
-('网络编辑', 'network:update', 'button', 26, NULL, NULL, 3, 'active'),
-('网络删除', 'network:delete', 'button', 26, NULL, NULL, 4, 'active'),
-
--- 市场管理
-('市场管理', 'market:manage', 'menu', NULL, '/market', 'ShoppingOutlined', 3, 'active'),
-('商品管理', 'product:manage', 'menu', 31, '/market/products', 'AppstoreOutlined', 1, 'active'),
-('商品列表', 'product:list', 'button', 32, NULL, NULL, 1, 'active'),
-('商品创建', 'product:create', 'button', 32, NULL, NULL, 2, 'active'),
-('商品编辑', 'product:update', 'button', 32, NULL, NULL, 3, 'active'),
-('商品删除', 'product:delete', 'button', 32, NULL, NULL, 4, 'active'),
-('订单管理', 'order:manage', 'menu', 31, '/market/orders', 'FileTextOutlined', 2, 'active'),
-('订单列表', 'order:list', 'button', 37, NULL, NULL, 1, 'active'),
-('订单详情', 'order:detail', 'button', 37, NULL, NULL, 2, 'active'),
-('订单状态', 'order:status', 'button', 37, NULL, NULL, 3, 'active');
+('权限状态', 'permission:status', 'button', 14, NULL, NULL, 5, 'active');
 
 -- 插入用户角色关联
 INSERT INTO `user_role` (`user_id`, `role_id`) VALUES
@@ -162,21 +137,20 @@ INSERT INTO `user_role` (`user_id`, `role_id`) VALUES
 INSERT INTO `role_permission` (`role_id`, `permission_id`) 
 SELECT 1, id FROM `permission_info` WHERE status = 'active';
 
--- 管理员拥有大部分权限（除了超级管理员专用权限）
+-- 管理员拥有系统管理权限（除了超级管理员专用权限）
 INSERT INTO `role_permission` (`role_id`, `permission_id`) 
-SELECT 2, id FROM `permission_info` WHERE status = 'active' AND code NOT LIKE 'system:%';
+SELECT 2, id FROM `permission_info` WHERE status = 'active' AND code LIKE 'system:%';
 
--- 普通用户拥有基本权限
+-- 普通用户拥有基本查看权限
 INSERT INTO `role_permission` (`role_id`, `permission_id`) 
 SELECT 3, id FROM `permission_info` WHERE status = 'active' AND code IN (
-    'infra:manage', 'server:list', 'network:list',
-    'market:manage', 'product:list', 'order:list', 'order:detail'
+    'system:manage', 'user:list', 'role:list', 'permission:list'
 );
 
--- 访客只有查看权限
+-- 访客只有系统管理查看权限
 INSERT INTO `role_permission` (`role_id`, `permission_id`) 
 SELECT 4, id FROM `permission_info` WHERE status = 'active' AND code IN (
-    'server:list', 'network:list', 'product:list'
+    'system:manage', 'user:list', 'role:list', 'permission:list'
 );
 
 
