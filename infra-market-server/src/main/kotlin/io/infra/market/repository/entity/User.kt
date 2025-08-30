@@ -2,6 +2,7 @@ package io.infra.market.repository.entity
 
 import com.mybatisflex.annotation.Table
 import io.infra.structure.db.model.activerecord.BaseActiveRecordEntity
+import java.util.Date
 
 /**
  * @author liuqinglin
@@ -13,5 +14,6 @@ data class User(
     var password: String? = null,
     var email: String? = null,
     var phone: String? = null,
-    var status: String = "active"
+    var status: String = "active",
+    var lastLoginTime: Date? = null
 ) : BaseActiveRecordEntity<User, Long>()

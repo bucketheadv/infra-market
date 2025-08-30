@@ -15,13 +15,15 @@ CREATE TABLE IF NOT EXISTS `user_info` (
     `email` VARCHAR(100) NULL COMMENT '邮箱',
     `phone` VARCHAR(20) NULL COMMENT '手机号',
     `status` VARCHAR(20) NOT NULL DEFAULT 'active' COMMENT '状态：active-启用，inactive-禁用，deleted-已删除',
+    `last_login_time` DATETIME NULL COMMENT '最后登录时间',
     `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_username` (`username`),
     KEY `idx_email` (`email`),
     KEY `idx_phone` (`phone`),
-    KEY `idx_status` (`status`)
+    KEY `idx_status` (`status`),
+    KEY `idx_last_login_time` (`last_login_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户信息表';
 
 -- 角色信息表

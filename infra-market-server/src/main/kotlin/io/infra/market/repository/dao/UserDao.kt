@@ -6,6 +6,7 @@ import com.mybatisflex.kotlin.extensions.kproperty.like
 import com.mybatisflex.kotlin.extensions.wrapper.whereWith
 import com.mybatisflex.core.paginate.Page
 import com.mybatisflex.kotlin.extensions.condition.and
+import com.mybatisflex.kotlin.extensions.kproperty.isNotNull
 import com.mybatisflex.kotlin.extensions.kproperty.ne
 import com.mybatisflex.spring.service.impl.ServiceImpl
 import io.infra.market.dto.UserQueryDto
@@ -78,5 +79,28 @@ class UserDao : ServiceImpl<UserMapper, User>() {
         
         val page = Page<User>(query.current, query.size)
         return page(page, queryBuilder)
+    }
+    
+
+    
+    /**
+     * 获取最近登录的用户
+     */
+    fun getRecentLoginUsers(limit: Int): List<User> {
+        val query = query().whereWith {
+            User::status.ne(StatusEnum.DELETED.code) and User::lastLoginTime.isNotNull
+        }.orderBy("last_login_time DESC").limit(limit)
+        
+        return mapper.selectListByQuery(query)
+    }
+    
+    /**
+     * 获取用户总数（排除已删除的用户）
+     */
+    override fun count(): Long {
+        val query = query().whereWith {
+            User::status.ne(StatusEnum.DELETED.code)
+        }
+        return mapper.selectCountByQuery(query)
     }
 }

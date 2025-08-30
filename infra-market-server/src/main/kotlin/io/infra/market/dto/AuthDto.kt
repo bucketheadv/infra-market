@@ -26,6 +26,7 @@ data class UserDto(
     val email: String?,
     val phone: String?,
     val status: String,
+    val lastLoginTime: String?,
     val createTime: String,
     val updateTime: String
 )

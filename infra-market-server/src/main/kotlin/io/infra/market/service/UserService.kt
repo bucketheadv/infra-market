@@ -32,6 +32,7 @@ class UserService(
                 email = user.email,
                 phone = user.phone,
                 status = user.status,
+                lastLoginTime = DateTimeUtil.formatDateTime(user.lastLoginTime),
                 createTime = DateTimeUtil.formatDateTime(user.createTime),
                 updateTime = DateTimeUtil.formatDateTime(user.updateTime)
             )
@@ -56,6 +57,7 @@ class UserService(
             email = user.email,
             phone = user.phone,
             status = user.status,
+            lastLoginTime = DateTimeUtil.formatDateTime(user.lastLoginTime),
             createTime = DateTimeUtil.formatDateTime(user.createTime),
             updateTime = DateTimeUtil.formatDateTime(user.updateTime)
         )
@@ -108,6 +110,7 @@ class UserService(
             email = user.email,
             phone = user.phone,
             status = user.status,
+            lastLoginTime = DateTimeUtil.formatDateTime(user.lastLoginTime),
             createTime = DateTimeUtil.formatDateTime(user.createTime),
             updateTime = DateTimeUtil.formatDateTime(user.updateTime)
         )
@@ -168,6 +171,7 @@ class UserService(
             email = user.email,
             phone = user.phone,
             status = user.status,
+            lastLoginTime = DateTimeUtil.formatDateTime(user.lastLoginTime),
             createTime = DateTimeUtil.formatDateTime(user.createTime),
             updateTime = DateTimeUtil.formatDateTime(user.updateTime)
         )

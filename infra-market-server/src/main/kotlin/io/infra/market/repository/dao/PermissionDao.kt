@@ -99,4 +99,14 @@ class PermissionDao : ServiceImpl<PermissionMapper, Permission>() {
         val page = Page<Permission>(query.current, query.size)
         return page(page, queryBuilder)
     }
+    
+    /**
+     * 获取权限总数（排除已删除的权限）
+     */
+    override fun count(): Long {
+        val query = query().whereWith {
+            Permission::status.ne(StatusEnum.DELETED.code)
+        }
+        return mapper.selectCountByQuery(query)
+    }
 }

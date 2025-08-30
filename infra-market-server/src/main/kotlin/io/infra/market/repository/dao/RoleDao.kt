@@ -81,4 +81,14 @@ class RoleDao : ServiceImpl<RoleMapper, Role>() {
         val page = Page<Role>(query.current, query.size)
         return page(page, queryBuilder)
     }
+    
+    /**
+     * 获取角色总数（排除已删除的角色）
+     */
+    override fun count(): Long {
+        val query = query().whereWith {
+            Role::status.ne(StatusEnum.DELETED.code)
+        }
+        return mapper.selectCountByQuery(query)
+    }
 }

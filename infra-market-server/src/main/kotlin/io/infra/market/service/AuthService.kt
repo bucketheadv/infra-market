@@ -15,6 +15,7 @@ import io.infra.market.util.DateTimeUtil
 import io.infra.market.util.AesUtil
 import io.infra.market.util.JwtUtil
 import org.springframework.stereotype.Service
+import java.util.Date
 
 @Service
 class AuthService(
@@ -38,6 +39,10 @@ class AuthService(
             return ApiResponse.error("用户已被禁用")
         }
         
+        // 更新登录时间
+        user.lastLoginTime = Date()
+        userDao.updateById(user)
+        
         // 获取用户权限
         val permissions = getUserPermissions(user.id ?: 0)
         
@@ -53,6 +58,7 @@ class AuthService(
             email = user.email,
             phone = user.phone,
             status = user.status,
+            lastLoginTime = DateTimeUtil.formatDateTime(user.lastLoginTime),
             createTime = DateTimeUtil.formatDateTime(user.createTime),
             updateTime = DateTimeUtil.formatDateTime(user.updateTime)
         )
@@ -90,6 +96,7 @@ class AuthService(
             email = user.email,
             phone = user.phone,
             status = user.status,
+            lastLoginTime = DateTimeUtil.formatDateTime(user.lastLoginTime),
             createTime = DateTimeUtil.formatDateTime(user.createTime),
             updateTime = DateTimeUtil.formatDateTime(user.updateTime)
         )
