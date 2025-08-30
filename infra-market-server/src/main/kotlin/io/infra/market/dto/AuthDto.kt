@@ -27,6 +27,7 @@ data class UserDto(
     val phone: String?,
     val status: String,
     val lastLoginTime: String?,
+    val roleIds: List<Long> = emptyList(),
     val createTime: String,
     val updateTime: String
 )

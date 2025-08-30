@@ -30,6 +30,7 @@ data class RoleDto(
     val code: String,
     val description: String?,
     val status: String,
+    val permissionIds: List<Long> = emptyList(),
     val createTime: String,
     val updateTime: String
 )

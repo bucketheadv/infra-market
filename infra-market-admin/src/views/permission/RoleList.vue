@@ -179,8 +179,8 @@ const fetchRoles = async () => {
     const response = await roleApi.getRoles(params)
     roles.value = response.data.records
     pagination.total = response.data.total
-  } catch (error) {
-    message.error('获取角色列表失败')
+  } catch (error: any) {
+    message.error(error.message || '获取角色列表失败')
   } finally {
     loading.value = false
   }
@@ -226,9 +226,9 @@ const handleToggleStatus = async (record: Role) => {
     await roleApi.updateRoleStatus(record.id, newStatus)
     message.success('状态更新成功')
     fetchRoles()
-  } catch (error) {
+  } catch (error: any) {
     console.error('状态更新失败:', error)
-    message.error('状态更新失败')
+    message.error(error.message || '状态更新失败')
   }
 }
 
@@ -238,8 +238,8 @@ const handleDelete = async (record: Role) => {
     await roleApi.deleteRole(record.id)
     message.success('删除成功')
     fetchRoles()
-  } catch (error) {
-    message.error('删除失败')
+  } catch (error: any) {
+    message.error(error.message || '删除失败')
   }
 }
 

@@ -1,6 +1,7 @@
 package io.infra.market.repository.dao
 
 import com.mybatisflex.kotlin.extensions.kproperty.eq
+import com.mybatisflex.kotlin.extensions.kproperty.inList
 import com.mybatisflex.kotlin.extensions.wrapper.whereWith
 import com.mybatisflex.spring.service.impl.ServiceImpl
 import io.infra.market.repository.entity.UserRole
@@ -18,6 +19,16 @@ class UserRoleDao : ServiceImpl<UserRoleMapper, UserRole>() {
     fun findByUserId(userId: Long): List<UserRole> {
         val query = query().whereWith {
             UserRole::userId.eq(userId)
+        }
+        return mapper.selectListByQuery(query)
+    }
+    
+    fun findByUserIds(userIds: List<Long>): List<UserRole> {
+        if (userIds.isEmpty()) {
+            return emptyList()
+        }
+        val query = query().whereWith {
+            UserRole::userId.inList(userIds)
         }
         return mapper.selectListByQuery(query)
     }

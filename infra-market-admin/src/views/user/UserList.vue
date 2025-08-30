@@ -174,8 +174,8 @@ const fetchUsers = async () => {
     const response = await userApi.getUsers(params)
     users.value = response.data.records
     pagination.total = response.data.total
-  } catch (error) {
-    message.error('获取用户列表失败')
+  } catch (error: any) {
+    message.error(error.message || '获取用户列表失败')
   } finally {
     loading.value = false
   }
@@ -220,8 +220,8 @@ const handleResetPassword = async (record: User) => {
       title: '密码重置成功',
       content: `新密码：${response.data.password}`,
     })
-  } catch (error) {
-    message.error('密码重置失败')
+  } catch (error: any) {
+    message.error(error.message || '密码重置失败')
   }
 }
 
@@ -232,8 +232,8 @@ const handleToggleStatus = async (record: User) => {
     await userApi.updateUserStatus(record.id, newStatus)
     message.success('状态更新成功')
     fetchUsers()
-  } catch (error) {
-    message.error('状态更新失败')
+  } catch (error: any) {
+    message.error(error.message || '状态更新失败')
   }
 }
 
@@ -243,8 +243,8 @@ const handleDelete = async (record: User) => {
     await userApi.deleteUser(record.id)
     message.success('删除成功')
     fetchUsers()
-  } catch (error) {
-    message.error('删除失败')
+  } catch (error: any) {
+    message.error(error.message || '删除失败')
   }
 }
 

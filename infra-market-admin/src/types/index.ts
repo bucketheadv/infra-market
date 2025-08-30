@@ -5,6 +5,7 @@ export interface User {
   email?: string
   phone?: string
   status: 'active' | 'inactive'
+  roleIds?: number[]
   createTime: string
   updateTime: string
 }
@@ -24,6 +25,7 @@ export interface Role {
   code: string
   description?: string
   status: 'active' | 'inactive'
+  permissionIds?: number[]
   createTime: string
   updateTime: string
 }

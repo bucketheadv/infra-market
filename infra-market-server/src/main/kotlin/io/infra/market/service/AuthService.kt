@@ -6,6 +6,7 @@ import io.infra.market.dto.LoginResponse
 import io.infra.market.dto.UserDto
 import io.infra.market.dto.PermissionDto
 import io.infra.market.dto.ChangePasswordRequest
+import io.infra.market.enums.PermissionTypeEnum
 import io.infra.market.enums.StatusEnum
 import io.infra.market.repository.dao.UserDao
 import io.infra.market.repository.dao.UserRoleDao
@@ -135,22 +136,38 @@ class AuthService(
             return ApiResponse.success(emptyList())
         }
         
-        // 获取所有菜单权限（包括父级和子级）
+        // 获取用户拥有的所有权限（包括按钮权限）
+        val allUserPermissions = permissionDao.findByIds(permissionIds.toList())
+        
+        // 收集所有需要的菜单权限ID
         val allMenuPermissionIds = mutableSetOf<Long>()
         
-        // 先获取用户直接拥有的菜单权限
-        val directMenuPermissions = permissionDao.findMenusByIds(permissionIds.toList())
-        allMenuPermissionIds.addAll(directMenuPermissions.map { it.id ?: 0 })
-        
-        // 对于每个直接拥有的菜单权限，找到其所有父级菜单
-        for (permission in directMenuPermissions) {
-            var currentParentId = permission.parentId
-            while (currentParentId != null) {
-                allMenuPermissionIds.add(currentParentId)
-                val parentPermission = permissionDao.findByIds(listOf(currentParentId)).firstOrNull()
-                currentParentId = parentPermission?.parentId
+        // 对于每个按钮权限，找到其父级菜单
+        for (permission in allUserPermissions) {
+            if (permission.type == PermissionTypeEnum.BUTTON.code) {
+                var currentParentId = permission.parentId
+                while (currentParentId != null) {
+                    allMenuPermissionIds.add(currentParentId)
+                    val parentPermission = permissionDao.findByIds(listOf(currentParentId)).firstOrNull()
+                    currentParentId = parentPermission?.parentId
+                }
             }
         }
+        
+        // 对于每个菜单权限，找到其父级菜单
+        for (permission in allUserPermissions) {
+            if (permission.type == PermissionTypeEnum.MENU.code) {
+                var currentParentId = permission.parentId
+                while (currentParentId != null) {
+                    allMenuPermissionIds.add(currentParentId)
+                    val parentPermission = permissionDao.findByIds(listOf(currentParentId)).firstOrNull()
+                    currentParentId = parentPermission?.parentId
+                }
+            }
+        }
+        
+        // 添加用户直接拥有的菜单权限
+        allMenuPermissionIds.addAll(allUserPermissions.filter { it.type == PermissionTypeEnum.MENU.code }.map { it.id ?: 0 })
         
         // 批量获取所有需要的权限详情
         val permissions = permissionDao.findByIds(allMenuPermissionIds.toList()).map { permission ->
@@ -181,8 +198,12 @@ class AuthService(
         
         for (permission in permissions) {
             if (permission.parentId == null) {
-                // 根节点，直接添加到结果列表
-                rootMenus.add(buildMenuWithChildren(permission, permissionMap))
+                // 根节点，检查是否有子菜单
+                val menuWithChildren = buildMenuWithChildren(permission, permissionMap)
+                // 只有当根菜单有子菜单时才添加到结果中
+                if (menuWithChildren.children?.isNotEmpty() == true) {
+                    rootMenus.add(menuWithChildren)
+                }
             }
         }
         

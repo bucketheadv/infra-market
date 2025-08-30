@@ -26,13 +26,25 @@ class RoleService(
         // 使用DAO的page方法进行分页查询
         val page = roleDao.page(query)
         
+        // 批量获取所有角色的权限ID列表，避免N+1查询
+        val roleIds = page.records.mapNotNull { it.id }
+        val allRolePermissions = if (roleIds.isNotEmpty()) {
+            rolePermissionDao.findByRoleIds(roleIds)
+        } else {
+            emptyList()
+        }
+        val rolePermissionsMap = allRolePermissions.groupBy { it.roleId }
+        
         val roleDtos = page.records.map { role ->
+            val permissionIds = rolePermissionsMap[role.id]?.mapNotNull { it.permissionId } ?: emptyList()
+            
             RoleDto(
                 id = role.id ?: 0,
                 name = role.name ?: "",
                 code = role.code ?: "",
                 description = role.description,
                 status = role.status,
+                permissionIds = permissionIds,
                 createTime = DateTimeUtil.formatDateTime(role.createTime),
                 updateTime = DateTimeUtil.formatDateTime(role.updateTime)
             )
@@ -51,13 +63,25 @@ class RoleService(
     fun getAllRoles(): ApiResponse<List<RoleDto>> {
         val roles = roleDao.findByStatus(StatusEnum.ACTIVE.code)
         
+        // 批量获取所有角色的权限ID列表，避免N+1查询
+        val roleIds = roles.mapNotNull { it.id }
+        val allRolePermissions = if (roleIds.isNotEmpty()) {
+            rolePermissionDao.findByRoleIds(roleIds)
+        } else {
+            emptyList()
+        }
+        val rolePermissionsMap = allRolePermissions.groupBy { it.roleId }
+        
         val roleDtos = roles.map { role ->
+            val permissionIds = rolePermissionsMap[role.id]?.mapNotNull { it.permissionId } ?: emptyList()
+            
             RoleDto(
                 id = role.id ?: 0,
                 name = role.name ?: "",
                 code = role.code ?: "",
                 description = role.description,
                 status = role.status,
+                permissionIds = permissionIds,
                 createTime = DateTimeUtil.formatDateTime(role.createTime),
                 updateTime = DateTimeUtil.formatDateTime(role.updateTime)
             )
@@ -69,12 +93,17 @@ class RoleService(
     fun getRole(id: Long): ApiResponse<RoleDto> {
         val role = roleDao.getById(id) ?: return ApiResponse.error("角色不存在")
         
+        // 获取角色的权限ID列表
+        val rolePermissions = rolePermissionDao.findByRoleId(role.id ?: 0)
+        val permissionIds = rolePermissions.mapNotNull { it.permissionId }
+        
         val roleDto = RoleDto(
             id = role.id ?: 0,
             name = role.name ?: "",
             code = role.code ?: "",
             description = role.description,
             status = role.status,
+            permissionIds = permissionIds,
             createTime = DateTimeUtil.formatDateTime(role.createTime),
             updateTime = DateTimeUtil.formatDateTime(role.updateTime)
         )
@@ -113,6 +142,7 @@ class RoleService(
             code = role.code ?: "",
             description = role.description,
             status = role.status,
+            permissionIds = form.permissionIds,
             createTime = DateTimeUtil.formatDateTime(role.createTime),
             updateTime = DateTimeUtil.formatDateTime(role.updateTime)
         )
@@ -151,6 +181,7 @@ class RoleService(
             code = role.code ?: "",
             description = role.description,
             status = role.status,
+            permissionIds = form.permissionIds,
             createTime = DateTimeUtil.formatDateTime(role.createTime),
             updateTime = DateTimeUtil.formatDateTime(role.updateTime)
         )

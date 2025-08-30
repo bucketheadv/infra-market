@@ -50,8 +50,9 @@ request.interceptors.response.use(
           window.location.href = '/login'
           break
         case 403:
-          message.error('没有权限访问')
-          break
+          // 403错误不在这里显示消息，但需要创建包含错误消息的Error对象
+          const errorMessage = data?.message || '权限不足，无法访问此功能'
+          return Promise.reject(new Error(errorMessage))
         case 404:
           message.error('请求的资源不存在')
           break

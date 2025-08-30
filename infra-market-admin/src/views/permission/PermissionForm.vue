@@ -496,8 +496,8 @@ const fetchPermissionTree = async () => {
   try {
     const response = await permissionApi.getPermissionTree()
     permissionTree.value = response.data
-  } catch (error) {
-    message.error('获取权限树失败')
+  } catch (error: any) {
+    message.error(error.message || '获取权限树失败')
   } finally {
     permissionLoading.value = false
   }
@@ -516,8 +516,8 @@ const fetchPermission = async (id: number) => {
     form.path = permission.path || ''
     form.icon = permission.icon || ''
     form.sort = permission.sort
-  } catch (error) {
-    message.error('获取权限信息失败')
+  } catch (error: any) {
+    message.error(error.message || '获取权限信息失败')
     router.push('/system/permissions')
   }
 }
@@ -537,8 +537,8 @@ const handleSubmit = async () => {
       message.success('权限创建成功')
     }
     router.push('/system/permissions')
-  } catch (error) {
-    message.error(isEdit.value ? '权限更新失败' : '权限创建失败')
+  } catch (error: any) {
+    message.error(error.message || (isEdit.value ? '权限更新失败' : '权限创建失败'))
   } finally {
     loading.value = false
   }

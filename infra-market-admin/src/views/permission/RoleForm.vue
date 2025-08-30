@@ -34,7 +34,8 @@
         
         <a-form-item label="权限" name="permissionIds">
           <a-tree
-            v-model:checkedKeys="form.permissionIds"
+            :key="treeKey"
+            :checkedKeys="form.permissionIds"
             :tree-data="permissionTree"
             :loading="permissionLoading"
             checkable
@@ -44,6 +45,8 @@
               title: 'name',
               key: 'id',
             }"
+            :checkStrictly="false"
+            @check="handlePermissionCheck"
           />
         </a-form-item>
         
@@ -61,7 +64,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { message } from 'ant-design-vue'
 import { roleApi } from '@/api/role'
@@ -75,6 +78,7 @@ const formRef = ref()
 const loading = ref(false)
 const permissionLoading = ref(false)
 const permissionTree = ref<Permission[]>([])
+const treeKey = ref(0) // 用于强制重新渲染树组件
 
 const isEdit = computed(() => !!route.params.id)
 
@@ -108,8 +112,8 @@ const fetchPermissionTree = async () => {
   try {
     const response = await permissionApi.getPermissionTree()
     permissionTree.value = response.data
-  } catch (error) {
-    message.error('获取权限树失败')
+  } catch (error: any) {
+    message.error(error.message || '获取权限树失败')
   } finally {
     permissionLoading.value = false
   }
@@ -124,12 +128,25 @@ const fetchRole = async (id: number) => {
     form.name = role.name
     form.code = role.code
     form.description = role.description || ''
-    // 注意：这里需要根据实际API返回的数据结构调整
-    form.permissionIds = [] // 需要从角色权限关联表中获取
-  } catch (error) {
-    message.error('获取角色信息失败')
+    // 设置角色已有的权限ID列表，确保类型为数字
+    const permissionIds = (role.permissionIds || []).map(id => Number(id))
+    form.permissionIds = permissionIds
+    
+    // 使用nextTick确保DOM更新后再设置权限ID
+    await nextTick()
+    form.permissionIds = permissionIds
+    
+    // 强制重新渲染树组件
+    treeKey.value++
+  } catch (error: any) {
+    message.error(error.message || '获取角色信息失败')
     router.push('/system/roles')
   }
+}
+
+// 权限选择处理
+const handlePermissionCheck = (checkedKeys: any) => {
+  form.permissionIds = checkedKeys
 }
 
 // 提交表单
@@ -144,8 +161,8 @@ const handleSubmit = async () => {
       message.success('角色创建成功')
     }
     router.push('/system/roles')
-  } catch (error) {
-    message.error(isEdit.value ? '角色更新失败' : '角色创建失败')
+  } catch (error: any) {
+    message.error(error.message || (isEdit.value ? '角色更新失败' : '角色创建失败'))
   } finally {
     loading.value = false
   }

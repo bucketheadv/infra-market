@@ -25,7 +25,13 @@ class UserService(
         // 使用DAO的page方法进行分页查询
         val page = userDao.page(query)
         
+        // 批量获取所有用户的角色ID，避免N+1查询
+        val userIds = page.records.mapNotNull { it.id }
+        val userRoles = userRoleDao.findByUserIds(userIds)
+        val userRoleMap = userRoles.groupBy { it.userId }
+        
         val userDtos = page.records.map { user ->
+            val roleIds = userRoleMap[user.id]?.mapNotNull { it.roleId } ?: emptyList()
             UserDto(
                 id = user.id ?: 0,
                 username = user.username ?: "",
@@ -33,6 +39,7 @@ class UserService(
                 phone = user.phone,
                 status = user.status,
                 lastLoginTime = DateTimeUtil.formatDateTime(user.lastLoginTime),
+                roleIds = roleIds,
                 createTime = DateTimeUtil.formatDateTime(user.createTime),
                 updateTime = DateTimeUtil.formatDateTime(user.updateTime)
             )
@@ -51,6 +58,9 @@ class UserService(
     fun getUser(id: Long): ApiResponse<UserDto> {
         val user = userDao.findByUid(id) ?: return ApiResponse.error("用户不存在")
         
+        // 获取用户的角色ID列表
+        val roleIds = userRoleDao.findByUserId(id).mapNotNull { it.roleId }
+        
         val userDto = UserDto(
             id = user.id ?: 0,
             username = user.username ?: "",
@@ -58,6 +68,7 @@ class UserService(
             phone = user.phone,
             status = user.status,
             lastLoginTime = DateTimeUtil.formatDateTime(user.lastLoginTime),
+            roleIds = roleIds,
             createTime = DateTimeUtil.formatDateTime(user.createTime),
             updateTime = DateTimeUtil.formatDateTime(user.updateTime)
         )
@@ -111,6 +122,7 @@ class UserService(
             phone = user.phone,
             status = user.status,
             lastLoginTime = DateTimeUtil.formatDateTime(user.lastLoginTime),
+            roleIds = form.roleIds,
             createTime = DateTimeUtil.formatDateTime(user.createTime),
             updateTime = DateTimeUtil.formatDateTime(user.updateTime)
         )
@@ -172,6 +184,7 @@ class UserService(
             phone = user.phone,
             status = user.status,
             lastLoginTime = DateTimeUtil.formatDateTime(user.lastLoginTime),
+            roleIds = form.roleIds,
             createTime = DateTimeUtil.formatDateTime(user.createTime),
             updateTime = DateTimeUtil.formatDateTime(user.updateTime)
         )

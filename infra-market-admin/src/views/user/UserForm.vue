@@ -136,8 +136,8 @@ const fetchUser = async (id: number) => {
     form.username = user.username
     form.email = user.email || ''
     form.phone = user.phone || ''
-    // 注意：这里需要根据实际API返回的数据结构调整
-    form.roleIds = [] // 需要从用户角色关联表中获取
+    // 设置用户已有的角色ID列表
+    form.roleIds = user.roleIds || []
   } catch (error) {
     message.error('获取用户信息失败')
     router.push('/system/users')

@@ -27,7 +27,9 @@ export const useAuthStore = defineStore('auth', () => {
 
   // 计算属性
   const isLoggedIn = computed(() => !!token.value)
-  const hasPermission = computed(() => (permission: string) => permissions.value.includes(permission))
+  
+  // 权限检查方法
+  const hasPermission = (permission: string) => permissions.value.includes(permission)
 
   // 登录
   const login = async (loginForm: LoginForm) => {
