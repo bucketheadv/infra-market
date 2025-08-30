@@ -108,6 +108,20 @@ const selectedKeys = ref<string[]>([])
 const openKeys = ref<string[]>([])
 const isUpdatingFromRoute = ref(false)
 
+// 初始化默认展开的菜单
+const initializeDefaultOpenKeys = () => {
+  const defaultOpenKeys: string[] = []
+  
+  // 遍历菜单，找到有子菜单的顶级菜单，默认展开
+  for (const menu of validMenus.value) {
+    if (menu.children && menu.children.length > 0) {
+      defaultOpenKeys.push(`submenu-${menu.id}`)
+    }
+  }
+  
+  openKeys.value = defaultOpenKeys
+}
+
 // 过滤有效的菜单项
 const validMenus = computed(() => {
   return userMenus.value.filter(menu => menu && menu.name)
@@ -142,7 +156,7 @@ const updateMenuState = (path: string) => {
   // 特殊处理仪表盘
   if (path === '/') {
     selectedKeys.value = ['dashboard']
-    openKeys.value = []
+    // 保持现有的展开状态，不清空
     isUpdatingFromRoute.value = false
     return
   }
@@ -174,7 +188,7 @@ const updateMenuState = (path: string) => {
     currentOpenKeys.add(parentId.toString())
     openKeys.value = Array.from(currentOpenKeys)
   }
-  // 注意：如果是顶级菜单，我们不重置openKeys，保持用户的手动展开状态
+  // 如果是顶级菜单，保持现有的展开状态
   
   isUpdatingFromRoute.value = false
 }
@@ -194,6 +208,9 @@ watch(
   (newMenus, oldMenus) => {
     // 只在菜单数据从空变为有数据时更新状态
     if (newMenus.length > 0 && (!oldMenus || oldMenus.length === 0)) {
+      // 初始化默认展开的菜单
+      initializeDefaultOpenKeys()
+      // 更新当前路由对应的菜单状态
       updateMenuState(route.path)
     }
   },

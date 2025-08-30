@@ -170,6 +170,7 @@ const columns = [
     title: '权限名称',
     dataIndex: 'name',
     key: 'name',
+    width: 150,
   },
   {
     title: '权限编码',
