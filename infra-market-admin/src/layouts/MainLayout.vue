@@ -1,7 +1,7 @@
 <template>
   <a-layout class="main-layout">
     <a-layout-header class="header">
-      <div class="logo">Infra Market Admin</div>
+      <div class="logo">基础商城后台</div>
       <div class="header-right">
         <a-dropdown>
           <a class="user-dropdown">
@@ -46,7 +46,7 @@
           
           <!-- 动态菜单 -->
           <template v-for="menu in validMenus" :key="menu.id">
-            <a-sub-menu v-if="menu.children && menu.children.length > 0" :key="menu.id.toString()">
+            <a-sub-menu v-if="menu.children && menu.children.length > 0" :key="`submenu-${menu.id}`">
               <template #title>
                 <component :is="getIconComponent(menu.icon)" v-if="menu.icon" />
                 <span>{{ menu.name }}</span>
@@ -61,7 +61,7 @@
                 </a-menu-item>
               </template>
             </a-sub-menu>
-            <a-menu-item v-else :key="menu.id.toString()">
+            <a-menu-item v-else :key="`item-${menu.id}`">
               <component :is="getIconComponent(menu.icon)" v-if="menu.icon" />
               <span>{{ menu.name }}</span>
             </a-menu-item>

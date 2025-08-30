@@ -2,7 +2,7 @@
   <div class="login-container">
     <div class="login-form">
       <div class="login-header">
-        <h1>Infra Market Admin</h1>
+        <h1>基础商城后台</h1>
         <p>欢迎登录管理系统</p>
       </div>
       
