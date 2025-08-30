@@ -264,6 +264,8 @@ onMounted(() => {
 
 <style scoped>
 .user-list {
+  min-height: 100%;
+  background: #f0f2f5;
   padding: 24px;
 }
 
@@ -279,6 +281,10 @@ onMounted(() => {
 }
 
 @media (max-width: 768px) {
+  .user-list {
+    padding: 16px;
+  }
+  
   .search-form {
     padding: 12px;
   }

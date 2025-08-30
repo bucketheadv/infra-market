@@ -274,6 +274,11 @@ const handleLogout = async () => {
 </script>
 
 <style scoped>
+.main-layout {
+  height: 100vh;
+  overflow: hidden;
+}
+
 .header {
   display: flex;
   justify-content: space-between;
@@ -281,6 +286,7 @@ const handleLogout = async () => {
   background: #fff;
   padding: 0 24px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
 }
 
 .logo {
@@ -315,10 +321,37 @@ const handleLogout = async () => {
 .sider {
   background: #fff;
   border-right: 1px solid #f0f0f0;
+  height: calc(100vh - 64px);
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+/* 菜单选中样式 */
+.sider :deep(.ant-menu-item-selected) {
+  background-color: #e6f7ff !important;
+  border-right: 3px solid #1890ff !important;
+  color: #1890ff !important;
+}
+
+.sider :deep(.ant-menu-item-selected .anticon) {
+  color: #1890ff !important;
+}
+
+.sider :deep(.ant-menu-item:hover) {
+  background-color: #f5f5f5 !important;
+}
+
+.sider :deep(.ant-menu-submenu-selected > .ant-menu-submenu-title) {
+  color: #1890ff !important;
+}
+
+.sider :deep(.ant-menu-submenu-selected > .ant-menu-submenu-title .anticon) {
+  color: #1890ff !important;
 }
 
 .main-content {
   background: #f0f2f5;
   min-height: calc(100vh - 64px);
+  overflow-y: auto;
 }
 </style>

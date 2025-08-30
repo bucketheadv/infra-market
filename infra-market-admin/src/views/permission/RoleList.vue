@@ -261,6 +261,8 @@ onMounted(() => {
 
 <style scoped>
 .role-list {
+  min-height: 100%;
+  background: #f0f2f5;
   padding: 24px;
 }
 
@@ -276,6 +278,10 @@ onMounted(() => {
 }
 
 @media (max-width: 768px) {
+  .role-list {
+    padding: 16px;
+  }
+  
   .search-form {
     padding: 12px;
   }

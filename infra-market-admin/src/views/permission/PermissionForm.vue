@@ -560,6 +560,8 @@ onMounted(async () => {
 
 <style scoped>
 .permission-form {
+  min-height: 100%;
+  background: #f0f2f5;
   padding: 24px;
 }
 </style>
