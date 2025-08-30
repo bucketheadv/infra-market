@@ -2,10 +2,10 @@ package io.infra.market.controller
 
 import io.infra.market.dto.LoginRequest
 import io.infra.market.service.AuthService
+import io.infra.market.util.AuthThreadLocal
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
@@ -24,29 +24,14 @@ class AuthController(
     fun login(@RequestBody request: LoginRequest) = authService.login(request)
     
     @GetMapping("/current/user")
-    fun getCurrentUser(@RequestHeader("Authorization", required = false) authorization: String?) = 
-        if (authorization != null && authorization.startsWith("Bearer ")) {
-            authService.getCurrentUser(authorization.replace("Bearer ", ""))
-        } else {
-            authService.getCurrentUser("")
-        }
+    fun getCurrentUser() = authService.getCurrentUser(AuthThreadLocal.getCurrentUserId())
     
     @GetMapping("/user/menus")
-    fun getUserMenus(@RequestHeader("Authorization", required = false) authorization: String?) = 
-        if (authorization != null && authorization.startsWith("Bearer ")) {
-            authService.getUserMenus(authorization.replace("Bearer ", ""))
-        } else {
-            authService.getUserMenus("")
-        }
+    fun getUserMenus() = authService.getUserMenus(AuthThreadLocal.getCurrentUserId())
     
     @PostMapping("/refresh/token")
-    fun refreshToken(@RequestHeader("Authorization", required = false) authorization: String?) = 
-        if (authorization != null && authorization.startsWith("Bearer ")) {
-            authService.refreshToken(authorization.replace("Bearer ", ""))
-        } else {
-            authService.refreshToken("")
-        }
+    fun refreshToken() = authService.refreshToken(AuthThreadLocal.getCurrentUserId())
     
     @PostMapping("/logout")
-    fun logout() = authService.logout()
+    fun logout() = authService.logout(AuthThreadLocal.getCurrentUserId())
 }

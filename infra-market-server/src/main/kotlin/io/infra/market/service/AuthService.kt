@@ -13,6 +13,7 @@ import io.infra.market.repository.dao.RolePermissionDao
 import io.infra.market.repository.dao.PermissionDao
 import io.infra.market.util.DateTimeUtil
 import io.infra.market.util.AesUtil
+import io.infra.market.util.JwtUtil
 import org.springframework.stereotype.Service
 
 @Service
@@ -20,7 +21,8 @@ class AuthService(
     private val userDao: UserDao,
     private val userRoleDao: UserRoleDao,
     private val rolePermissionDao: RolePermissionDao,
-    private val permissionDao: PermissionDao
+    private val permissionDao: PermissionDao,
+    private val tokenService: TokenService
 ) {
     
     fun login(request: LoginRequest): ApiResponse<LoginResponse> {
@@ -39,8 +41,11 @@ class AuthService(
         // 获取用户权限
         val permissions = getUserPermissions(user.id ?: 0)
         
-        // 生成token（简化处理，使用用户ID作为token）
-        val token = user.id.toString()
+        // 生成JWT token
+        val token = JwtUtil.generateToken(user.id ?: 0, user.username ?: "")
+        
+        // 保存token到Redis
+        tokenService.saveToken(user.id ?: 0, token)
         
         val userDto = UserDto(
             id = user.id ?: 0,
@@ -61,15 +66,21 @@ class AuthService(
         return ApiResponse.success(response)
     }
     
-    fun getCurrentUser(token: String): ApiResponse<LoginResponse> {
-        // 验证token是否为空
-        if (token.isBlank()) {
+    fun logout(userId: Long?): ApiResponse<Unit> {
+        if (userId == null) {
             return ApiResponse.error("无效的token")
         }
         
-        // 这里简化处理，实际应该验证token
-        // 从token中解析用户ID（这里假设token就是用户ID）
-        val userId = token.toLongOrNull() ?: return ApiResponse.error("无效的token")
+        // 从Redis中删除token
+        tokenService.deleteToken(userId)
+        
+        return ApiResponse.success()
+    }
+    
+    fun getCurrentUser(userId: Long?): ApiResponse<LoginResponse> {
+        if (userId == null) {
+            return ApiResponse.error("无效的token")
+        }
         
         val user = userDao.findByUid(userId) ?: return ApiResponse.error("用户不存在")
         
@@ -91,7 +102,7 @@ class AuthService(
         )
         
         val response = LoginResponse(
-            token = token,
+            token = "", // 不再返回token，因为前端已经有token了
             user = userDto,
             permissions = permissions
         )
@@ -99,14 +110,10 @@ class AuthService(
         return ApiResponse.success(response)
     }
     
-    fun getUserMenus(token: String): ApiResponse<List<PermissionDto>> {
-        // 验证token是否为空
-        if (token.isBlank()) {
+    fun getUserMenus(userId: Long?): ApiResponse<List<PermissionDto>> {
+        if (userId == null) {
             return ApiResponse.error("无效的token")
         }
-        
-        // 从token中解析用户ID
-        val userId = token.toLongOrNull() ?: return ApiResponse.error("无效的token")
         
         val user = userDao.findByUid(userId) ?: return ApiResponse.error("用户不存在")
         
@@ -202,14 +209,10 @@ class AuthService(
         return permission.copy(children = sortedChildren)
     }
     
-    fun refreshToken(token: String): ApiResponse<Map<String, String>> {
-        // 验证token是否为空
-        if (token.isBlank()) {
+    fun refreshToken(userId: Long?): ApiResponse<Map<String, String>> {
+        if (userId == null) {
             return ApiResponse.error("无效的token")
         }
-        
-        // 从token中解析用户ID
-        val userId = token.toLongOrNull() ?: return ApiResponse.error("无效的token")
         
         val user = userDao.findByUid(userId) ?: return ApiResponse.error("用户不存在")
         
@@ -218,8 +221,8 @@ class AuthService(
             return ApiResponse.error("用户已被禁用")
         }
         
-        // 生成新的token（这里简化处理，实际应该使用JWT）
-        val newToken = user.id.toString()
+        // 生成新的token
+        val newToken = tokenService.refreshToken(userId, user.username ?: "")
         
         return ApiResponse.success(mapOf("token" to newToken))
     }
