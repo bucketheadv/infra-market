@@ -13,9 +13,9 @@ app.use(pinia)
 app.use(router)
 app.use(Antd)
 
-// 初始化认证状态
-const { useAuthStore } = await import('@/stores/auth')
-const authStore = useAuthStore()
-await authStore.initializeAuth()
+// 初始化认证状态 - 移除这里的调用，改为在路由守卫中处理
+// const { useAuthStore } = await import('@/stores/auth')
+// const authStore = useAuthStore()
+// await authStore.initializeAuth()
 
 app.mount('#app')

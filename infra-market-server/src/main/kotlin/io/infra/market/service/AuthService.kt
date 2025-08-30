@@ -142,25 +142,60 @@ class AuthService(
         // 收集所有需要的菜单权限ID
         val allMenuPermissionIds = mutableSetOf<Long>()
         
-        // 对于每个按钮权限，找到其父级菜单
+        // 收集所有需要查询的父级权限ID
+        val parentIdsToQuery = mutableSetOf<Long>()
+        
+        // 收集所有按钮权限的父级权限ID
+        for (permission in allUserPermissions) {
+            if (permission.type == PermissionTypeEnum.BUTTON.code) {
+                val parentId = permission.parentId
+                if (parentId != null) {
+                    parentIdsToQuery.add(parentId)
+                }
+            }
+        }
+        
+        // 收集所有菜单权限的父级权限ID
+        for (permission in allUserPermissions) {
+            if (permission.type == PermissionTypeEnum.MENU.code) {
+                val parentId = permission.parentId
+                if (parentId != null) {
+                    parentIdsToQuery.add(parentId)
+                }
+            }
+        }
+        
+        // 递归收集所有父级权限ID
+        val allParentIds = collectAllParentIds(parentIdsToQuery)
+        
+        // 批量获取所有父级权限，避免N+1查询
+        val allParentPermissions = if (allParentIds.isNotEmpty()) {
+            permissionDao.findByIds(allParentIds.toList())
+        } else {
+            emptyList()
+        }
+        
+        // 构建权限ID到权限对象的映射
+        val permissionMap = allParentPermissions.associateBy { it.id ?: 0 }
+        
+        // 收集所有需要的菜单权限ID（包括父级链）
         for (permission in allUserPermissions) {
             if (permission.type == PermissionTypeEnum.BUTTON.code) {
                 var currentParentId = permission.parentId
                 while (currentParentId != null) {
                     allMenuPermissionIds.add(currentParentId)
-                    val parentPermission = permissionDao.findByIds(listOf(currentParentId)).firstOrNull()
+                    val parentPermission = permissionMap[currentParentId]
                     currentParentId = parentPermission?.parentId
                 }
             }
         }
         
-        // 对于每个菜单权限，找到其父级菜单
         for (permission in allUserPermissions) {
             if (permission.type == PermissionTypeEnum.MENU.code) {
                 var currentParentId = permission.parentId
                 while (currentParentId != null) {
                     allMenuPermissionIds.add(currentParentId)
-                    val parentPermission = permissionDao.findByIds(listOf(currentParentId)).firstOrNull()
+                    val parentPermission = permissionMap[currentParentId]
                     currentParentId = parentPermission?.parentId
                 }
             }
@@ -169,8 +204,11 @@ class AuthService(
         // 添加用户直接拥有的菜单权限
         allMenuPermissionIds.addAll(allUserPermissions.filter { it.type == PermissionTypeEnum.MENU.code }.map { it.id ?: 0 })
         
+        // 合并所有需要的权限ID
+        val allNeededPermissionIds = (allMenuPermissionIds + allUserPermissions.mapNotNull { it.id }).toSet()
+        
         // 批量获取所有需要的权限详情
-        val permissions = permissionDao.findByIds(allMenuPermissionIds.toList()).map { permission ->
+        val permissions = permissionDao.findByIds(allNeededPermissionIds.toList()).map { permission ->
             PermissionDto(
                 id = permission.id ?: 0,
                 name = permission.name ?: "",
@@ -198,12 +236,9 @@ class AuthService(
         
         for (permission in permissions) {
             if (permission.parentId == null) {
-                // 根节点，检查是否有子菜单
+                // 根节点，构建菜单树
                 val menuWithChildren = buildMenuWithChildren(permission, permissionMap)
-                // 只有当根菜单有子菜单时才添加到结果中
-                if (menuWithChildren.children?.isNotEmpty() == true) {
-                    rootMenus.add(menuWithChildren)
-                }
+                rootMenus.add(menuWithChildren)
             }
         }
         
@@ -298,6 +333,39 @@ class AuthService(
             .map { it.code ?: "" }
         
         return permissions.distinct()
+    }
+    
+    /**
+     * 递归收集所有父级权限ID
+     */
+    private fun collectAllParentIds(initialParentIds: Set<Long>): Set<Long> {
+        val allParentIds = mutableSetOf<Long>()
+        val processedIds = mutableSetOf<Long>()
+        val idsToProcess = initialParentIds.toMutableSet()
+        
+        while (idsToProcess.isNotEmpty()) {
+            val currentBatch = idsToProcess.toList()
+            idsToProcess.clear()
+            
+            // 批量查询当前批次的权限
+            val permissions = permissionDao.findByIds(currentBatch)
+            
+            for (permission in permissions) {
+                val permissionId = permission.id ?: 0
+                if (permissionId !in processedIds) {
+                    processedIds.add(permissionId)
+                    allParentIds.add(permissionId)
+                    
+                    // 如果这个权限还有父级，添加到下一批处理
+                    val parentId = permission.parentId
+                    if (parentId != null && parentId !in processedIds) {
+                        idsToProcess.add(parentId)
+                    }
+                }
+            }
+        }
+        
+        return allParentIds
     }
     
 

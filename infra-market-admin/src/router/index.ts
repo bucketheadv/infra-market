@@ -111,16 +111,6 @@ router.beforeEach(async (to, _from, next) => {
       return
     }
     
-    // 如果没有用户信息，获取用户信息
-    if (!authStore.user) {
-      try {
-        await authStore.getCurrentUser()
-      } catch (error) {
-        next('/login')
-        return
-      }
-    }
-    
     // 检查权限
     if (to.meta.permission && !authStore.hasPermission(to.meta.permission as string)) {
       next('/403')
