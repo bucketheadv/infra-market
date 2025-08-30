@@ -10,42 +10,53 @@
       </template>
       
       <!-- 搜索表单 -->
-      <a-form layout="inline" :model="searchForm" style="margin-bottom: 16px;">
-        <a-form-item label="角色名称">
-          <a-input
-            v-model:value="searchForm.name"
-            placeholder="请输入角色名称"
-            allow-clear
-          />
-        </a-form-item>
-        <a-form-item label="角色编码">
-          <a-input
-            v-model:value="searchForm.code"
-            placeholder="请输入角色编码"
-            allow-clear
-          />
-        </a-form-item>
-        <a-form-item label="状态">
-          <a-select
-            v-model:value="searchForm.status"
-            placeholder="请选择状态"
-            allow-clear
-            style="width: 120px;"
-          >
-            <a-select-option value="active">启用</a-select-option>
-            <a-select-option value="inactive">禁用</a-select-option>
-          </a-select>
-        </a-form-item>
-        <a-form-item>
-          <a-button type="primary" @click="handleSearch">
-            <SearchOutlined />
-            搜索
-          </a-button>
-          <a-button style="margin-left: 8px;" @click="handleReset">
-            <ReloadOutlined />
-            重置
-          </a-button>
-        </a-form-item>
+      <a-form :model="searchForm" class="search-form">
+        <a-row :gutter="16">
+          <a-col :xs="24" :sm="12" :md="8" :lg="6">
+            <a-form-item label="角色名称">
+              <a-input
+                v-model:value="searchForm.name"
+                placeholder="请输入角色名称"
+                allow-clear
+              />
+            </a-form-item>
+          </a-col>
+          <a-col :xs="24" :sm="12" :md="8" :lg="6">
+            <a-form-item label="角色编码">
+              <a-input
+                v-model:value="searchForm.code"
+                placeholder="请输入角色编码"
+                allow-clear
+              />
+            </a-form-item>
+          </a-col>
+          <a-col :xs="24" :sm="12" :md="8" :lg="6">
+            <a-form-item label="状态">
+              <a-select
+                v-model:value="searchForm.status"
+                placeholder="请选择状态"
+                allow-clear
+              >
+                <a-select-option value="active">启用</a-select-option>
+                <a-select-option value="inactive">禁用</a-select-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+          <a-col :xs="24" :sm="24" :md="24" :lg="24">
+            <a-form-item>
+              <a-space>
+                <a-button type="primary" @click="handleSearch">
+                  <SearchOutlined />
+                  搜索
+                </a-button>
+                <a-button @click="handleReset">
+                  <ReloadOutlined />
+                  重置
+                </a-button>
+              </a-space>
+            </a-form-item>
+          </a-col>
+        </a-row>
       </a-form>
       
       <!-- 角色表格 -->
@@ -251,5 +262,26 @@ onMounted(() => {
 <style scoped>
 .role-list {
   padding: 24px;
+}
+
+.search-form {
+  margin-bottom: 16px;
+  padding: 16px;
+  background: #fafafa;
+  border-radius: 6px;
+}
+
+.search-form .ant-form-item {
+  margin-bottom: 16px;
+}
+
+@media (max-width: 768px) {
+  .search-form {
+    padding: 12px;
+  }
+  
+  .search-form .ant-form-item {
+    margin-bottom: 12px;
+  }
 }
 </style>
