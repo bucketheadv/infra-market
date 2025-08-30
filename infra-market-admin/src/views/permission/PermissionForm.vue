@@ -518,7 +518,7 @@ const fetchPermission = async (id: number) => {
     form.sort = permission.sort
   } catch (error) {
     message.error('获取权限信息失败')
-    router.push('/permissions')
+    router.push('/system/permissions')
   }
 }
 
@@ -536,7 +536,7 @@ const handleSubmit = async () => {
       await permissionApi.createPermission(form)
       message.success('权限创建成功')
     }
-    router.push('/permissions')
+    router.push('/system/permissions')
   } catch (error) {
     message.error(isEdit.value ? '权限更新失败' : '权限创建失败')
   } finally {
@@ -546,7 +546,7 @@ const handleSubmit = async () => {
 
 // 取消
 const handleCancel = () => {
-  router.push('/permissions')
+  router.push('/system/permissions')
 }
 
 onMounted(async () => {

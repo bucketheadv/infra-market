@@ -178,6 +178,16 @@ class UserService(
     fun deleteUser(id: Long): ApiResponse<Unit> {
         val user = userDao.findByUid(id) ?: return ApiResponse.error("用户不存在")
         
+        // 检查是否为超级管理员（假设用户名为admin的用户为超级管理员）
+        if (user.username == "admin") {
+            return ApiResponse.error("不能删除超级管理员用户")
+        }
+        
+        // 检查用户当前状态
+        if (user.status == StatusEnum.DELETED.code) {
+            return ApiResponse.error("用户已被删除")
+        }
+        
         // 软删除：将状态设置为已删除
         user.status = StatusEnum.DELETED.code
         userDao.updateById(user)
@@ -187,6 +197,27 @@ class UserService(
     
     fun updateUserStatus(id: Long, status: String): ApiResponse<Unit> {
         val user = userDao.findByUid(id) ?: return ApiResponse.error("用户不存在")
+        
+        // 验证状态值是否有效
+        val statusEnum = StatusEnum.fromCode(status)
+        if (statusEnum == null) {
+            return ApiResponse.error("无效的状态值")
+        }
+        
+        // 检查是否为超级管理员
+        if (user.username == "admin" && status == StatusEnum.DELETED.code) {
+            return ApiResponse.error("不能删除超级管理员用户")
+        }
+        
+        // 检查状态转换是否合理
+        if (user.status == StatusEnum.DELETED.code && status != StatusEnum.DELETED.code) {
+            return ApiResponse.error("已删除的用户不能重新启用")
+        }
+        
+        // 如果是要删除用户，调用删除方法
+        if (status == StatusEnum.DELETED.code) {
+            return deleteUser(id)
+        }
         
         user.status = status
         userDao.updateById(user)
@@ -208,5 +239,30 @@ class UserService(
     private fun generateRandomPassword(): String {
         val chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
         return (1..8).map { chars.random() }.joinToString("")
+    }
+    
+    fun batchDeleteUsers(ids: List<Long>): ApiResponse<Unit> {
+        if (ids.isEmpty()) {
+            return ApiResponse.error("请选择要删除的用户")
+        }
+        
+        val users = userDao.findByUids(ids)
+        if (users.size != ids.size) {
+            return ApiResponse.error("部分用户不存在")
+        }
+        
+        // 检查是否包含超级管理员
+        val adminUser = users.find { it.username == "admin" }
+        if (adminUser != null) {
+            return ApiResponse.error("不能删除超级管理员用户")
+        }
+        
+        // 批量删除
+        for (user in users) {
+            user.status = StatusEnum.DELETED.code
+            userDao.updateById(user)
+        }
+        
+        return ApiResponse.success()
     }
 }

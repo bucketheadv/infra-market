@@ -45,9 +45,10 @@ class PermissionController(
     fun deletePermission(@PathVariable id: Long) = permissionService.deletePermission(id)
     
     @PatchMapping("/{id}/status")
-    fun updatePermissionStatus(@PathVariable id: Long, @RequestParam status: String) = permissionService.updatePermissionStatus(id, status)
+    fun updatePermissionStatus(@PathVariable id: Long, @RequestBody request: Map<String, String>) = 
+        permissionService.updatePermissionStatus(id, request["status"] ?: "")
     
     @DeleteMapping("/batch")
     fun batchDeletePermissions(@RequestBody request: BatchRequest) = 
-        request.ids.forEach { permissionService.deletePermission(it) }
+        permissionService.batchDeletePermissions(request.ids)
 }

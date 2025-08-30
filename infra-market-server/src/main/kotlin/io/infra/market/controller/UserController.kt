@@ -42,12 +42,13 @@ class UserController(
     fun deleteUser(@PathVariable id: Long) = userService.deleteUser(id)
     
     @PatchMapping("/{id}/status")
-    fun updateUserStatus(@PathVariable id: Long, @RequestParam status: String) = userService.updateUserStatus(id, status)
+    fun updateUserStatus(@PathVariable id: Long, @RequestBody request: Map<String, String>) = 
+        userService.updateUserStatus(id, request["status"] ?: "")
     
     @PostMapping("/{id}/reset/password")
     fun resetPassword(@PathVariable id: Long) = userService.resetPassword(id)
     
     @DeleteMapping("/batch")
     fun batchDeleteUsers(@RequestBody request: BatchRequest) = 
-        request.ids.forEach { userService.deleteUser(it) }
+        userService.batchDeleteUsers(request.ids)
 }

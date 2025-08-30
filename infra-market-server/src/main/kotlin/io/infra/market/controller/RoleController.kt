@@ -45,9 +45,10 @@ class RoleController(
     fun deleteRole(@PathVariable id: Long) = roleService.deleteRole(id)
     
     @PatchMapping("/{id}/status")
-    fun updateRoleStatus(@PathVariable id: Long, @RequestParam status: String) = roleService.updateRoleStatus(id, status)
+    fun updateRoleStatus(@PathVariable id: Long, @RequestBody request: Map<String, String>) = 
+        roleService.updateRoleStatus(id, request["status"] ?: "")
     
     @DeleteMapping("/batch")
     fun batchDeleteRoles(@RequestBody request: BatchRequest) = 
-        request.ids.forEach { roleService.deleteRole(it) }
+        roleService.batchDeleteRoles(request.ids)
 }

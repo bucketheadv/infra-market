@@ -46,4 +46,11 @@ class RolePermissionDao : ServiceImpl<RolePermissionMapper, RolePermission>() {
         }
         return mapper.deleteByQuery(query)
     }
+    
+    fun countByPermissionId(permissionId: Long): Long {
+        val query = query().whereWith {
+            RolePermission::permissionId.eq(permissionId)
+        }
+        return mapper.selectCountByQuery(query)
+    }
 }

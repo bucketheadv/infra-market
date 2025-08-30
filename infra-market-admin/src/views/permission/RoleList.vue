@@ -210,22 +210,24 @@ const handleTableChange = (pag: any) => {
 
 // 创建角色
 const handleCreate = () => {
-  router.push('/roles/create')
+  router.push('/system/roles/create')
 }
 
 // 编辑角色
 const handleEdit = (record: Role) => {
-  router.push(`/roles/${record.id}/edit`)
+  router.push(`/system/roles/${record.id}/edit`)
 }
 
 // 切换状态
 const handleToggleStatus = async (record: Role) => {
   try {
+    console.log('切换状态 - 角色ID:', record.id, '角色信息:', record)
     const newStatus = record.status === 'active' ? 'inactive' : 'active'
     await roleApi.updateRoleStatus(record.id, newStatus)
     message.success('状态更新成功')
     fetchRoles()
   } catch (error) {
+    console.error('状态更新失败:', error)
     message.error('状态更新失败')
   }
 }

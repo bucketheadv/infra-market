@@ -204,12 +204,12 @@ const handleTableChange = (pag: any) => {
 
 // 创建用户
 const handleCreate = () => {
-  router.push('/users/create')
+  router.push('/system/users/create')
 }
 
 // 编辑用户
 const handleEdit = (record: User) => {
-  router.push(`/users/${record.id}/edit`)
+  router.push(`/system/users/${record.id}/edit`)
 }
 
 // 重置密码

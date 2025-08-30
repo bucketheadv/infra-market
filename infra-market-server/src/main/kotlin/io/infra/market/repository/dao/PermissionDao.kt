@@ -5,6 +5,8 @@ import com.mybatisflex.kotlin.extensions.kproperty.inList
 import com.mybatisflex.kotlin.extensions.kproperty.like
 import com.mybatisflex.kotlin.extensions.wrapper.whereWith
 import com.mybatisflex.core.paginate.Page
+import com.mybatisflex.kotlin.extensions.condition.and
+import com.mybatisflex.kotlin.extensions.kproperty.ne
 import com.mybatisflex.spring.service.impl.ServiceImpl
 import io.infra.market.dto.PermissionQueryDto
 import io.infra.market.enums.PermissionTypeEnum
@@ -23,7 +25,7 @@ class PermissionDao : ServiceImpl<PermissionMapper, Permission>() {
     
     fun findByCode(code: String): Permission? {
         val query = query().whereWith {
-            Permission::code.eq(code)
+            Permission::code.eq(code) and  Permission::status.ne(StatusEnum.DELETED.code)
         }
         return mapper.selectOneByQuery(query)
     }
@@ -59,33 +61,40 @@ class PermissionDao : ServiceImpl<PermissionMapper, Permission>() {
         }
     }
     
+    fun findByParentId(parentId: Long): List<Permission> {
+        val query = query().whereWith {
+            Permission::parentId.eq(parentId) and Permission::status.ne(StatusEnum.DELETED.code)
+        }
+        return mapper.selectListByQuery(query)
+    }
+    
     fun page(query: PermissionQueryDto): Page<Permission> {
         val queryBuilder = query()
         
+        // 默认排除已删除的权限
+        queryBuilder.whereWith {
+            Permission::status.ne(StatusEnum.DELETED.code)
+        }
+        
         // 添加查询条件
         if (!query.name.isNullOrBlank()) {
-            queryBuilder.whereWith {
-                Permission::name.like("%${query.name}%")
-            }
+            queryBuilder.and { Permission::name.like("%${query.name}%") }
         }
         
         if (!query.code.isNullOrBlank()) {
-            queryBuilder.whereWith {
-                Permission::code.like("%${query.code}%")
-            }
+            queryBuilder.and { Permission::code.like("%${query.code}%") }
         }
         
         if (!query.type.isNullOrBlank()) {
-            queryBuilder.whereWith {
-                Permission::type.eq(query.type)
-            }
+            queryBuilder.and { Permission::type.eq(query.type) }
         }
         
         if (!query.status.isNullOrBlank()) {
-            queryBuilder.whereWith {
-                Permission::status.eq(query.status)
-            }
+            queryBuilder.and { Permission::status.eq(query.status) }
         }
+        
+        // 按id排序
+        queryBuilder.orderBy("id ASC")
         
         val page = Page<Permission>(query.current, query.size)
         return page(page, queryBuilder)

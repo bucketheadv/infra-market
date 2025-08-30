@@ -91,7 +91,7 @@ const form = reactive<UserForm>({
   roleIds: [],
 })
 
-const rules = {
+const rules = computed(() => ({
   username: [
     { required: true, message: '请输入用户名', trigger: 'blur' },
     { min: 3, max: 20, message: '用户名长度在 3 到 20 个字符', trigger: 'blur' },
@@ -109,7 +109,7 @@ const rules = {
   roleIds: [
     { required: true, message: '请选择角色', trigger: 'change' },
   ],
-}
+}))
 
 // 获取角色列表
 const fetchRoles = async () => {
@@ -140,7 +140,7 @@ const fetchUser = async (id: number) => {
     form.roleIds = [] // 需要从用户角色关联表中获取
   } catch (error) {
     message.error('获取用户信息失败')
-    router.push('/users')
+    router.push('/system/users')
   }
 }
 
@@ -155,7 +155,7 @@ const handleSubmit = async () => {
       await userApi.createUser(form)
       message.success('用户创建成功')
     }
-    router.push('/users')
+    router.push('/system/users')
   } catch (error) {
     message.error(isEdit.value ? '用户更新失败' : '用户创建失败')
   } finally {
@@ -165,7 +165,7 @@ const handleSubmit = async () => {
 
 // 取消
 const handleCancel = () => {
-  router.push('/users')
+  router.push('/system/users')
 }
 
 onMounted(async () => {

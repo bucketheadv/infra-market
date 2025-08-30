@@ -247,22 +247,24 @@ const handleTableChange = (pag: any) => {
 
 // 创建权限
 const handleCreate = () => {
-  router.push('/permissions/create')
+  router.push('/system/permissions/create')
 }
 
 // 编辑权限
 const handleEdit = (record: Permission) => {
-  router.push(`/permissions/${record.id}/edit`)
+  router.push(`/system/permissions/${record.id}/edit`)
 }
 
 // 切换状态
 const handleToggleStatus = async (record: Permission) => {
   try {
+    console.log('切换状态 - 权限ID:', record.id, '权限信息:', record)
     const newStatus = record.status === 'active' ? 'inactive' : 'active'
     await permissionApi.updatePermissionStatus(record.id, newStatus)
     message.success('状态更新成功')
     fetchPermissions()
   } catch (error) {
+    console.error('状态更新失败:', error)
     message.error('状态更新失败')
   }
 }

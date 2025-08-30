@@ -4,6 +4,9 @@ import com.mybatisflex.kotlin.extensions.kproperty.eq
 import com.mybatisflex.kotlin.extensions.kproperty.like
 import com.mybatisflex.kotlin.extensions.wrapper.whereWith
 import com.mybatisflex.core.paginate.Page
+import com.mybatisflex.kotlin.extensions.condition.and
+import com.mybatisflex.kotlin.extensions.kproperty.inList
+import com.mybatisflex.kotlin.extensions.kproperty.ne
 import com.mybatisflex.spring.service.impl.ServiceImpl
 import io.infra.market.dto.RoleQueryDto
 import io.infra.market.enums.StatusEnum
@@ -21,14 +24,14 @@ class RoleDao : ServiceImpl<RoleMapper, Role>() {
     
     fun findByName(name: String): Role? {
         val query = query().whereWith {
-            Role::name.eq(name)
+            Role::name.eq(name) and  Role::status.ne(StatusEnum.DELETED.code)
         }
         return mapper.selectOneByQuery(query)
     }
     
     fun findByCode(code: String): Role? {
         val query = query().whereWith {
-            Role::code.eq(code)
+            Role::code.eq(code) and Role::status.ne(StatusEnum.DELETED.code)
         }
         return mapper.selectOneByQuery(query)
     }
@@ -40,27 +43,40 @@ class RoleDao : ServiceImpl<RoleMapper, Role>() {
         return mapper.selectListByQuery(query)
     }
     
+    fun findByIds(ids: List<Long>): List<Role> {
+        if (ids.isEmpty()) {
+            return emptyList()
+        }
+        val query = query().whereWith {
+            Role::id.inList(ids)
+            Role::status.ne(StatusEnum.DELETED.code)
+        }
+        return mapper.selectListByQuery(query)
+    }
+    
     fun page(query: RoleQueryDto): Page<Role> {
         val queryBuilder = query()
         
+        // 默认排除已删除的角色
+        queryBuilder.whereWith {
+            Role::status.ne(StatusEnum.DELETED.code)
+        }
+        
         // 添加查询条件
         if (!query.name.isNullOrBlank()) {
-            queryBuilder.whereWith {
-                Role::name.like("%${query.name}%")
-            }
+            queryBuilder.and { Role::name.like("%${query.name}%") }
         }
         
         if (!query.code.isNullOrBlank()) {
-            queryBuilder.whereWith {
-                Role::code.like("%${query.code}%")
-            }
+            queryBuilder.and { Role::code.like("%${query.code}%") }
         }
         
         if (!query.status.isNullOrBlank()) {
-            queryBuilder.whereWith {
-                Role::status.eq(query.status)
-            }
+            queryBuilder.and { Role::status.eq(query.status) }
         }
+        
+        // 按id排序
+        queryBuilder.orderBy("id ASC")
         
         val page = Page<Role>(query.current, query.size)
         return page(page, queryBuilder)

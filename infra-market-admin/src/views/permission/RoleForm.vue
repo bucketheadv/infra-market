@@ -128,7 +128,7 @@ const fetchRole = async (id: number) => {
     form.permissionIds = [] // 需要从角色权限关联表中获取
   } catch (error) {
     message.error('获取角色信息失败')
-    router.push('/roles')
+    router.push('/system/roles')
   }
 }
 
@@ -143,7 +143,7 @@ const handleSubmit = async () => {
       await roleApi.createRole(form)
       message.success('角色创建成功')
     }
-    router.push('/roles')
+    router.push('/system/roles')
   } catch (error) {
     message.error(isEdit.value ? '角色更新失败' : '角色创建失败')
   } finally {
@@ -153,7 +153,7 @@ const handleSubmit = async () => {
 
 // 取消
 const handleCancel = () => {
-  router.push('/roles')
+  router.push('/system/roles')
 }
 
 onMounted(async () => {

@@ -8,13 +8,15 @@ import io.infra.market.dto.PermissionQueryDto
 import io.infra.market.enums.PermissionTypeEnum
 import io.infra.market.enums.StatusEnum
 import io.infra.market.repository.dao.PermissionDao
+import io.infra.market.repository.dao.RolePermissionDao
 import io.infra.market.repository.entity.Permission
 import io.infra.market.util.DateTimeUtil
 import org.springframework.stereotype.Service
 
 @Service
 class PermissionService(
-    private val permissionDao: PermissionDao
+    private val permissionDao: PermissionDao,
+    private val rolePermissionDao: RolePermissionDao
 ) {
     
     fun getPermissions(query: PermissionQueryDto): ApiResponse<PageResultDto<PermissionDto>> {
@@ -166,6 +168,28 @@ class PermissionService(
     fun deletePermission(id: Long): ApiResponse<Unit> {
         val permission = permissionDao.getById(id) ?: return ApiResponse.error("权限不存在")
         
+        // 检查是否为系统权限（假设权限编码为system的权限为系统权限）
+        if (permission.code == "system") {
+            return ApiResponse.error("不能删除系统权限")
+        }
+        
+        // 检查权限当前状态
+        if (permission.status == StatusEnum.DELETED.code) {
+            return ApiResponse.error("权限已被删除")
+        }
+        
+        // 检查是否有子权限
+        val childPermissions = permissionDao.findByParentId(id)
+        if (childPermissions.isNotEmpty()) {
+            return ApiResponse.error("该权限下还有子权限，无法删除")
+        }
+        
+        // 检查是否有角色正在使用此权限
+        val roleCount = rolePermissionDao.countByPermissionId(id)
+        if (roleCount > 0) {
+            return ApiResponse.error("该权限下还有角色，无法删除")
+        }
+        
         // 软删除：将状态设置为已删除
         permission.status = StatusEnum.DELETED.code
         permissionDao.updateById(permission)
@@ -175,6 +199,27 @@ class PermissionService(
     
     fun updatePermissionStatus(id: Long, status: String): ApiResponse<Unit> {
         val permission = permissionDao.getById(id) ?: return ApiResponse.error("权限不存在")
+        
+        // 验证状态值是否有效
+        val statusEnum = StatusEnum.fromCode(status)
+        if (statusEnum == null) {
+            return ApiResponse.error("无效的状态值")
+        }
+        
+        // 检查是否为系统权限
+        if (permission.code == "system" && status == StatusEnum.DELETED.code) {
+            return ApiResponse.error("不能删除系统权限")
+        }
+        
+        // 检查状态转换是否合理
+        if (permission.status == StatusEnum.DELETED.code && status != StatusEnum.DELETED.code) {
+            return ApiResponse.error("已删除的权限不能重新启用")
+        }
+        
+        // 如果是要删除权限，调用删除方法
+        if (status == StatusEnum.DELETED.code) {
+            return deletePermission(id)
+        }
         
         permission.status = status
         permissionDao.updateById(permission)
@@ -211,5 +256,43 @@ class PermissionService(
         
         // 返回带有子权限的新PermissionDto
         return permission.copy(children = sortedChildren)
+    }
+    
+    fun batchDeletePermissions(ids: List<Long>): ApiResponse<Unit> {
+        if (ids.isEmpty()) {
+            return ApiResponse.error("请选择要删除的权限")
+        }
+        
+        val permissions = permissionDao.findByIds(ids)
+        if (permissions.size != ids.size) {
+            return ApiResponse.error("部分权限不存在")
+        }
+        
+        // 检查是否包含系统权限
+        val systemPermission = permissions.find { it.code == "system" }
+        if (systemPermission != null) {
+            return ApiResponse.error("不能删除系统权限")
+        }
+        
+        // 检查是否有子权限或角色关联
+        for (permission in permissions) {
+            val childPermissions = permissionDao.findByParentId(permission.id ?: 0)
+            if (childPermissions.isNotEmpty()) {
+                return ApiResponse.error("权限 ${permission.name} 下还有子权限，无法删除")
+            }
+            
+            val roleCount = rolePermissionDao.countByPermissionId(permission.id ?: 0)
+            if (roleCount > 0) {
+                return ApiResponse.error("权限 ${permission.name} 下还有角色，无法删除")
+            }
+        }
+        
+        // 批量删除
+        for (permission in permissions) {
+            permission.status = StatusEnum.DELETED.code
+            permissionDao.updateById(permission)
+        }
+        
+        return ApiResponse.success()
     }
 }

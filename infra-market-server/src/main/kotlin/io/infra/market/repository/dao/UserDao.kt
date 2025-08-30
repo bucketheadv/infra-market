@@ -5,6 +5,8 @@ import com.mybatisflex.kotlin.extensions.kproperty.inList
 import com.mybatisflex.kotlin.extensions.kproperty.like
 import com.mybatisflex.kotlin.extensions.wrapper.whereWith
 import com.mybatisflex.core.paginate.Page
+import com.mybatisflex.kotlin.extensions.condition.and
+import com.mybatisflex.kotlin.extensions.kproperty.ne
 import com.mybatisflex.spring.service.impl.ServiceImpl
 import io.infra.market.dto.UserQueryDto
 import io.infra.market.enums.StatusEnum
@@ -20,33 +22,36 @@ import org.springframework.stereotype.Repository
 class UserDao : ServiceImpl<UserMapper, User>() {
     
     fun findByUid(id: Long): User? {
-        return mapper.selectOneById(id)
+        val query = query().whereWith {
+            User::id.eq(id) and  User::status.ne(StatusEnum.DELETED.code)
+        }
+        return mapper.selectOneByQuery(query)
     }
 
     fun findByUids(uids: List<Long>): List<User> {
         val condition = query().whereWith {
-            User::id.inList(uids)
+            User::id.inList(uids) and User::status.ne(StatusEnum.DELETED.code)
         }
         return mapper.selectListByQuery(condition)
     }
     
     fun findByUsername(username: String): User? {
         val query = query().whereWith {
-            User::username.eq(username)
+            User::username.eq(username) and User::status.ne(StatusEnum.DELETED.code)
         }
         return mapper.selectOneByQuery(query)
     }
     
     fun findByEmail(email: String): User? {
         val query = query().whereWith {
-            User::email.eq(email)
+            User::email.eq(email) and User::status.ne(StatusEnum.DELETED.code)
         }
         return mapper.selectOneByQuery(query)
     }
     
     fun findByPhone(phone: String): User? {
         val query = query().whereWith {
-            User::phone.eq(phone)
+            User::phone.eq(phone) and User::status.ne(StatusEnum.DELETED.code)
         }
         return mapper.selectOneByQuery(query)
     }
@@ -54,18 +59,22 @@ class UserDao : ServiceImpl<UserMapper, User>() {
     fun page(query: UserQueryDto): Page<User> {
         val queryBuilder = query()
         
+        // 默认排除已删除的用户
+        queryBuilder.whereWith {
+            User::status.ne(StatusEnum.DELETED.code)
+        }
+        
         // 添加查询条件
         if (!query.username.isNullOrBlank()) {
-            queryBuilder.whereWith {
-                User::username.like("%${query.username}%")
-            }
+            queryBuilder.and { User::username.like("%${query.username}%") }
         }
         
         if (!query.status.isNullOrBlank()) {
-            queryBuilder.whereWith {
-                User::status.eq(query.status)
-            }
+            queryBuilder.and { User::status.eq(query.status) }
         }
+        
+        // 按id排序
+        queryBuilder.orderBy("id ASC")
         
         val page = Page<User>(query.current, query.size)
         return page(page, queryBuilder)

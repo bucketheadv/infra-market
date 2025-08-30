@@ -35,4 +35,11 @@ class UserRoleDao : ServiceImpl<UserRoleMapper, UserRole>() {
         }
         return mapper.deleteByQuery(query)
     }
+    
+    fun countByRoleId(roleId: Long): Long {
+        val query = query().whereWith {
+            UserRole::roleId.eq(roleId)
+        }
+        return mapper.selectCountByQuery(query)
+    }
 }
