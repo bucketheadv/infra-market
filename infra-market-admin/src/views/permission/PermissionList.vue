@@ -75,6 +75,11 @@
             </a-tag>
           </template>
           
+          <template v-else-if="column.key === 'icon'">
+            <component v-if="record.icon && iconMap[record.icon]" :is="iconMap[record.icon]" style="font-size: 16px;" />
+            <span v-else class="anticon anticon-minus" style="color: #ccc;"></span>
+          </template>
+          
           <template v-else-if="column.key === 'status'">
             <a-tag :color="record.status === 'active' ? 'green' : 'red'">
               {{ record.status === 'active' ? '启用' : '禁用' }}
@@ -118,11 +123,23 @@ import {
   PlusOutlined,
   SearchOutlined,
   ReloadOutlined,
+  SettingOutlined,
+  UserOutlined,
+  TeamOutlined,
+  SafetyCertificateOutlined,
 } from '@ant-design/icons-vue'
 import { permissionApi } from '@/api/permission'
 import type { Permission, PageParams } from '@/types'
 
 const router = useRouter()
+
+// 图标映射
+const iconMap: Record<string, any> = {
+  'SettingOutlined': SettingOutlined,
+  'UserOutlined': UserOutlined,
+  'TeamOutlined': TeamOutlined,
+  'SafetyCertificateOutlined': SafetyCertificateOutlined,
+}
 
 const loading = ref(false)
 const permissions = ref<Permission[]>([])
