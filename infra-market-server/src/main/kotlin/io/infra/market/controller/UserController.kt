@@ -1,33 +1,56 @@
 package io.infra.market.controller
 
-import com.mybatisflex.kotlin.extensions.db.query
-import com.mybatisflex.kotlin.extensions.kproperty.eq
-import com.mybatisflex.kotlin.extensions.wrapper.whereWith
-import io.infra.market.repository.dao.UserDao
-import io.infra.market.repository.entity.User
-import io.infra.structure.core.tool.JsonTool
+import io.infra.market.dto.ApiResponse
+import io.infra.market.dto.BatchRequest
+import io.infra.market.dto.PageResultDto
+import io.infra.market.dto.UserDto
+import io.infra.market.dto.UserFormDto
+import io.infra.market.dto.UserQueryDto
+import io.infra.market.service.UserService
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PatchMapping
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
+import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 /**
+ * 用户管理控制器
  * @author liuqinglin
- * Date: 2025/8/15 19:09
+ * Date: 2025/8/30
  */
 @RestController
-@RequestMapping("/user")
+@RequestMapping("/users")
 class UserController(
-    private val userDao: UserDao,
+    private val userService: UserService
 ) {
-    @GetMapping("/list")
-    fun index() : List<User> {
-//        val users = query<User> {
-//            whereWith {
-//                User::id.eq(1)
-//            }
-//        }
-        val users = userDao.findByUids(listOf(1, 2))
-        println(JsonTool.toJsonString(users))
-        return users
-    }
+    
+    @GetMapping
+    fun getUsers(query: UserQueryDto) = userService.getUsers(query)
+    
+    @GetMapping("/{id}")
+    fun getUser(@PathVariable id: Long) = userService.getUser(id)
+    
+    @PostMapping
+    fun createUser(@RequestBody form: UserFormDto) = userService.createUser(form)
+    
+    @PutMapping("/{id}")
+    fun updateUser(@PathVariable id: Long, @RequestBody form: UserFormDto) = userService.updateUser(id, form)
+    
+    @DeleteMapping("/{id}")
+    fun deleteUser(@PathVariable id: Long) = userService.deleteUser(id)
+    
+    @PatchMapping("/{id}/status")
+    fun updateUserStatus(@PathVariable id: Long, @RequestParam status: String) = userService.updateUserStatus(id, status)
+    
+    @PostMapping("/{id}/reset-password")
+    fun resetPassword(@PathVariable id: Long) = userService.resetPassword(id)
+    
+    @DeleteMapping("/batch")
+    fun batchDeleteUsers(@RequestBody request: BatchRequest) = 
+        request.ids.forEach { userService.deleteUser(it) }
 }

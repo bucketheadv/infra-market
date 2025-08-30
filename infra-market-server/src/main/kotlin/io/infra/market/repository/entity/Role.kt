@@ -5,14 +5,14 @@ import io.infra.market.enums.StatusEnum
 import io.infra.structure.db.model.activerecord.BaseActiveRecordEntity
 
 /**
+ * 角色实体类
  * @author liuqinglin
- * Date: 2025/8/15 19:05
+ * Date: 2025/8/30
  */
-@Table("user_info")
-data class User(
-    var username: String? = null,
-    var password: String? = null,
-    var email: String? = null,
-    var phone: String? = null,
+@Table("role_info")
+data class Role(
+    var name: String? = null,
+    var code: String? = null,
+    var description: String? = null,
     var status: StatusEnum = StatusEnum.ACTIVE
-) : BaseActiveRecordEntity<User, Long>()
+) : BaseActiveRecordEntity<Role, Long>()

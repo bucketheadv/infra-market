@@ -1,63 +1,58 @@
 package io.infra.market.repository.dao
 
 import com.mybatisflex.kotlin.extensions.kproperty.eq
-import com.mybatisflex.kotlin.extensions.kproperty.inList
 import com.mybatisflex.kotlin.extensions.kproperty.like
 import com.mybatisflex.kotlin.extensions.wrapper.whereWith
 import com.mybatisflex.core.paginate.Page
 import com.mybatisflex.spring.service.impl.ServiceImpl
-import io.infra.market.dto.UserQueryDto
+import io.infra.market.dto.RoleQueryDto
 import io.infra.market.enums.StatusEnum
-import io.infra.market.repository.entity.User
-import io.infra.market.repository.mapper.UserMapper
+import io.infra.market.repository.entity.Role
+import io.infra.market.repository.mapper.RoleMapper
 import org.springframework.stereotype.Repository
 
 /**
+ * 角色DAO
  * @author liuqinglin
  * Date: 2025/8/30
  */
 @Repository
-class UserDao : ServiceImpl<UserMapper, User>() {
+class RoleDao : ServiceImpl<RoleMapper, Role>() {
     
-    fun findByUid(id: Long): User? {
-        return mapper.selectOneById(id)
-    }
-
-    fun findByUids(uids: List<Long>): List<User> {
-        val condition = query().whereWith {
-            User::id.inList(uids)
-        }
-        return mapper.selectListByQuery(condition)
-    }
-    
-    fun findByUsername(username: String): User? {
+    fun findByName(name: String): Role? {
         val query = query().whereWith {
-            User::username.eq(username)
+            Role::name.eq(name)
         }
         return mapper.selectOneByQuery(query)
     }
     
-    fun findByEmail(email: String): User? {
+    fun findByCode(code: String): Role? {
         val query = query().whereWith {
-            User::email.eq(email)
+            Role::code.eq(code)
         }
         return mapper.selectOneByQuery(query)
     }
     
-    fun findByPhone(phone: String): User? {
+    fun findByStatus(status: StatusEnum): List<Role> {
         val query = query().whereWith {
-            User::phone.eq(phone)
+            Role::status.eq(status)
         }
-        return mapper.selectOneByQuery(query)
+        return mapper.selectListByQuery(query)
     }
     
-    fun page(query: UserQueryDto): Page<User> {
+    fun page(query: RoleQueryDto): Page<Role> {
         val queryBuilder = query()
         
         // 添加查询条件
-        if (!query.username.isNullOrBlank()) {
+        if (!query.name.isNullOrBlank()) {
             queryBuilder.whereWith {
-                User::username.like("%${query.username}%")
+                Role::name.like("%${query.name}%")
+            }
+        }
+        
+        if (!query.code.isNullOrBlank()) {
+            queryBuilder.whereWith {
+                Role::code.like("%${query.code}%")
             }
         }
         
@@ -65,12 +60,12 @@ class UserDao : ServiceImpl<UserMapper, User>() {
             val status = StatusEnum.fromCode(query.status)
             if (status != null) {
                 queryBuilder.whereWith {
-                    User::status.eq(status)
+                    Role::status.eq(status)
                 }
             }
         }
         
-        val page = Page<User>(query.current, query.size)
+        val page = Page<Role>(query.current, query.size)
         return page(page, queryBuilder)
     }
 }

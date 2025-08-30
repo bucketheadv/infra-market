@@ -1,0 +1,181 @@
+-- 基础设施市场数据库初始化脚本
+-- 创建时间: 2025-08-30
+-- 作者: liuqinglin
+
+-- 创建数据库
+CREATE DATABASE IF NOT EXISTS `infra_market` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+USE `infra_market`;
+
+-- 用户信息表
+CREATE TABLE IF NOT EXISTS `user_info` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    `username` VARCHAR(50) NOT NULL COMMENT '用户名',
+    `password` VARCHAR(255) NOT NULL COMMENT '密码',
+    `email` VARCHAR(100) NULL COMMENT '邮箱',
+    `phone` VARCHAR(20) NULL COMMENT '手机号',
+    `status` VARCHAR(20) NOT NULL DEFAULT 'active' COMMENT '状态：active-启用，inactive-禁用，deleted-已删除',
+    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_username` (`username`),
+    KEY `idx_email` (`email`),
+    KEY `idx_phone` (`phone`),
+    KEY `idx_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户信息表';
+
+-- 角色信息表
+CREATE TABLE IF NOT EXISTS `role_info` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    `name` VARCHAR(50) NOT NULL COMMENT '角色名称',
+    `code` VARCHAR(50) NOT NULL COMMENT '角色编码',
+    `description` VARCHAR(255) NULL COMMENT '角色描述',
+    `status` VARCHAR(20) NOT NULL DEFAULT 'active' COMMENT '状态：active-启用，inactive-禁用，deleted-已删除',
+    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_code` (`code`),
+    KEY `idx_name` (`name`),
+    KEY `idx_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='角色信息表';
+
+-- 权限信息表
+CREATE TABLE IF NOT EXISTS `permission_info` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    `name` VARCHAR(50) NOT NULL COMMENT '权限名称',
+    `code` VARCHAR(50) NOT NULL COMMENT '权限编码',
+    `type` VARCHAR(20) NOT NULL DEFAULT 'menu' COMMENT '权限类型：menu-菜单，button-按钮',
+    `parent_id` BIGINT NULL COMMENT '父权限ID',
+    `path` VARCHAR(255) NULL COMMENT '路径',
+    `icon` VARCHAR(100) NULL COMMENT '图标',
+    `sort` INT NOT NULL DEFAULT 0 COMMENT '排序',
+    `status` VARCHAR(20) NOT NULL DEFAULT 'active' COMMENT '状态：active-启用，inactive-禁用，deleted-已删除',
+    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_code` (`code`),
+    KEY `idx_parent_id` (`parent_id`),
+    KEY `idx_type` (`type`),
+    KEY `idx_status` (`status`),
+    KEY `idx_sort` (`sort`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='权限信息表';
+
+-- 用户角色关联表
+CREATE TABLE IF NOT EXISTS `user_role` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    `user_id` BIGINT NOT NULL COMMENT '用户ID',
+    `role_id` BIGINT NOT NULL COMMENT '角色ID',
+    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_user_role` (`user_id`, `role_id`),
+    KEY `idx_user_id` (`user_id`),
+    KEY `idx_role_id` (`role_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户角色关联表';
+
+-- 角色权限关联表
+CREATE TABLE IF NOT EXISTS `role_permission` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    `role_id` BIGINT NOT NULL COMMENT '角色ID',
+    `permission_id` BIGINT NOT NULL COMMENT '权限ID',
+    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_role_permission` (`role_id`, `permission_id`),
+    KEY `idx_role_id` (`role_id`),
+    KEY `idx_permission_id` (`permission_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='角色权限关联表';
+
+-- 插入初始数据
+
+-- 插入管理员用户
+INSERT INTO `user_info` (`username`, `password`, `email`, `phone`, `status`) VALUES
+('admin', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', 'admin@infra-market.com', '13800138000', 'active'),
+('user1', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', 'user1@infra-market.com', '13800138001', 'active'),
+('user2', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', 'user2@infra-market.com', '13800138002', 'active');
+
+-- 插入角色
+INSERT INTO `role_info` (`name`, `code`, `description`, `status`) VALUES
+('超级管理员', 'SUPER_ADMIN', '系统超级管理员，拥有所有权限', 'active'),
+('管理员', 'ADMIN', '系统管理员，拥有大部分权限', 'active'),
+('普通用户', 'USER', '普通用户，拥有基本权限', 'active'),
+('访客', 'GUEST', '访客用户，只有查看权限', 'active');
+
+-- 插入权限
+INSERT INTO `permission_info` (`name`, `code`, `type`, `parent_id`, `path`, `icon`, `sort`, `status`) VALUES
+-- 系统管理
+('系统管理', 'system:manage', 'menu', NULL, '/system', 'SettingOutlined', 1, 'active'),
+('用户管理', 'user:manage', 'menu', 1, '/system/users', 'UserOutlined', 1, 'active'),
+('用户列表', 'user:list', 'button', 2, NULL, NULL, 1, 'active'),
+('用户创建', 'user:create', 'button', 2, NULL, NULL, 2, 'active'),
+('用户编辑', 'user:update', 'button', 2, NULL, NULL, 3, 'active'),
+('用户删除', 'user:delete', 'button', 2, NULL, NULL, 4, 'active'),
+('用户状态', 'user:status', 'button', 2, NULL, NULL, 5, 'active'),
+('角色管理', 'role:manage', 'menu', 1, '/system/roles', 'TeamOutlined', 2, 'active'),
+('角色列表', 'role:list', 'button', 8, NULL, NULL, 1, 'active'),
+('角色创建', 'role:create', 'button', 8, NULL, NULL, 2, 'active'),
+('角色编辑', 'role:update', 'button', 8, NULL, NULL, 3, 'active'),
+('角色删除', 'role:delete', 'button', 8, NULL, NULL, 4, 'active'),
+('角色状态', 'role:status', 'button', 8, NULL, NULL, 5, 'active'),
+('权限管理', 'permission:manage', 'menu', 1, '/system/permissions', 'SafetyCertificateOutlined', 3, 'active'),
+('权限列表', 'permission:list', 'button', 14, NULL, NULL, 1, 'active'),
+('权限创建', 'permission:create', 'button', 14, NULL, NULL, 2, 'active'),
+('权限编辑', 'permission:update', 'button', 14, NULL, NULL, 3, 'active'),
+('权限删除', 'permission:delete', 'button', 14, NULL, NULL, 4, 'active'),
+('权限状态', 'permission:status', 'button', 14, NULL, NULL, 5, 'active'),
+
+-- 基础设施管理
+('基础设施', 'infra:manage', 'menu', NULL, '/infra', 'CloudServerOutlined', 2, 'active'),
+('服务器管理', 'server:manage', 'menu', 20, '/infra/servers', 'DesktopOutlined', 1, 'active'),
+('服务器列表', 'server:list', 'button', 21, NULL, NULL, 1, 'active'),
+('服务器创建', 'server:create', 'button', 21, NULL, NULL, 2, 'active'),
+('服务器编辑', 'server:update', 'button', 21, NULL, NULL, 3, 'active'),
+('服务器删除', 'server:delete', 'button', 21, NULL, NULL, 4, 'active'),
+('网络管理', 'network:manage', 'menu', 20, '/infra/networks', 'ApiOutlined', 2, 'active'),
+('网络列表', 'network:list', 'button', 26, NULL, NULL, 1, 'active'),
+('网络创建', 'network:create', 'button', 26, NULL, NULL, 2, 'active'),
+('网络编辑', 'network:update', 'button', 26, NULL, NULL, 3, 'active'),
+('网络删除', 'network:delete', 'button', 26, NULL, NULL, 4, 'active'),
+
+-- 市场管理
+('市场管理', 'market:manage', 'menu', NULL, '/market', 'ShoppingOutlined', 3, 'active'),
+('商品管理', 'product:manage', 'menu', 31, '/market/products', 'AppstoreOutlined', 1, 'active'),
+('商品列表', 'product:list', 'button', 32, NULL, NULL, 1, 'active'),
+('商品创建', 'product:create', 'button', 32, NULL, NULL, 2, 'active'),
+('商品编辑', 'product:update', 'button', 32, NULL, NULL, 3, 'active'),
+('商品删除', 'product:delete', 'button', 32, NULL, NULL, 4, 'active'),
+('订单管理', 'order:manage', 'menu', 31, '/market/orders', 'FileTextOutlined', 2, 'active'),
+('订单列表', 'order:list', 'button', 37, NULL, NULL, 1, 'active'),
+('订单详情', 'order:detail', 'button', 37, NULL, NULL, 2, 'active'),
+('订单状态', 'order:status', 'button', 37, NULL, NULL, 3, 'active');
+
+-- 插入用户角色关联
+INSERT INTO `user_role` (`user_id`, `role_id`) VALUES
+(1, 1), -- admin -> 超级管理员
+(2, 2), -- user1 -> 管理员
+(3, 3); -- user2 -> 普通用户
+
+-- 插入角色权限关联
+-- 超级管理员拥有所有权限
+INSERT INTO `role_permission` (`role_id`, `permission_id`) 
+SELECT 1, id FROM `permission_info` WHERE status = 'active';
+
+-- 管理员拥有大部分权限（除了超级管理员专用权限）
+INSERT INTO `role_permission` (`role_id`, `permission_id`) 
+SELECT 2, id FROM `permission_info` WHERE status = 'active' AND code NOT LIKE 'system:%';
+
+-- 普通用户拥有基本权限
+INSERT INTO `role_permission` (`role_id`, `permission_id`) 
+SELECT 3, id FROM `permission_info` WHERE status = 'active' AND code IN (
+    'infra:manage', 'server:list', 'network:list',
+    'market:manage', 'product:list', 'order:list', 'order:detail'
+);
+
+-- 访客只有查看权限
+INSERT INTO `role_permission` (`role_id`, `permission_id`) 
+SELECT 4, id FROM `permission_info` WHERE status = 'active' AND code IN (
+    'server:list', 'network:list', 'product:list'
+);
+
+
+

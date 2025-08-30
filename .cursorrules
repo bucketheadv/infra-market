@@ -9,7 +9,7 @@
 - **ORM**: MyBatis-Flex
 - **数据库**: MySQL
 - **构建工具**: Maven
-- **其他**: Hutool, Apache POI
+- **其他**: Hutool, Apache POI, Joda Time
 
 ## 代码规范
 
@@ -34,14 +34,44 @@ src/main/kotlin/io/infra/market/
 - **常量**: 使用 UPPER_SNAKE_CASE，如 `MAX_RETRY_COUNT`
 - **包名**: 使用小写，如 `io.infra.market.controller`
 
-### 3. 注解使用规范
+### 3. 导入规范
+- **禁止使用全限定名**：除非有同名类冲突，否则不要使用全限定名（如 `io.infra.market.enums.PermissionTypeEnum`）
+- **禁止使用 import ***：必须明确导入每个类，不允许使用 `import package.*`
+- **导入顺序**：
+  1. 标准库导入
+  2. 第三方库导入
+  3. 项目内部导入
+- **示例**：
+```kotlin
+// 正确
+import org.joda.time.DateTime
+import org.joda.time.format.DateTimeFormat
+import io.infra.market.dto.PermissionDto
+import io.infra.market.enums.PermissionTypeEnum
+
+// 错误
+import io.infra.market.dto.*
+import io.infra.market.enums.*
+```
+
+### 4. 方法生成规范
+- **不要生成未使用的方法**：只生成实际需要的方法，避免生成冗余代码
+- **清理未使用方法**：如果生成了未使用的方法，在结束之前必须清理掉
+- **方法命名要明确**：方法名应该清楚表达其功能，避免生成模糊或重复的方法
+- **优先使用现有方法**：如果已有类似功能的方法，应该复用而不是重新生成
+- **检测重复代码**：如果检测到有重复方法或重复代码块，必须将重复部分提取出来
+- **提取公共方法**：将重复的逻辑提取为公共方法，提高代码复用性
+- **避免代码重复**：相同或相似的业务逻辑应该封装为独立的方法
+- **重构重复代码**：发现重复代码时，优先考虑重构而不是复制粘贴
+
+### 5. 注解使用规范
 - 控制器类使用 `@RestController` 和 `@RequestMapping`
 - 服务类使用 `@Service`
 - DAO类使用 `@Repository`
 - 实体类使用 `@Table` 和 `@Column`
 - 配置类使用 `@Configuration`
 
-### 4. 实体类规范
+### 6. 实体类规范
 ```kotlin
 @Table("table_name")
 data class EntityName(
@@ -49,7 +79,7 @@ data class EntityName(
 ) : BaseActiveRecordEntity<EntityName, Long>()
 ```
 
-### 5. 控制器规范
+### 7. 控制器规范
 ```kotlin
 @RestController
 @RequestMapping("/api/resource")
@@ -68,7 +98,7 @@ class ResourceController(
 }
 ```
 
-### 6. DAO层规范
+### 8. DAO层规范
 ```kotlin
 @Repository
 class ResourceDao : ServiceImpl<ResourceMapper, Resource>() {
@@ -81,58 +111,73 @@ class ResourceDao : ServiceImpl<ResourceMapper, Resource>() {
 }
 ```
 
-### 7. 异常处理
+### 9. 时间日期处理规范
+- **统一使用Joda Time库**进行时间日期相关的计算和格式化
+- 导入：`import org.joda.time.DateTime` 和 `import org.joda.time.format.DateTimeFormat`
+- 日期格式化示例：
+```kotlin
+private fun formatDateTime(dateTime: Date?): String {
+    return if (dateTime != null) {
+        val dateTime = DateTime(dateTime)
+        dateTime.toString(DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss"))
+    } else ""
+}
+```
+- 禁止使用Java 8的java.time包进行时间日期处理
+- 时间计算、格式化、解析等操作必须使用Joda Time API
+
+### 10. 异常处理
 - 使用统一的异常处理机制
 - 自定义业务异常继承 `RuntimeException`
 - 在控制器中使用 `@ExceptionHandler` 处理异常
 
-### 8. 日志规范
+### 11. 日志规范
 - 使用 SLF4J + Logback
 - 日志级别：DEBUG, INFO, WARN, ERROR
 - 关键业务操作必须记录日志
 - 敏感信息不要记录到日志中
 
-### 9. 数据库规范
+### 12. 数据库规范
 - 表名使用下划线命名，如 `user_info`
 - 字段名使用下划线命名，如 `user_name`
 - 主键统一使用 `id`，类型为 `BIGINT`
 - 创建时间和更新时间字段：`create_time`, `update_time`
 
-### 10. API设计规范
+### 13. API设计规范
 - RESTful API设计
 - 使用HTTP状态码表示操作结果
 - 统一响应格式
 - 支持分页查询
 - 参数验证使用 `@Valid`
 
-### 11. 代码质量要求
+### 14. 代码质量要求
 - 函数长度不超过50行
 - 类长度不超过500行
 - 圈复杂度不超过10
 - 代码覆盖率不低于80%
 - 使用Kotlin的空安全特性
 
-### 12. 性能优化
+### 15. 性能优化
 - 使用连接池管理数据库连接
 - 合理使用缓存（Redis）
 - 避免N+1查询问题
 - 大数据量查询使用分页
 - 异步处理耗时操作
 
-### 13. 安全规范
+### 16. 安全规范
 - 输入参数验证
 - SQL注入防护（使用MyBatis-Flex的参数化查询）
 - XSS防护
 - 敏感信息加密存储
 - 接口权限控制
 
-### 14. 测试规范
+### 17. 测试规范
 - 单元测试覆盖核心业务逻辑
 - 集成测试覆盖API接口
 - 使用 `@SpringBootTest` 进行集成测试
 - 测试数据使用 `@TestConfiguration`
 
-### 15. 文档规范
+### 18. 文档规范
 - 类和方法必须有文档注释
 - API接口使用Swagger注解
 - 重要业务逻辑添加注释
@@ -160,3 +205,6 @@ class ResourceDao : ServiceImpl<ResourceMapper, Resource>() {
 4. 保持代码简洁和可读性
 5. 定期进行代码审查
 6. 及时更新依赖版本
+7. 时间日期相关计算统一使用Joda Time
+8. 避免使用全限定名和import *
+9. 不要生成未使用的方法，生成后要及时清理
