@@ -1,5 +1,5 @@
 import request from '@/utils/request'
-import type { LoginForm, LoginResponse, ApiResponse } from '@/types'
+import type { LoginForm, LoginResponse, ApiResponse, Permission } from '@/types'
 
 export const authApi = {
   // 登录
@@ -14,11 +14,16 @@ export const authApi = {
 
   // 获取当前用户信息
   getCurrentUser(): Promise<ApiResponse<LoginResponse>> {
-    return request.get('/auth/current-user')
+    return request.get('/auth/current/user')
+  },
+
+  // 获取用户菜单
+  getUserMenus(): Promise<ApiResponse<Permission[]>> {
+    return request.get('/auth/user/menus')
   },
 
   // 刷新token
   refreshToken(): Promise<ApiResponse<{ token: string }>> {
-    return request.post('/auth/refresh-token')
+    return request.post('/auth/refresh/token')
   },
 }

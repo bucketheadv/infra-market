@@ -1,6 +1,7 @@
 package io.infra.market.repository.dao
 
 import com.mybatisflex.kotlin.extensions.kproperty.eq
+import com.mybatisflex.kotlin.extensions.kproperty.inList
 import com.mybatisflex.kotlin.extensions.wrapper.whereWith
 import com.mybatisflex.spring.service.impl.ServiceImpl
 import io.infra.market.repository.entity.RolePermission
@@ -25,6 +26,16 @@ class RolePermissionDao : ServiceImpl<RolePermissionMapper, RolePermission>() {
     fun findByPermissionId(permissionId: Long): List<RolePermission> {
         val query = query().whereWith {
             RolePermission::permissionId.eq(permissionId)
+        }
+        return mapper.selectListByQuery(query)
+    }
+    
+    fun findByRoleIds(roleIds: List<Long>): List<RolePermission> {
+        if (roleIds.isEmpty()) {
+            return emptyList()
+        }
+        val query = query().whereWith {
+            RolePermission::roleId.inList(roleIds)
         }
         return mapper.selectListByQuery(query)
     }

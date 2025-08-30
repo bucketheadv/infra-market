@@ -149,6 +149,25 @@ private fun formatDateTime(dateTime: Date?): String {
 - 统一响应格式
 - 支持分页查询
 - 参数验证使用 `@Valid`
+- **接口地址命名规范**：
+  - 禁止使用连字符（-）和下划线（_）
+  - 使用正斜杠（/）作为路径分隔符
+  - 使用小写字母，单词间用正斜杠分隔
+  - 示例：
+    ```kotlin
+    // 正确
+    @RequestMapping("/api/user")
+    @GetMapping("/user/list")
+    @PostMapping("/user/create")
+    @GetMapping("/current/user")
+    @GetMapping("/user/menus")
+    
+    // 错误
+    @RequestMapping("/api/user-management")  // 使用了连字符
+    @GetMapping("/user_list")               // 使用了下划线
+    @PostMapping("/createUser")             // 使用了驼峰命名
+    @GetMapping("/currentuser")             // 没有用斜杠分隔
+    ```
 
 ### 14. 代码质量要求
 - 函数长度不超过50行

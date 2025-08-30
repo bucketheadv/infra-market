@@ -34,7 +34,7 @@ export const userApi = {
 
   // 重置用户密码
   resetPassword(id: number): Promise<ApiResponse<{ password: string }>> {
-    return request.post(`/users/${id}/reset-password`)
+    return request.post(`/users/${id}/reset/password`)
   },
 
   // 修改用户状态

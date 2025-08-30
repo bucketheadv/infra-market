@@ -20,55 +20,55 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '仪表盘' }
       },
       {
-        path: '/users',
+        path: '/system/users',
         name: 'Users',
         component: () => import('@/views/user/UserList.vue'),
         meta: { title: '用户管理', permission: 'user:list' }
       },
       {
-        path: '/users/create',
+        path: '/system/users/create',
         name: 'UserCreate',
         component: () => import('@/views/user/UserForm.vue'),
         meta: { title: '创建用户', permission: 'user:create' }
       },
       {
-        path: '/users/:id/edit',
+        path: '/system/users/:id/edit',
         name: 'UserEdit',
         component: () => import('@/views/user/UserForm.vue'),
         meta: { title: '编辑用户', permission: 'user:update' }
       },
       {
-        path: '/roles',
+        path: '/system/roles',
         name: 'Roles',
         component: () => import('@/views/permission/RoleList.vue'),
         meta: { title: '角色管理', permission: 'role:list' }
       },
       {
-        path: '/roles/create',
+        path: '/system/roles/create',
         name: 'RoleCreate',
         component: () => import('@/views/permission/RoleForm.vue'),
         meta: { title: '创建角色', permission: 'role:create' }
       },
       {
-        path: '/roles/:id/edit',
+        path: '/system/roles/:id/edit',
         name: 'RoleEdit',
         component: () => import('@/views/permission/RoleForm.vue'),
         meta: { title: '编辑角色', permission: 'role:update' }
       },
       {
-        path: '/permissions',
+        path: '/system/permissions',
         name: 'Permissions',
         component: () => import('@/views/permission/PermissionList.vue'),
         meta: { title: '权限管理', permission: 'permission:list' }
       },
       {
-        path: '/permissions/create',
+        path: '/system/permissions/create',
         name: 'PermissionCreate',
         component: () => import('@/views/permission/PermissionForm.vue'),
         meta: { title: '创建权限', permission: 'permission:create' }
       },
       {
-        path: '/permissions/:id/edit',
+        path: '/system/permissions/:id/edit',
         name: 'PermissionEdit',
         component: () => import('@/views/permission/PermissionForm.vue'),
         meta: { title: '编辑权限', permission: 'permission:update' }
@@ -87,6 +87,9 @@ router.beforeEach(async (to, _from, next) => {
   // 延迟导入避免循环依赖
   const { useAuthStore } = await import('@/stores/auth')
   const authStore = useAuthStore()
+  
+  // 初始化认证状态
+  await authStore.initializeAuth()
   
   // 如果需要认证
   if (to.meta.requiresAuth !== false) {

@@ -23,9 +23,29 @@ class AuthController(
     @PostMapping("/login")
     fun login(@RequestBody request: LoginRequest) = authService.login(request)
     
-    @GetMapping("/current-user")
-    fun getCurrentUser(@RequestHeader("Authorization") token: String) = 
-        authService.getCurrentUser(token.replace("Bearer ", ""))
+    @GetMapping("/current/user")
+    fun getCurrentUser(@RequestHeader("Authorization", required = false) authorization: String?) = 
+        if (authorization != null && authorization.startsWith("Bearer ")) {
+            authService.getCurrentUser(authorization.replace("Bearer ", ""))
+        } else {
+            authService.getCurrentUser("")
+        }
+    
+    @GetMapping("/user/menus")
+    fun getUserMenus(@RequestHeader("Authorization", required = false) authorization: String?) = 
+        if (authorization != null && authorization.startsWith("Bearer ")) {
+            authService.getUserMenus(authorization.replace("Bearer ", ""))
+        } else {
+            authService.getUserMenus("")
+        }
+    
+    @PostMapping("/refresh/token")
+    fun refreshToken(@RequestHeader("Authorization", required = false) authorization: String?) = 
+        if (authorization != null && authorization.startsWith("Bearer ")) {
+            authService.refreshToken(authorization.replace("Bearer ", ""))
+        } else {
+            authService.refreshToken("")
+        }
     
     @PostMapping("/logout")
     fun logout() = authService.logout()

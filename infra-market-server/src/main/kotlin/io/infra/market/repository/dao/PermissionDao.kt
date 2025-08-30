@@ -1,6 +1,7 @@
 package io.infra.market.repository.dao
 
 import com.mybatisflex.kotlin.extensions.kproperty.eq
+import com.mybatisflex.kotlin.extensions.kproperty.inList
 import com.mybatisflex.kotlin.extensions.kproperty.like
 import com.mybatisflex.kotlin.extensions.wrapper.whereWith
 import com.mybatisflex.core.paginate.Page
@@ -32,6 +33,30 @@ class PermissionDao : ServiceImpl<PermissionMapper, Permission>() {
             Permission::status.eq(status)
         }
         return mapper.selectListByQuery(query)
+    }
+    
+    fun findByIds(ids: List<Long>): List<Permission> {
+        if (ids.isEmpty()) {
+            return emptyList()
+        }
+        val query = query().whereWith {
+            Permission::id.inList(ids)
+        }
+        return mapper.selectListByQuery(query)
+    }
+    
+    fun findMenusByIds(ids: List<Long>): List<Permission> {
+        if (ids.isEmpty()) {
+            return emptyList()
+        }
+        val query = query().whereWith {
+            Permission::id.inList(ids)
+        }
+        val permissions = mapper.selectListByQuery(query)
+        // 在内存中过滤菜单权限
+        return permissions.filter { 
+            it.status == StatusEnum.ACTIVE.code && it.type == PermissionTypeEnum.MENU.code 
+        }
     }
     
     fun page(query: PermissionQueryDto): Page<Permission> {

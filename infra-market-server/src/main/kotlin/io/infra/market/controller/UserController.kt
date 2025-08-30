@@ -44,7 +44,7 @@ class UserController(
     @PatchMapping("/{id}/status")
     fun updateUserStatus(@PathVariable id: Long, @RequestParam status: String) = userService.updateUserStatus(id, status)
     
-    @PostMapping("/{id}/reset-password")
+    @PostMapping("/{id}/reset/password")
     fun resetPassword(@PathVariable id: Long) = userService.resetPassword(id)
     
     @DeleteMapping("/batch")
