@@ -1,4 +1,4 @@
-package io.infra.market.dao.entity
+package io.infra.market.repository.entity
 
 import com.mybatisflex.annotation.Table
 import io.infra.structure.db.model.activerecord.BaseActiveRecordEntity

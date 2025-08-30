@@ -1,10 +1,10 @@
-package io.infra.market.dao.dao
+package io.infra.market.repository.dao
 
 import com.mybatisflex.kotlin.extensions.kproperty.inList
 import com.mybatisflex.kotlin.extensions.wrapper.whereWith
 import com.mybatisflex.spring.service.impl.ServiceImpl
-import io.infra.market.dao.entity.User
-import io.infra.market.dao.mapper.UserMapper
+import io.infra.market.repository.entity.User
+import io.infra.market.repository.mapper.UserMapper
 import org.springframework.stereotype.Repository
 
 /**

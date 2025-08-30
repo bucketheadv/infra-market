@@ -18,7 +18,7 @@
 src/main/kotlin/io/infra/market/
 ├── controller/          # 控制器层
 ├── service/            # 服务层
-├── dao/               # 数据访问层
+├── repository/         # 数据访问层
 │   ├── dao/           # DAO实现类
 │   ├── entity/        # 实体类
 │   └── mapper/        # Mapper接口

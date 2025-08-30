@@ -14,6 +14,7 @@
 
     <modules>
         <module>infra-market-server</module>
+        <module>infra-market-admin</module>
     </modules>
 
     <properties>

@@ -3,8 +3,8 @@ package io.infra.market.controller
 import com.mybatisflex.kotlin.extensions.db.query
 import com.mybatisflex.kotlin.extensions.kproperty.eq
 import com.mybatisflex.kotlin.extensions.wrapper.whereWith
-import io.infra.market.dao.dao.UserDao
-import io.infra.market.dao.entity.User
+import io.infra.market.repository.dao.UserDao
+import io.infra.market.repository.entity.User
 import io.infra.structure.core.tool.JsonTool
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
