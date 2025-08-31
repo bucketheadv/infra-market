@@ -303,8 +303,20 @@ const handleLogout = async () => {
   align-items: center;
   background: #fff;
   padding: 0 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   flex-shrink: 0;
+  position: relative;
+  z-index: 1000;
+}
+
+.header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.2), transparent);
 }
 
 .logo {
@@ -335,18 +347,18 @@ const handleLogout = async () => {
   align-items: center;
   cursor: pointer;
   padding: 8px 16px;
-  border-radius: 12px;
+  border-radius: 8px;
   transition: all 0.3s ease;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border: none;
+  background: #ffffff;
+  border: 1px solid #e8e8e8;
   min-width: 160px;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .user-dropdown:hover {
-  background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
+  background: #fafafa;
+  border-color: #1890ff;
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.15);
 }
 
 .user-info {
@@ -356,12 +368,17 @@ const handleLogout = async () => {
 }
 
 .user-avatar {
-  background: rgba(255, 255, 255, 0.2);
+  background: #1890ff;
   color: white;
   font-weight: bold;
   margin-right: 12px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  backdrop-filter: blur(10px);
+  border: 2px solid #e6f7ff;
+  transition: all 0.3s ease;
+}
+
+.user-dropdown:hover .user-avatar {
+  background: #40a9ff;
+  border-color: #bae7ff;
 }
 
 .user-details {
@@ -371,54 +388,67 @@ const handleLogout = async () => {
 }
 
 .username {
-  color: white;
+  color: #333333;
   font-weight: 600;
   font-size: 14px;
   line-height: 1.2;
+  transition: all 0.3s ease;
 }
 
 .user-role {
-  color: rgba(255, 255, 255, 0.8);
+  color: #666666;
   font-size: 12px;
   line-height: 1.2;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.user-dropdown:hover .username {
+  color: #1890ff;
+}
+
+.user-dropdown:hover .user-role {
+  color: #40a9ff;
 }
 
 .dropdown-icon {
-  color: rgba(255, 255, 255, 0.8);
+  color: #666666;
   font-size: 12px;
-  transition: transform 0.3s ease;
+  transition: all 0.3s ease;
   margin-left: 8px;
 }
 
 .user-dropdown:hover .dropdown-icon {
   transform: rotate(180deg);
+  color: #1890ff;
 }
 
 /* 用户菜单美化 */
 .user-menu {
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e8e8e8;
   padding: 0;
-  backdrop-filter: blur(10px);
-  background: rgba(255, 255, 255, 0.95);
+  background: #ffffff;
+  overflow: hidden;
 }
 
 .menu-header {
   display: flex;
   align-items: center;
   padding: 16px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 12px 12px 0 0;
+  background: #fafafa;
+  border-radius: 8px 8px 0 0;
   margin: -1px -1px 0 -1px;
+  border-bottom: 1px solid #e8e8e8;
 }
 
 .menu-avatar {
-  background: rgba(255, 255, 255, 0.2);
+  background: #1890ff;
   color: white;
   font-weight: bold;
   margin-right: 12px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  border: 2px solid #e6f7ff;
 }
 
 .menu-user-info {
@@ -427,16 +457,17 @@ const handleLogout = async () => {
 }
 
 .menu-username {
-  color: white;
+  color: #333333;
   font-weight: 600;
   font-size: 14px;
   line-height: 1.2;
 }
 
 .menu-role {
-  color: rgba(255, 255, 255, 0.8);
+  color: #666666;
   font-size: 12px;
   line-height: 1.2;
+  font-weight: 500;
 }
 
 .user-menu :deep(.ant-menu-item) {
@@ -451,9 +482,8 @@ const handleLogout = async () => {
 }
 
 .user-menu :deep(.ant-menu-item:hover) {
-  background: linear-gradient(135deg, #f8f9ff 0%, #f0f2ff 100%);
-  color: #667eea;
-  transform: translateX(4px);
+  background: #e6f7ff;
+  color: #1890ff;
 }
 
 .user-menu :deep(.ant-menu-item .anticon) {
@@ -471,7 +501,7 @@ const handleLogout = async () => {
 }
 
 .logout-item:hover {
-  background: linear-gradient(135deg, #fff2f0 0%, #ffe7e6 100%) !important;
+  background: #fff2f0 !important;
   color: #ff4d4f !important;
 }
 
@@ -510,5 +540,60 @@ const handleLogout = async () => {
   background: #f0f2f5;
   min-height: calc(100vh - 64px);
   overflow-y: auto;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .header {
+    padding: 0 16px;
+  }
+  
+  .logo {
+    font-size: 18px;
+  }
+  
+  .user-dropdown {
+    min-width: 140px;
+    padding: 8px 12px;
+  }
+  
+  .user-details {
+    display: none;
+  }
+  
+  .dropdown-icon {
+    margin-left: 4px;
+  }
+  
+  .user-menu {
+    min-width: 200px;
+  }
+  
+  .menu-header {
+    padding: 16px;
+  }
+  
+  .user-menu :deep(.ant-menu-item) {
+    padding: 12px 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .header {
+    padding: 0 12px;
+  }
+  
+  .logo {
+    font-size: 16px;
+  }
+  
+  .user-dropdown {
+    min-width: 120px;
+    padding: 6px 10px;
+  }
+  
+  .user-avatar {
+    margin-right: 8px;
+  }
 }
 </style>

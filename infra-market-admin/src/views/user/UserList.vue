@@ -59,17 +59,34 @@
         row-key="id"
         class="user-table"
         :row-class-name="getRowClassName"
+        :scroll="{ x: 1120 }"
         @change="handleTableChange"
       >
         <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'status'">
+          <template v-if="column.key === 'roles'">
+            <div class="roles-display">
+              <template v-if="record.roleIds && record.roleIds.length > 0">
+                <a-tag 
+                  v-for="roleId in record.roleIds" 
+                  :key="roleId" 
+                  color="blue" 
+                  class="role-tag"
+                >
+                  {{ getRoleName(roleId) }}
+                </a-tag>
+              </template>
+              <span v-else class="no-role">无角色</span>
+            </div>
+          </template>
+          
+          <template v-else-if="column.key === 'status'">
             <a-tag :color="record.status === 'active' ? 'green' : 'red'" class="status-tag">
               {{ record.status === 'active' ? '启用' : '禁用' }}
             </a-tag>
           </template>
           
           <template v-else-if="column.key === 'action'">
-            <a-space size="small">
+            <div class="action-buttons">
               <a-button 
                 type="link" 
                 size="small" 
@@ -79,15 +96,21 @@
                 <EditOutlined />
                 编辑
               </a-button>
-              <a-button 
-                type="link" 
-                size="small" 
-                class="action-btn reset-btn"
-                @click="handleResetPassword(record)"
+              <a-popconfirm
+                title="确定要重置该用户的密码吗？"
+                ok-text="确定"
+                cancel-text="取消"
+                @confirm="handleResetPassword(record)"
               >
-                <KeyOutlined />
-                重置密码
-              </a-button>
+                <a-button 
+                  type="link" 
+                  size="small" 
+                  class="action-btn reset-btn"
+                >
+                  <KeyOutlined />
+                  重置密码
+                </a-button>
+              </a-popconfirm>
               <a-button
                 type="link"
                 size="small"
@@ -114,7 +137,7 @@
                   删除
                 </a-button>
               </a-popconfirm>
-            </a-space>
+            </div>
           </template>
         </template>
       </a-table>
@@ -137,12 +160,14 @@ import {
   KeyOutlined,
 } from '@ant-design/icons-vue'
 import { userApi } from '@/api/user'
-import type { User, PageParams } from '@/types'
+import { roleApi } from '@/api/role'
+import type { User, Role, PageParams } from '@/types'
 
 const router = useRouter()
 
 const loading = ref(false)
 const users = ref<User[]>([])
+const roles = ref<Role[]>([])
 const pagination = reactive({
   current: 1,
   pageSize: 10,
@@ -162,52 +187,79 @@ const columns = [
     title: 'ID',
     dataIndex: 'id',
     key: 'id',
-    width: 80,
+    width: 60,
     align: 'center',
   },
   {
     title: '用户名',
     dataIndex: 'username',
     key: 'username',
-    width: 150,
+    width: 140,
+    ellipsis: true,
+    align: 'center',
   },
   {
     title: '邮箱',
     dataIndex: 'email',
     key: 'email',
-    width: 200,
+    width: 180,
+    ellipsis: true,
+    align: 'center',
   },
   {
     title: '手机号',
     dataIndex: 'phone',
     key: 'phone',
-    width: 150,
+    width: 140,
+    ellipsis: true,
+    align: 'center',
   },
   {
     title: '角色',
     dataIndex: 'roles',
     key: 'roles',
-    width: 200,
+    width: 160,
+    ellipsis: true,
+    align: 'center',
   },
   {
     title: '状态',
     dataIndex: 'status',
     key: 'status',
-    width: 100,
+    width: 80,
+    align: 'center',
   },
   {
     title: '创建时间',
     dataIndex: 'createTime',
     key: 'createTime',
-    width: 180,
+    width: 160,
+    align: 'center',
   },
   {
     title: '操作',
     key: 'action',
-    width: 280,
+    width: 140,
     fixed: 'right',
+    align: 'center',
   },
 ]
+
+// 获取角色列表
+const fetchRoles = async () => {
+  try {
+    const response = await roleApi.getRoles({ current: 1, size: 1000 })
+    roles.value = response.data.records
+  } catch (error: any) {
+    console.error('获取角色列表失败:', error)
+  }
+}
+
+// 根据角色ID获取角色名称
+const getRoleName = (roleId: number) => {
+  const role = roles.value.find(r => r.id === roleId)
+  return role ? role.name : `角色${roleId}`
+}
 
 // 获取用户列表
 const fetchUsers = async () => {
@@ -302,6 +354,7 @@ const getRowClassName = (record: User, index: number) => {
 }
 
 onMounted(() => {
+  fetchRoles()
   fetchUsers()
 })
 </script>
@@ -331,18 +384,30 @@ onMounted(() => {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
+.user-table :deep(.ant-table-container) {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
 .user-table :deep(.ant-table) {
   border-radius: 8px;
+  table-layout: fixed;
 }
+
+
 
 .user-table :deep(.ant-table-thead > tr > th) {
   background: #ffffff;
   border-bottom: 1px solid #e8e8e8;
   font-weight: 500;
   color: #333333;
-  padding: 16px 12px;
-  font-size: 14px;
+  padding: 12px 8px;
+  font-size: 13px;
   text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .user-table :deep(.ant-table-thead > tr > th:first-child) {
@@ -354,14 +419,23 @@ onMounted(() => {
 }
 
 .user-table :deep(.ant-table-tbody > tr > td) {
-  padding: 16px 12px;
+  padding: 12px 8px;
   border-bottom: 1px solid #f0f0f0;
   transition: all 0.3s ease;
-  text-align: left;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+  min-width: 0;
 }
 
-/* ID列居中显示 */
-.user-table :deep(.ant-table-tbody > tr > td:first-child) {
+/* 表格内容居中显示 */
+.user-table :deep(.ant-table-tbody > tr > td) {
+  text-align: center;
+}
+
+.user-table :deep(.ant-table-tbody > tr > td .action-buttons) {
   text-align: center;
 }
 
@@ -385,22 +459,56 @@ onMounted(() => {
   font-size: 12px;
 }
 
+/* 角色显示样式 */
+.roles-display {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: center;
+  align-items: center;
+}
+
+.role-tag {
+  border-radius: 4px;
+  font-size: 11px;
+  padding: 2px 6px;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.no-role {
+  color: #999;
+  font-size: 12px;
+  font-style: italic;
+}
+
 /* 操作按钮美化 */
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: center;
+  min-width: 120px;
+}
+
 .action-btn {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 6px 10px;
-  border-radius: 6px;
+  gap: 2px;
+  padding: 3px 6px;
+  border-radius: 4px;
   transition: all 0.3s ease;
-  font-size: 12px;
-  height: 32px;
+  font-size: 10px;
+  height: 24px;
   font-weight: 500;
+  white-space: nowrap;
+  min-width: 50px;
+  justify-content: center;
 }
 
 .action-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .edit-btn {
@@ -527,7 +635,43 @@ onMounted(() => {
   
   .user-table :deep(.ant-table-thead > tr > th),
   .user-table :deep(.ant-table-tbody > tr > td) {
-    padding: 12px 8px;
+    padding: 8px 4px;
+  }
+  
+  /* 移动端表格优化 */
+  .user-table :deep(.ant-table) {
+    font-size: 12px;
+  }
+  
+  .user-table :deep(.ant-table-thead > tr > th) {
+    font-size: 12px;
+    padding: 8px 4px;
+  }
+  
+  .user-table :deep(.ant-table-tbody > tr > td) {
+    font-size: 12px;
+    padding: 8px 4px;
+  }
+  
+  .action-btn {
+    font-size: 9px;
+    padding: 2px 4px;
+    height: 20px;
+    min-width: 40px;
+  }
+  
+  .action-buttons {
+    gap: 1px;
+    min-width: 100px;
+  }
+  
+  .roles-display {
+    gap: 2px;
+  }
+  
+  .role-tag {
+    font-size: 10px;
+    padding: 1px 4px;
   }
 }
 </style>

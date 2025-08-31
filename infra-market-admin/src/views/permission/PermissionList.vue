@@ -80,6 +80,7 @@
         row-key="id"
         class="permission-table"
         :row-class-name="getRowClassName"
+        :scroll="{ x: 1120 }"
         @change="handleTableChange"
       >
         <template #bodyCell="{ column, record }">
@@ -101,7 +102,7 @@
           </template>
           
           <template v-else-if="column.key === 'action'">
-            <a-space size="small">
+            <div class="action-buttons">
               <a-button 
                 type="link" 
                 size="small" 
@@ -137,7 +138,7 @@
                   删除
                 </a-button>
               </a-popconfirm>
-            </a-space>
+            </div>
           </template>
         </template>
       </a-table>
@@ -198,62 +199,74 @@ const columns = [
     title: 'ID',
     dataIndex: 'id',
     key: 'id',
-    width: 80,
+    width: 60,
     align: 'center',
   },
   {
     title: '权限名称',
     dataIndex: 'name',
     key: 'name',
-    width: 300,
+    width: 140,
+    ellipsis: true,
+    align: 'center',
   },
   {
     title: '权限编码',
     dataIndex: 'code',
     key: 'code',
-    width: 180,
+    width: 160,
+    ellipsis: true,
+    align: 'center',
   },
   {
     title: '权限类型',
     dataIndex: 'type',
     key: 'type',
-    width: 120,
+    width: 80,
+    align: 'center',
   },
   {
     title: '路径',
     dataIndex: 'path',
     key: 'path',
-    width: 200,
+    width: 180,
+    ellipsis: true,
+    align: 'center',
   },
   {
     title: '图标',
     dataIndex: 'icon',
     key: 'icon',
-    width: 120,
+    width: 60,
+    align: 'center',
   },
   {
     title: '排序',
     dataIndex: 'sort',
     key: 'sort',
-    width: 150,
+    width: 60,
+    align: 'center',
   },
   {
     title: '状态',
     dataIndex: 'status',
     key: 'status',
-    width: 100,
+    width: 80,
+    align: 'center',
   },
   {
     title: '创建时间',
     dataIndex: 'createTime',
     key: 'createTime',
-    width: 220,
+    width: 160,
+    align: 'center',
   },
   {
     title: '操作',
     key: 'action',
-    width: 200,
+    width: 140,
     fixed: 'right',
+    align: 'center',
   },
 ]
 
@@ -370,8 +383,14 @@ onMounted(() => {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
+.permission-table :deep(.ant-table-container) {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
 .permission-table :deep(.ant-table) {
   border-radius: 8px;
+  table-layout: fixed;
 }
 
 .permission-table :deep(.ant-table-thead > tr > th) {
@@ -379,9 +398,13 @@ onMounted(() => {
   border-bottom: 1px solid #e8e8e8;
   font-weight: 500;
   color: #333333;
-  padding: 16px 12px;
-  font-size: 14px;
+  padding: 12px 8px;
+  font-size: 13px;
   text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .permission-table :deep(.ant-table-thead > tr > th:first-child) {
@@ -393,14 +416,23 @@ onMounted(() => {
 }
 
 .permission-table :deep(.ant-table-tbody > tr > td) {
-  padding: 16px 12px;
+  padding: 12px 8px;
   border-bottom: 1px solid #f0f0f0;
   transition: all 0.3s ease;
-  text-align: left;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+  min-width: 0;
 }
 
-/* ID列居中显示 */
-.permission-table :deep(.ant-table-tbody > tr > td:first-child) {
+/* 表格内容居中显示 */
+.permission-table :deep(.ant-table-tbody > tr > td) {
+  text-align: center;
+}
+
+.permission-table :deep(.ant-table-tbody > tr > td .action-buttons) {
   text-align: center;
 }
 
@@ -443,21 +475,32 @@ onMounted(() => {
 }
 
 /* 操作按钮美化 */
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: center;
+  min-width: 120px;
+}
+
 .action-btn {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 6px 10px;
-  border-radius: 6px;
+  gap: 2px;
+  padding: 3px 6px;
+  border-radius: 4px;
   transition: all 0.3s ease;
-  font-size: 12px;
-  height: 32px;
+  font-size: 10px;
+  height: 24px;
   font-weight: 500;
+  white-space: nowrap;
+  min-width: 50px;
+  justify-content: center;
 }
 
 .action-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .edit-btn {
@@ -577,9 +620,34 @@ onMounted(() => {
   
   .permission-table :deep(.ant-table-thead > tr > th),
   .permission-table :deep(.ant-table-tbody > tr > td) {
-    padding: 12px 8px;
+    padding: 8px 4px;
   }
   
-
+  /* 移动端表格优化 */
+  .permission-table :deep(.ant-table) {
+    font-size: 12px;
+  }
+  
+  .permission-table :deep(.ant-table-thead > tr > th) {
+    font-size: 12px;
+    padding: 8px 4px;
+  }
+  
+  .permission-table :deep(.ant-table-tbody > tr > td) {
+    font-size: 12px;
+    padding: 8px 4px;
+  }
+  
+  .action-btn {
+    font-size: 9px;
+    padding: 2px 4px;
+    height: 20px;
+    min-width: 40px;
+  }
+  
+  .action-buttons {
+    gap: 1px;
+    min-width: 100px;
+  }
 }
 </style>
