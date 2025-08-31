@@ -1,7 +1,7 @@
 <template>
   <a-layout class="main-layout">
     <a-layout-header class="header">
-      <div class="logo">基础商城后台</div>
+              <div class="logo">基础设施市场</div>
       <div class="header-right">
         <a-dropdown>
           <a class="user-dropdown">
