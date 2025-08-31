@@ -19,24 +19,38 @@
           <template #overlay>
             <a-menu class="user-menu">
               <div class="menu-header">
-                <a-avatar class="menu-avatar">
-                  {{ user?.username?.charAt(0)?.toUpperCase() }}
-                </a-avatar>
+                <div class="menu-avatar-wrapper">
+                  <a-avatar class="menu-avatar">
+                    {{ user?.username?.charAt(0)?.toUpperCase() }}
+                  </a-avatar>
+                  <div class="online-indicator"></div>
+                </div>
                 <div class="menu-user-info">
                   <div class="menu-username">{{ user?.username }}</div>
                   <div class="menu-role">管理员</div>
+                  <div class="menu-status">在线</div>
                 </div>
               </div>
-              <a-menu-divider />
-              <a-menu-item key="change-password" @click="handleChangePassword">
-                <KeyOutlined />
-                <span>修改密码</span>
-              </a-menu-item>
-              <a-menu-divider />
-              <a-menu-item key="logout" @click="handleLogout" class="logout-item">
-                <LogoutOutlined />
-                <span>退出登录</span>
-              </a-menu-item>
+              <div style="height: 1px; background: #f0f0f0; margin: 8px 0;"></div>
+              <div @click="handleChangePassword" class="custom-menu-item" style="display: flex; align-items: center; padding: 12px 16px; cursor: pointer; transition: background 0.3s ease; border-radius: 10px; margin: 4px 8px;">
+                <div style="width: 32px; height: 32px; border-radius: 50%; background: rgba(24, 144, 255, 0.1); display: flex; align-items: center; justify-content: center; margin-right: 12px; flex-shrink: 0; color: #1890ff;">
+                  <KeyOutlined />
+                </div>
+                <div style="display: flex; flex-direction: column; justify-content: center; flex: 1;">
+                  <div style="font-size: 14px; font-weight: 600; color: #333; margin: 0; line-height: 1.3;">修改密码</div>
+                  <div style="font-size: 12px; color: #666; margin: 1px 0 0 0; line-height: 1.3;">更新您的账户密码</div>
+                </div>
+              </div>
+              <div style="height: 1px; background: #f0f0f0; margin: 8px 0;"></div>
+              <div @click="handleLogout" class="custom-menu-item" style="display: flex; align-items: center; padding: 12px 16px; cursor: pointer; transition: background 0.3s ease; border-radius: 10px; margin: 4px 8px;">
+                <div style="width: 32px; height: 32px; border-radius: 50%; background: rgba(255, 77, 79, 0.1); display: flex; align-items: center; justify-content: center; margin-right: 12px; flex-shrink: 0; color: #ff4d4f;">
+                  <LogoutOutlined />
+                </div>
+                <div style="display: flex; flex-direction: column; justify-content: center; flex: 1;">
+                  <div style="font-size: 14px; font-weight: 600; color: #333; margin: 0; line-height: 1.3;">退出登录</div>
+                  <div style="font-size: 12px; color: #666; margin: 1px 0 0 0; line-height: 1.3;">安全退出系统</div>
+                </div>
+              </div>
             </a-menu>
           </template>
         </a-dropdown>
@@ -346,39 +360,65 @@ const handleLogout = async () => {
   display: flex;
   align-items: center;
   cursor: pointer;
-  padding: 8px 16px;
+  padding: 8px 12px;
   border-radius: 8px;
   transition: all 0.3s ease;
-  background: #ffffff;
-  border: 1px solid #e8e8e8;
-  min-width: 160px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  min-width: 140px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  position: relative;
+  overflow: hidden;
+}
+
+.user-dropdown::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
 .user-dropdown:hover {
-  background: #fafafa;
-  border-color: #1890ff;
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(24, 144, 255, 0.3);
   box-shadow: 0 4px 12px rgba(24, 144, 255, 0.15);
+}
+
+.user-dropdown:hover::before {
+  opacity: 1;
 }
 
 .user-info {
   display: flex;
   align-items: center;
   flex: 1;
+  position: relative;
+  z-index: 1;
 }
 
 .user-avatar {
-  background: #1890ff;
+  background: linear-gradient(135deg, #1890ff 0%, #40a9ff 100%);
   color: white;
   font-weight: bold;
-  margin-right: 12px;
-  border: 2px solid #e6f7ff;
+  margin-right: 8px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
   transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.2);
+  width: 32px;
+  height: 32px;
+  font-size: 14px;
 }
 
 .user-dropdown:hover .user-avatar {
-  background: #40a9ff;
-  border-color: #bae7ff;
+  background: linear-gradient(135deg, #096dd9 0%, #1890ff 100%);
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
 }
 
 .user-details {
@@ -390,14 +430,15 @@ const handleLogout = async () => {
 .username {
   color: #333333;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 13px;
   line-height: 1.2;
   transition: all 0.3s ease;
+  margin-bottom: 1px;
 }
 
 .user-role {
   color: #666666;
-  font-size: 12px;
+  font-size: 11px;
   line-height: 1.2;
   font-weight: 500;
   transition: all 0.3s ease;
@@ -413,9 +454,11 @@ const handleLogout = async () => {
 
 .dropdown-icon {
   color: #666666;
-  font-size: 12px;
+  font-size: 10px;
   transition: all 0.3s ease;
-  margin-left: 8px;
+  margin-left: 6px;
+  position: relative;
+  z-index: 1;
 }
 
 .user-dropdown:hover .dropdown-icon {
@@ -425,84 +468,256 @@ const handleLogout = async () => {
 
 /* 用户菜单美化 */
 .user-menu {
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  border: 1px solid #e8e8e8;
-  padding: 0;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 4px 16px rgba(0, 0, 0, 0.08);
+  border: none;
+  padding: 4px;
   background: #ffffff;
   overflow: hidden;
+  min-width: 260px;
+  max-width: 280px;
+  backdrop-filter: blur(20px);
 }
 
 .menu-header {
   display: flex;
   align-items: center;
-  padding: 16px;
-  background: #fafafa;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #1890ff 0%, #40a9ff 100%);
+  border-radius: 12px;
+  margin: 8px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
+}
+
+.menu-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="50" cy="10" r="0.5" fill="rgba(255,255,255,0.1)"/><circle cx="10" cy="60" r="0.5" fill="rgba(255,255,255,0.1)"/><circle cx="90" cy="40" r="0.5" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+  opacity: 0.2;
   border-radius: 8px 8px 0 0;
-  margin: -1px -1px 0 -1px;
-  border-bottom: 1px solid #e8e8e8;
+}
+
+.menu-avatar-wrapper {
+  position: relative;
+  margin-right: 14px;
 }
 
 .menu-avatar {
-  background: #1890ff;
+  background: rgba(255, 255, 255, 0.25);
   color: white;
-  font-weight: bold;
-  margin-right: 12px;
-  border: 2px solid #e6f7ff;
+  font-weight: 700;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(10px);
+  position: relative;
+  z-index: 1;
+  width: 42px;
+  height: 42px;
+  font-size: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.online-indicator {
+  position: absolute;
+  bottom: 1px;
+  right: 1px;
+  width: 8px;
+  height: 8px;
+  background: #52c41a;
+  border: 1px solid white;
+  border-radius: 50%;
+  z-index: 2;
 }
 
 .menu-user-info {
   display: flex;
   flex-direction: column;
+  position: relative;
+  z-index: 1;
 }
 
 .menu-username {
-  color: #333333;
-  font-weight: 600;
-  font-size: 14px;
-  line-height: 1.2;
+  color: white;
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 1.3;
+  margin-bottom: 3px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  letter-spacing: 0.3px;
 }
 
 .menu-role {
-  color: #666666;
+  color: rgba(255, 255, 255, 0.95);
   font-size: 12px;
-  line-height: 1.2;
+  line-height: 1.3;
   font-weight: 500;
+  margin-bottom: 1px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.menu-status {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 11px;
+  line-height: 1.2;
+  font-weight: 400;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* 强制覆盖 Ant Design 菜单项样式 */
+.user-menu :deep(.ant-menu-item.menu-item-change-password),
+.user-menu :deep(.ant-menu-item.menu-item-logout) {
+  display: flex !important;
+  align-items: center !important;
+  padding: 16px 20px !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  transition: all 0.3s ease !important;
+  color: #333 !important;
+  border-bottom: 1px solid #f5f5f5 !important;
+  height: auto !important;
+  line-height: normal !important;
+  width: 100% !important;
+  justify-content: flex-start !important;
+  box-sizing: border-box !important;
 }
 
 .user-menu :deep(.ant-menu-item) {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  margin: 0;
-  border-radius: 0;
-  transition: all 0.3s ease;
-  color: #333;
+  display: flex !important;
+  align-items: center !important;
+  padding: 16px 20px !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  transition: all 0.3s ease !important;
+  color: #333 !important;
+  border-bottom: 1px solid #f5f5f5 !important;
+  height: auto !important;
+  line-height: normal !important;
+  width: 100% !important;
+  justify-content: flex-start !important;
+}
+
+.user-menu :deep(.ant-menu-item:last-child) {
+  border-bottom: none;
 }
 
 .user-menu :deep(.ant-menu-item:hover) {
-  background: #e6f7ff;
+  background: #f8f9fa;
   color: #1890ff;
+  transform: translateX(4px);
 }
 
 .user-menu :deep(.ant-menu-item .anticon) {
-  font-size: 16px;
+  font-size: 18px;
   color: inherit;
+  margin-right: 0 !important;
+  margin-left: 0 !important;
+}
+
+.user-menu :deep(.ant-menu-item) > * {
+  margin-right: 0 !important;
+  margin-left: 0 !important;
+}
+
+.user-menu :deep(.ant-menu-item) .menu-item-icon + .menu-item-content {
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.user-menu :deep(.ant-menu-item-content) {
+  width: 100% !important;
+  flex: 1 !important;
 }
 
 .user-menu :deep(.ant-menu-divider) {
-  margin: 4px 0;
+  margin: 0;
   border-color: #f0f0f0;
 }
 
-.logout-item {
+/* 自定义菜单项样式 */
+.custom-menu-item:hover {
+  background: rgba(0, 0, 0, 0.04) !important;
+}
+
+.custom-menu-item:active {
+  background: rgba(0, 0, 0, 0.08) !important;
+}
+
+.menu-item-change-password, .menu-item-logout {
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 8px;
+  transition: all 0.3s ease;
+  background: linear-gradient(135deg, #f0f0f0, #ffffff);
+}
+
+.menu-item-change-password:hover, .menu-item-logout:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.user-menu .menu-item-icon {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 50% !important;
+  background: rgba(24, 144, 255, 0.1) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin-right: 16px !important;
+  flex-shrink: 0 !important;
+}
+
+/* 强制菜单项内容布局 */
+.user-menu :deep(.menu-item-change-password) .menu-item-content,
+.user-menu :deep(.menu-item-logout) .menu-item-content,
+.user-menu .menu-item-content {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  flex: 1 !important;
+  width: calc(100% - 52px) !important;
+  min-width: 0 !important;
+  margin-left: 0 !important;
+  padding-left: 0 !important;
+}
+
+.user-menu .menu-item-title {
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  color: #333 !important;
+  margin: 0 !important;
+  line-height: 1.4 !important;
+}
+
+.user-menu .menu-item-desc {
+  font-size: 13px !important;
+  color: #666 !important;
+  margin: 2px 0 0 0 !important;
+  line-height: 1.4 !important;
+}
+
+.user-menu .menu-item-change-password .menu-item-icon {
+  background: rgba(24, 144, 255, 0.1) !important;
+  color: #1890ff !important;
+}
+
+.user-menu .menu-item-logout .menu-item-icon {
+  background: rgba(255, 77, 79, 0.1) !important;
   color: #ff4d4f !important;
 }
 
-.logout-item:hover {
-  background: #fff2f0 !important;
-  color: #ff4d4f !important;
+.menu-item-change-password:hover .menu-item-desc {
+  color: #1890ff;
+}
+
+.menu-item-logout:hover .menu-item-desc {
+  color: #ff4d4f;
 }
 
 .sider {
@@ -553,8 +768,8 @@ const handleLogout = async () => {
   }
   
   .user-dropdown {
-    min-width: 140px;
-    padding: 8px 12px;
+    min-width: 120px;
+    padding: 6px 10px;
   }
   
   .user-details {
@@ -566,11 +781,11 @@ const handleLogout = async () => {
   }
   
   .user-menu {
-    min-width: 200px;
+    min-width: 240px;
   }
   
   .menu-header {
-    padding: 16px;
+    padding: 12px 16px;
   }
   
   .user-menu :deep(.ant-menu-item) {
@@ -588,12 +803,19 @@ const handleLogout = async () => {
   }
   
   .user-dropdown {
-    min-width: 120px;
-    padding: 6px 10px;
+    min-width: 100px;
+    padding: 6px 8px;
   }
   
   .user-avatar {
-    margin-right: 8px;
+    margin-right: 6px;
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+  
+  .user-menu {
+    min-width: 200px;
   }
 }
 </style>
