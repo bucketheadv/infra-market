@@ -31,24 +31,24 @@
                   <div class="menu-status">在线</div>
                 </div>
               </div>
-              <div style="height: 1px; background: #f0f0f0; margin: 8px 0;"></div>
-              <div @click="handleChangePassword" class="custom-menu-item" style="display: flex; align-items: center; padding: 12px 16px; cursor: pointer; transition: background 0.3s ease; border-radius: 10px; margin: 4px 8px;">
-                <div style="width: 32px; height: 32px; border-radius: 50%; background: rgba(24, 144, 255, 0.1); display: flex; align-items: center; justify-content: center; margin-right: 12px; flex-shrink: 0; color: #1890ff;">
+              <div style="height: 1px; background: #f0f0f0; margin: 6px 0;"></div>
+              <div @click="handleChangePassword" class="custom-menu-item" style="display: flex; align-items: center; padding: 10px 14px; cursor: pointer; transition: background 0.3s ease; border-radius: 8px; margin: 3px 6px;">
+                <div style="width: 28px; height: 28px; border-radius: 50%; background: rgba(24, 144, 255, 0.1); display: flex; align-items: center; justify-content: center; margin-right: 10px; flex-shrink: 0; color: #1890ff;">
                   <KeyOutlined />
                 </div>
                 <div style="display: flex; flex-direction: column; justify-content: center; flex: 1;">
-                  <div style="font-size: 14px; font-weight: 600; color: #333; margin: 0; line-height: 1.3;">修改密码</div>
-                  <div style="font-size: 12px; color: #666; margin: 1px 0 0 0; line-height: 1.3;">更新您的账户密码</div>
+                  <div style="font-size: 13px; font-weight: 600; color: #333; margin: 0; line-height: 1.2;">修改密码</div>
+                  <div style="font-size: 11px; color: #666; margin: 1px 0 0 0; line-height: 1.2;">更新您的账户密码</div>
                 </div>
               </div>
-              <div style="height: 1px; background: #f0f0f0; margin: 8px 0;"></div>
-              <div @click="handleLogout" class="custom-menu-item" style="display: flex; align-items: center; padding: 12px 16px; cursor: pointer; transition: background 0.3s ease; border-radius: 10px; margin: 4px 8px;">
-                <div style="width: 32px; height: 32px; border-radius: 50%; background: rgba(255, 77, 79, 0.1); display: flex; align-items: center; justify-content: center; margin-right: 12px; flex-shrink: 0; color: #ff4d4f;">
+              <div style="height: 1px; background: #f0f0f0; margin: 6px 0;"></div>
+              <div @click="handleLogout" class="custom-menu-item" style="display: flex; align-items: center; padding: 10px 14px; cursor: pointer; transition: background 0.3s ease; border-radius: 8px; margin: 3px 6px;">
+                <div style="width: 28px; height: 28px; border-radius: 50%; background: rgba(255, 77, 79, 0.1); display: flex; align-items: center; justify-content: center; margin-right: 10px; flex-shrink: 0; color: #ff4d4f;">
                   <LogoutOutlined />
                 </div>
                 <div style="display: flex; flex-direction: column; justify-content: center; flex: 1;">
-                  <div style="font-size: 14px; font-weight: 600; color: #333; margin: 0; line-height: 1.3;">退出登录</div>
-                  <div style="font-size: 12px; color: #666; margin: 1px 0 0 0; line-height: 1.3;">安全退出系统</div>
+                  <div style="font-size: 13px; font-weight: 600; color: #333; margin: 0; line-height: 1.2;">退出登录</div>
+                  <div style="font-size: 11px; color: #666; margin: 1px 0 0 0; line-height: 1.2;">安全退出系统</div>
                 </div>
               </div>
             </a-menu>
@@ -468,27 +468,27 @@ const handleLogout = async () => {
 
 /* 用户菜单美化 */
 .user-menu {
-  border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 4px 16px rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.06);
   border: none;
-  padding: 4px;
+  padding: 3px;
   background: #ffffff;
   overflow: hidden;
-  min-width: 260px;
-  max-width: 280px;
+  min-width: 220px;
+  max-width: 240px;
   backdrop-filter: blur(20px);
 }
 
 .menu-header {
   display: flex;
   align-items: center;
-  padding: 16px 20px;
+  padding: 12px 16px;
   background: linear-gradient(135deg, #1890ff 0%, #40a9ff 100%);
-  border-radius: 12px;
-  margin: 8px;
+  border-radius: 8px;
+  margin: 6px;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.25);
 }
 
 .menu-header::before {
@@ -505,7 +505,7 @@ const handleLogout = async () => {
 
 .menu-avatar-wrapper {
   position: relative;
-  margin-right: 14px;
+  margin-right: 10px;
 }
 
 .menu-avatar {
@@ -516,18 +516,18 @@ const handleLogout = async () => {
   backdrop-filter: blur(10px);
   position: relative;
   z-index: 1;
-  width: 42px;
-  height: 42px;
-  font-size: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  width: 32px;
+  height: 32px;
+  font-size: 12px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
 }
 
 .online-indicator {
   position: absolute;
-  bottom: 1px;
-  right: 1px;
-  width: 8px;
-  height: 8px;
+  bottom: 0;
+  right: 0;
+  width: 6px;
+  height: 6px;
   background: #52c41a;
   border: 1px solid white;
   border-radius: 50%;
@@ -544,17 +544,17 @@ const handleLogout = async () => {
 .menu-username {
   color: white;
   font-weight: 700;
-  font-size: 15px;
-  line-height: 1.3;
-  margin-bottom: 3px;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-  letter-spacing: 0.3px;
+  font-size: 13px;
+  line-height: 1.2;
+  margin-bottom: 2px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  letter-spacing: 0.2px;
 }
 
 .menu-role {
   color: rgba(255, 255, 255, 0.95);
-  font-size: 12px;
-  line-height: 1.3;
+  font-size: 11px;
+  line-height: 1.2;
   font-weight: 500;
   margin-bottom: 1px;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
@@ -562,8 +562,8 @@ const handleLogout = async () => {
 
 .menu-status {
   color: rgba(255, 255, 255, 0.85);
-  font-size: 11px;
-  line-height: 1.2;
+  font-size: 10px;
+  line-height: 1.1;
   font-weight: 400;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
@@ -573,7 +573,7 @@ const handleLogout = async () => {
 .user-menu :deep(.ant-menu-item.menu-item-logout) {
   display: flex !important;
   align-items: center !important;
-  padding: 16px 20px !important;
+  padding: 12px 16px !important;
   margin: 0 !important;
   border-radius: 0 !important;
   transition: all 0.3s ease !important;
@@ -589,7 +589,7 @@ const handleLogout = async () => {
 .user-menu :deep(.ant-menu-item) {
   display: flex !important;
   align-items: center !important;
-  padding: 16px 20px !important;
+  padding: 12px 16px !important;
   margin: 0 !important;
   border-radius: 0 !important;
   transition: all 0.3s ease !important;
@@ -612,7 +612,7 @@ const handleLogout = async () => {
 }
 
 .user-menu :deep(.ant-menu-item .anticon) {
-  font-size: 18px;
+  font-size: 14px;
   color: inherit;
   margin-right: 0 !important;
   margin-left: 0 !important;

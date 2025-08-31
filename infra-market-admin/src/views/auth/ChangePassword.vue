@@ -168,8 +168,8 @@ const goBack = () => {
   justify-content: center;
   align-items: center;
   min-height: calc(100vh - 64px);
-  background: linear-gradient(135deg, #f0f2f5 0%, #e6f7ff 100%);
-  padding: 24px;
+  background: #f0f2f5;
+  padding: 16px;
   position: relative;
 }
 
@@ -186,60 +186,59 @@ const goBack = () => {
 
 .change-password-wrapper {
   width: 100%;
-  max-width: 480px;
+  max-width: 400px;
   position: relative;
   z-index: 1;
 }
 
 .change-password-header {
   text-align: center;
-  margin-bottom: 32px;
+  margin-bottom: 20px;
   color: #333;
 }
 
 .header-icon {
-  width: 80px;
-  height: 80px;
+  width: 48px;
+  height: 48px;
   background: linear-gradient(135deg, #1890ff 0%, #40a9ff 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 24px;
-  box-shadow: 0 4px 16px rgba(24, 144, 255, 0.3);
-  border: 3px solid rgba(255, 255, 255, 0.8);
+  margin: 0 auto 12px;
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.8);
 }
 
 .header-icon :deep(.anticon) {
-  font-size: 36px;
+  font-size: 20px;
   color: white;
 }
 
 .header-title {
-  font-size: 28px;
-  font-weight: 700;
-  margin: 0 0 12px;
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 8px;
   color: #333;
 }
 
 .header-subtitle {
-  font-size: 16px;
+  font-size: 13px;
   color: #666;
   margin: 0;
   font-weight: 400;
 }
 
 .change-password-card {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1px solid #f0f0f0;
   overflow: hidden;
 }
 
 .change-password-card :deep(.ant-card-body) {
-  padding: 40px;
+  padding: 24px;
 }
 
 .password-form {
@@ -247,94 +246,92 @@ const goBack = () => {
 }
 
 .password-form :deep(.ant-form-item-label > label) {
-  font-weight: 600;
+  font-weight: 500;
   color: #333;
-  font-size: 14px;
-  margin-bottom: 8px;
+  font-size: 13px;
+  margin-bottom: 6px;
 }
 
 .password-input {
-  border-radius: 8px;
-  border: 2px solid #e8e8e8;
+  border-radius: 4px;
+  border: 1px solid #d9d9d9;
   transition: all 0.3s ease;
-  background: #fafafa;
+  background: #fff;
+  font-size: 13px;
 }
 
 .password-input:hover {
-  border-color: #1890ff;
-  background: white;
+  border-color: #40a9ff;
 }
 
 .password-input:focus,
 .password-input:focus-within {
   border-color: #1890ff;
-  background: white;
-  box-shadow: 0 0 0 3px rgba(24, 144, 255, 0.1);
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
 }
 
 .input-icon {
-  color: #999;
-  font-size: 16px;
+  color: #bfbfbf;
+  font-size: 12px;
 }
 
 .password-tips {
-  margin-top: 8px;
+  margin-top: 4px;
 }
 
 .tip-text {
-  font-size: 12px;
+  font-size: 11px;
   color: #666;
-  line-height: 1.4;
+  line-height: 1.3;
 }
 
 .submit-item {
-  margin-top: 32px;
-  margin-bottom: 16px;
+  margin-top: 20px;
+  margin-bottom: 12px;
 }
 
 .submit-btn {
-  height: 48px;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 600;
-  background: linear-gradient(135deg, #1890ff 0%, #40a9ff 100%);
+  height: 40px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  background: #1890ff;
   border: none;
-  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
+  box-shadow: 0 2px 6px rgba(24, 144, 255, 0.2);
   transition: all 0.3s ease;
 }
 
 .submit-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(24, 144, 255, 0.4);
-  background: linear-gradient(135deg, #096dd9 0%, #1890ff 100%);
+  background: #40a9ff;
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
 }
 
 .submit-btn:active {
-  transform: translateY(0);
+  background: #096dd9;
 }
 
 .form-footer {
   text-align: center;
-  margin-top: 24px;
+  margin-top: 16px;
 }
 
 .back-btn {
   color: #666;
-  font-size: 14px;
-  padding: 8px 16px;
-  border-radius: 6px;
+  font-size: 13px;
+  padding: 6px 12px;
+  border-radius: 4px;
   transition: all 0.3s ease;
 }
 
 .back-btn:hover {
   color: #1890ff;
-  background: rgba(24, 144, 255, 0.1);
+  background: rgba(24, 144, 255, 0.05);
 }
 
 /* 响应式设计 */
 @media (max-width: 768px) {
   .change-password-container {
-    padding: 16px;
+    padding: 12px;
   }
   
   .change-password-wrapper {
@@ -342,40 +339,40 @@ const goBack = () => {
   }
   
   .header-icon {
-    width: 60px;
-    height: 60px;
-    margin-bottom: 16px;
+    width: 40px;
+    height: 40px;
+    margin-bottom: 10px;
   }
   
   .header-icon :deep(.anticon) {
-    font-size: 28px;
+    font-size: 16px;
   }
   
   .header-title {
-    font-size: 24px;
+    font-size: 18px;
   }
   
   .header-subtitle {
-    font-size: 14px;
+    font-size: 12px;
   }
   
   .change-password-card :deep(.ant-card-body) {
-    padding: 24px;
+    padding: 20px;
   }
 }
 
 @media (max-width: 480px) {
   .change-password-card :deep(.ant-card-body) {
-    padding: 20px;
+    padding: 16px;
   }
   
   .header-title {
-    font-size: 20px;
+    font-size: 16px;
   }
   
   .submit-btn {
-    height: 44px;
-    font-size: 14px;
+    height: 36px;
+    font-size: 13px;
   }
 }
 </style>
