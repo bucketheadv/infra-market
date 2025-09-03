@@ -36,6 +36,8 @@
         </div>
       </template>
     </a-dropdown>
+    
+
   </div>
 </template>
 
@@ -80,13 +82,14 @@ const resetToDefault = () => {
   width: 32px;
   height: 32px;
   border-radius: 6px;
-  border: 1px solid rgba(24, 144, 255, 0.15);
+  border: 1px solid var(--primary-color, rgba(24, 144, 255, 0.15));
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.85) 100%);
   backdrop-filter: blur(8px);
   transition: all 0.2s ease;
   cursor: pointer;
   position: relative;
   overflow: hidden;
+  box-shadow: 0 1px 3px var(--shadow-color, rgba(24, 144, 255, 0.1));
 }
 
 .theme-button::before {
@@ -101,15 +104,132 @@ const resetToDefault = () => {
   transition: opacity 0.2s ease;
 }
 
+/* 主题特定的伪元素背景 */
+html.theme-default .theme-button::before {
+  background: linear-gradient(135deg, #1890ff 0%, #40a9ff 100%) !important;
+}
+
+html.theme-dark .theme-button::before {
+  background: linear-gradient(135deg, #722ed1 0%, #9254de 100%) !important;
+}
+
+html.theme-green .theme-button::before {
+  background: linear-gradient(135deg, #52c41a 0%, #73d13d 100%) !important;
+}
+
+html.theme-orange .theme-button::before {
+  background: linear-gradient(135deg, #fa8c16 0%, #ffa940 100%) !important;
+}
+
+html.theme-red .theme-button::before {
+  background: linear-gradient(135deg, #f5222d 0%, #ff4d4f 100%) !important;
+}
+
 .theme-button:hover {
   border-color: var(--primary-color, #1890ff);
   transform: translateY(-1px);
-  box-shadow: 0 3px 8px rgba(24, 144, 255, 0.2);
+  box-shadow: 0 3px 8px var(--shadow-color, rgba(24, 144, 255, 0.2));
+}
+
+/* 主题特定的悬停样式 */
+html.theme-default .theme-button:hover {
+  box-shadow: 0 3px 8px rgba(24, 144, 255, 0.2) !important;
+}
+
+html.theme-dark .theme-button:hover {
+  box-shadow: 0 3px 8px rgba(114, 46, 209, 0.2) !important;
+}
+
+html.theme-green .theme-button:hover {
+  box-shadow: 0 3px 8px rgba(82, 196, 26, 0.2) !important;
+}
+
+html.theme-orange .theme-button:hover {
+  box-shadow: 0 3px 8px rgba(250, 140, 22, 0.2) !important;
+}
+
+html.theme-red .theme-button:hover {
+  box-shadow: 0 3px 8px rgba(245, 34, 45, 0.2) !important;
+}
+
+/* 主题特定的悬停边框颜色 */
+html.theme-default .theme-button:hover {
+  border-color: rgba(24, 144, 255, 0.3) !important;
+}
+
+html.theme-dark .theme-button:hover {
+  border-color: rgba(114, 46, 209, 0.3) !important;
+}
+
+html.theme-green .theme-button:hover {
+  border-color: rgba(82, 196, 26, 0.3) !important;
+}
+
+html.theme-orange .theme-button:hover {
+  border-color: rgba(250, 140, 22, 0.3) !important;
+}
+
+html.theme-red .theme-button:hover {
+  border-color: rgba(245, 34, 45, 0.3) !important;
 }
 
 .theme-button:hover::before {
   opacity: 0.1;
 }
+
+/* 主题特定的悬停伪元素样式 */
+html.theme-default .theme-button:hover::before {
+  opacity: 0.1 !important;
+}
+
+html.theme-dark .theme-button:hover::before {
+  opacity: 0.15 !important;
+}
+
+html.theme-green .theme-button:hover::before {
+  opacity: 0.12 !important;
+}
+
+html.theme-orange .theme-button:hover::before {
+  opacity: 0.1 !important;
+}
+
+html.theme-red .theme-button:hover::before {
+  opacity: 0.1 !important;
+}
+
+/* 主题特定的按钮样式 */
+html.theme-default .theme-button {
+  border-color: rgba(24, 144, 255, 0.15) !important;
+  box-shadow: 0 1px 3px rgba(24, 144, 255, 0.1) !important;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(24, 144, 255, 0.02) 100%) !important;
+}
+
+html.theme-dark .theme-button {
+  border-color: rgba(114, 46, 209, 0.15) !important;
+  box-shadow: 0 1px 3px rgba(114, 46, 209, 0.1) !important;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(114, 46, 209, 0.02) 100%) !important;
+}
+
+html.theme-green .theme-button {
+  border-color: rgba(82, 196, 26, 0.15) !important;
+  box-shadow: 0 1px 3px rgba(82, 196, 26, 0.1) !important;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(82, 196, 26, 0.02) 100%) !important;
+}
+
+html.theme-orange .theme-button {
+  border-color: rgba(250, 140, 22, 0.15) !important;
+  box-shadow: 0 1px 3px rgba(250, 140, 22, 0.1) !important;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(250, 140, 22, 0.02) 100%) !important;
+}
+
+html.theme-red .theme-button {
+  border-color: rgba(245, 34, 45, 0.15) !important;
+  box-shadow: 0 1px 3px rgba(245, 34, 45, 0.1) !important;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(245, 34, 45, 0.02) 100%) !important;
+}
+
+
 
 .theme-icon {
   font-size: 14px;
@@ -123,6 +243,48 @@ const resetToDefault = () => {
 .theme-button:hover .theme-icon {
   color: var(--primary-color, #1890ff);
   transform: scale(1.1);
+}
+
+/* 主题特定的悬停图标颜色 */
+html.theme-default .theme-button:hover .theme-icon {
+  color: #1890ff !important;
+}
+
+html.theme-dark .theme-button:hover .theme-icon {
+  color: #722ed1 !important;
+}
+
+html.theme-green .theme-button:hover .theme-icon {
+  color: #52c41a !important;
+}
+
+html.theme-orange .theme-button:hover .theme-icon {
+  color: #fa8c16 !important;
+}
+
+html.theme-red .theme-button:hover .theme-icon {
+  color: #f5222d !important;
+}
+
+/* 主题特定的图标颜色 */
+html.theme-default .theme-icon {
+  color: #1890ff !important;
+}
+
+html.theme-dark .theme-icon {
+  color: #722ed1 !important;
+}
+
+html.theme-green .theme-icon {
+  color: #52c41a !important;
+}
+
+html.theme-orange .theme-icon {
+  color: #fa8c16 !important;
+}
+
+html.theme-red .theme-icon {
+  color: #f5222d !important;
 }
 
 /* 主题下拉菜单样式 */

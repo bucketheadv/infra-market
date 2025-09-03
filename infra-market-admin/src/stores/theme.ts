@@ -106,9 +106,13 @@ export const useThemeStore = defineStore('theme', () => {
     root.style.setProperty('--border-color', theme.borderColor)
     root.style.setProperty('--shadow-color', theme.shadowColor)
     
-    // 更新body类名用于全局样式控制
+    // 更新html和body类名用于全局样式控制
+    document.documentElement.className = document.documentElement.className.replace(/theme-\w+/g, '')
+    document.documentElement.classList.add(`theme-${themeName}`)
     document.body.className = document.body.className.replace(/theme-\w+/g, '')
     document.body.classList.add(`theme-${themeName}`)
+    
+
   }
   
   // 初始化主题

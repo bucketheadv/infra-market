@@ -360,6 +360,7 @@ const handleLogout = async () => {
   flex-shrink: 0;
   position: relative;
   z-index: 1000;
+  font-family: 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
 .header::before {
@@ -377,36 +378,17 @@ const handleLogout = async () => {
   align-items: center;
   cursor: pointer;
   transition: all 0.3s ease;
-  padding: 8px 12px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(10px);
-  border: 1px solid var(--primary-color, rgba(24, 144, 255, 0.1));
-  box-shadow: 0 2px 8px var(--shadow-color, rgba(24, 144, 255, 0.08)), 0 0 0 1px var(--primary-color, rgba(24, 144, 255, 0.05));
+  padding: 8px 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
   position: relative;
-  overflow: hidden;
 }
 
-.logo::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, var(--primary-color, rgba(24, 144, 255, 0.1)), transparent);
-  transition: left 0.6s ease;
-}
 
-.logo:hover::before {
-  left: 100%;
-}
 
 .logo:hover {
-  transform: translateY(-2px);
-  background: rgba(255, 255, 255, 0.95);
-  border-color: var(--primary-color, rgba(24, 144, 255, 0.2));
-  box-shadow: 0 4px 16px var(--shadow-color, rgba(24, 144, 255, 0.15));
+  transform: translateY(-1px);
 }
 
 .logo-icon {
@@ -414,13 +396,11 @@ const handleLogout = async () => {
   height: 36px;
   margin-right: 12px;
   flex-shrink: 0;
-  filter: drop-shadow(0 2px 4px rgba(24, 144, 255, 0.2));
   transition: all 0.3s ease;
 }
 
 .logo:hover .logo-icon {
-  filter: drop-shadow(0 4px 8px rgba(24, 144, 255, 0.3));
-  transform: scale(1.05) rotate(2deg);
+  transform: scale(1.05);
 }
 
 .logo-icon svg {
@@ -437,24 +417,22 @@ const handleLogout = async () => {
 }
 
 .logo-title {
-  font-size: 18px;
-  font-weight: 700;
-  background: linear-gradient(135deg, var(--primary-color, #1890ff) 0%, var(--secondary-color, #40a9ff) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  line-height: 1.2;
-  letter-spacing: 0.5px;
-  margin-bottom: 2px;
+  font-size: 20px;
+  font-weight: 300;
+  font-family: 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  color: #0f172a;
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+  margin-bottom: 3px;
 }
 
 .logo-subtitle {
   font-size: 11px;
-  color: #666;
+  font-weight: 300;
+  font-family: 'Inter', 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  color: #475569;
   line-height: 1.2;
-  letter-spacing: 0.3px;
-  font-weight: 500;
-  opacity: 0.8;
+  letter-spacing: 0.02em;
 }
 
 .header-right {
@@ -871,7 +849,7 @@ const handleLogout = async () => {
   }
   
   .logo {
-    padding: 6px 10px;
+    padding: 6px 0;
   }
   
   .logo-icon {
@@ -885,7 +863,7 @@ const handleLogout = async () => {
   }
   
   .logo-subtitle {
-    font-size: 10px;
+    font-size: 9px;
   }
   
   .user-dropdown {
@@ -920,7 +898,7 @@ const handleLogout = async () => {
   }
   
   .logo {
-    padding: 4px 8px;
+    padding: 4px 0;
   }
   
   .logo-icon {
@@ -934,7 +912,7 @@ const handleLogout = async () => {
   }
   
   .logo-subtitle {
-    font-size: 9px;
+    font-size: 8px;
   }
   
   .user-dropdown {
