@@ -14,7 +14,8 @@
 
     <modules>
         <module>infra-market-server</module>
-        <module>infra-market-admin</module>
+<!--        <module>infra-market-admin</module>-->
+<!--        <module>infra-market-quarkus</module>-->
     </modules>
 
     <properties>
@@ -30,6 +31,11 @@
         <repository>
             <id>ktor</id>
             <url>https://maven.pkg.jetbrains.space/public/p/ktor/eap</url>
+        </repository>
+        <repository>
+            <id>repo1</id>
+            <name>repo1</name>
+            <url>https://repo1.maven.org/maven2/</url>
         </repository>
     </repositories>
 
