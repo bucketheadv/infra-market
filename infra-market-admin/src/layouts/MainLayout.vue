@@ -139,6 +139,7 @@
       </a-layout-sider>
       
       <a-layout-content class="main-content">
+        <Breadcrumb />
         <router-view />
       </a-layout-content>
     </a-layout>
@@ -151,6 +152,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { message } from 'ant-design-vue'
 import ThemeSelector from '@/components/ThemeSelector.vue'
+import Breadcrumb from '@/components/Breadcrumb.vue'
 import {
   DashboardOutlined,
   SettingOutlined,
@@ -249,7 +251,35 @@ const getIconComponent = (iconName: string) => {
       return { menuId: null, parentId: null }
     }
     
-    const { menuId, parentId } = findMenuInfoByPath(validMenus.value, path)
+    // 特殊处理编辑页面：根据路径前缀找到对应的列表页面
+    const findMenuInfoByPathPrefix = (menus: any[], targetPath: string): { menuId: string | null, parentId: string | null } => {
+      // 处理编辑页面的路径模式
+      const editPatterns = [
+        { prefix: '/system/users/', listPath: '/system/users' },
+        { prefix: '/system/roles/', listPath: '/system/roles' },
+        { prefix: '/system/permissions/', listPath: '/system/permissions' }
+      ]
+      
+      for (const pattern of editPatterns) {
+        if (targetPath.startsWith(pattern.prefix)) {
+          // 找到对应的列表页面路径
+          return findMenuInfoByPath(menus, pattern.listPath)
+        }
+      }
+      
+      return { menuId: null, parentId: null }
+    }
+    
+    // 先尝试精确匹配，再尝试前缀匹配
+    let { menuId, parentId } = findMenuInfoByPath(validMenus.value, path)
+    
+    // 如果精确匹配失败，尝试前缀匹配（用于编辑页面）
+    if (!menuId) {
+      const prefixResult = findMenuInfoByPathPrefix(validMenus.value, path)
+      menuId = prefixResult.menuId
+      parentId = prefixResult.parentId
+    }
+    
     selectedKeys.value = menuId ? [menuId.toString()] : []
     
     // 设置展开的菜单状态
@@ -844,6 +874,7 @@ const handleLogout = async () => {
   background: #f0f2f5;
   min-height: calc(100vh - 64px);
   overflow-y: auto;
+  padding: 0;
 }
 
 /* 响应式设计 */
