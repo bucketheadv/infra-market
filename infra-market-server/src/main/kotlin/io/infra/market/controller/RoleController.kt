@@ -4,7 +4,9 @@ import io.infra.market.annotation.RequiresPermission
 import io.infra.market.dto.BatchRequest
 import io.infra.market.dto.RoleFormDto
 import io.infra.market.dto.RoleQueryDto
+import io.infra.market.dto.StatusUpdateDto
 import io.infra.market.service.RoleService
+import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
@@ -29,7 +31,7 @@ class RoleController(
     
     @RequiresPermission("role:list", "角色列表查看")
     @GetMapping
-    fun getRoles(query: RoleQueryDto) = roleService.getRoles(query)
+    fun getRoles(@Valid query: RoleQueryDto) = roleService.getRoles(query)
     
     @RequiresPermission("role:list", "角色列表查看")
     @GetMapping("/all")
@@ -41,11 +43,11 @@ class RoleController(
     
     @RequiresPermission("role:create", "角色创建")
     @PostMapping
-    fun createRole(@RequestBody form: RoleFormDto) = roleService.createRole(form)
+    fun createRole(@Valid @RequestBody form: RoleFormDto) = roleService.createRole(form)
     
     @RequiresPermission("role:update", "角色编辑")
     @PutMapping("/{id}")
-    fun updateRole(@PathVariable id: Long, @RequestBody form: RoleFormDto) = roleService.updateRole(id, form)
+    fun updateRole(@PathVariable id: Long, @Valid @RequestBody form: RoleFormDto) = roleService.updateRole(id, form)
     
     @RequiresPermission("role:delete", "角色删除")
     @DeleteMapping("/{id}")
@@ -53,11 +55,11 @@ class RoleController(
     
     @RequiresPermission("role:status", "角色状态管理")
     @PatchMapping("/{id}/status")
-    fun updateRoleStatus(@PathVariable id: Long, @RequestBody request: Map<String, String>) = 
-        roleService.updateRoleStatus(id, request["status"] ?: "")
+    fun updateRoleStatus(@PathVariable id: Long, @Valid @RequestBody request: StatusUpdateDto) = 
+        roleService.updateRoleStatus(id, request.status)
     
     @RequiresPermission("role:delete", "角色批量删除")
     @DeleteMapping("/batch")
-    fun batchDeleteRoles(@RequestBody request: BatchRequest) = 
+    fun batchDeleteRoles(@Valid @RequestBody request: BatchRequest) = 
         roleService.batchDeleteRoles(request.ids)
 }

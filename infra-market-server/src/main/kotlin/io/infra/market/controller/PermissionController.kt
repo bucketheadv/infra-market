@@ -4,7 +4,9 @@ import io.infra.market.annotation.RequiresPermission
 import io.infra.market.dto.BatchRequest
 import io.infra.market.dto.PermissionFormDto
 import io.infra.market.dto.PermissionQueryDto
+import io.infra.market.dto.StatusUpdateDto
 import io.infra.market.service.PermissionService
+import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
@@ -29,7 +31,7 @@ class PermissionController(
     
     @RequiresPermission("permission:list", "权限列表查看")
     @GetMapping
-    fun getPermissions(query: PermissionQueryDto) = permissionService.getPermissions(query)
+    fun getPermissions(@Valid query: PermissionQueryDto) = permissionService.getPermissions(query)
     
     @RequiresPermission("permission:list", "权限树查看")
     @GetMapping("/tree")
@@ -41,11 +43,11 @@ class PermissionController(
     
     @RequiresPermission("permission:create", "权限创建")
     @PostMapping
-    fun createPermission(@RequestBody form: PermissionFormDto) = permissionService.createPermission(form)
+    fun createPermission(@Valid @RequestBody form: PermissionFormDto) = permissionService.createPermission(form)
     
     @RequiresPermission("permission:update", "权限编辑")
     @PutMapping("/{id}")
-    fun updatePermission(@PathVariable id: Long, @RequestBody form: PermissionFormDto) = permissionService.updatePermission(id, form)
+    fun updatePermission(@PathVariable id: Long, @Valid @RequestBody form: PermissionFormDto) = permissionService.updatePermission(id, form)
     
     @RequiresPermission("permission:delete", "权限删除")
     @DeleteMapping("/{id}")
@@ -53,11 +55,11 @@ class PermissionController(
     
     @RequiresPermission("permission:status", "权限状态管理")
     @PatchMapping("/{id}/status")
-    fun updatePermissionStatus(@PathVariable id: Long, @RequestBody request: Map<String, String>) = 
-        permissionService.updatePermissionStatus(id, request["status"] ?: "")
+    fun updatePermissionStatus(@PathVariable id: Long, @Valid @RequestBody request: StatusUpdateDto) = 
+        permissionService.updatePermissionStatus(id, request.status)
     
     @RequiresPermission("permission:delete", "权限批量删除")
     @DeleteMapping("/batch")
-    fun batchDeletePermissions(@RequestBody request: BatchRequest) = 
+    fun batchDeletePermissions(@Valid @RequestBody request: BatchRequest) = 
         permissionService.batchDeletePermissions(request.ids)
 }

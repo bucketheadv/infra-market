@@ -5,6 +5,7 @@ import io.infra.market.dto.PageResultDto
 import io.infra.market.dto.UserDto
 import io.infra.market.dto.UserFormDto
 import io.infra.market.dto.UserQueryDto
+import io.infra.market.dto.UserUpdateDto
 import io.infra.market.enums.StatusEnum
 import io.infra.market.repository.dao.UserDao
 import io.infra.market.repository.dao.UserRoleDao
@@ -131,7 +132,7 @@ class UserService(
     }
     
     @Transactional
-    fun updateUser(id: Long, form: UserFormDto): ApiResponse<UserDto> {
+    fun updateUser(id: Long, form: UserUpdateDto): ApiResponse<UserDto> {
         val user = userDao.findByUid(id) ?: return ApiResponse.error("用户不存在")
         
         // 检查用户名是否已被其他用户使用
