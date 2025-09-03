@@ -41,4 +41,24 @@ export const userApi = {
   updateUserStatus(id: number, status: 'active' | 'inactive'): Promise<ApiResponse<void>> {
     return request.patch(`/users/${id}/status`, { status })
   },
+
+  // 用户设置相关API
+  getUserSettings: () => {
+    return request.get('/api/user/settings')
+  },
+
+  // 更新用户设置
+  updateUserSettings: (settings: any) => {
+    return request.put('/api/user/settings', settings)
+  },
+
+  // 保存主题偏好
+  saveThemePreference: (theme: string) => {
+    return request.post('/api/user/theme', { theme })
+  },
+
+  // 获取用户主题偏好
+  getThemePreference: () => {
+    return request.get('/api/user/theme')
+  }
 }

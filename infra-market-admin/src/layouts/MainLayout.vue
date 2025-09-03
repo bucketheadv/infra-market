@@ -40,6 +40,7 @@
         </div>
       </div>
       <div class="header-right">
+        <ThemeSelector />
         <a-dropdown>
           <a class="user-dropdown">
             <div class="user-info">
@@ -149,6 +150,7 @@ import { ref, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { message } from 'ant-design-vue'
+import ThemeSelector from '@/components/ThemeSelector.vue'
 import {
   DashboardOutlined,
   SettingOutlined,
@@ -379,8 +381,8 @@ const handleLogout = async () => {
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(24, 144, 255, 0.1);
-  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.08), 0 0 0 1px rgba(24, 144, 255, 0.05);
+  border: 1px solid var(--primary-color, rgba(24, 144, 255, 0.1));
+  box-shadow: 0 2px 8px var(--shadow-color, rgba(24, 144, 255, 0.08)), 0 0 0 1px var(--primary-color, rgba(24, 144, 255, 0.05));
   position: relative;
   overflow: hidden;
 }
@@ -392,7 +394,7 @@ const handleLogout = async () => {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(24, 144, 255, 0.1), transparent);
+  background: linear-gradient(90deg, transparent, var(--primary-color, rgba(24, 144, 255, 0.1)), transparent);
   transition: left 0.6s ease;
 }
 
@@ -403,8 +405,8 @@ const handleLogout = async () => {
 .logo:hover {
   transform: translateY(-2px);
   background: rgba(255, 255, 255, 0.95);
-  border-color: rgba(24, 144, 255, 0.2);
-  box-shadow: 0 4px 16px rgba(24, 144, 255, 0.15);
+  border-color: var(--primary-color, rgba(24, 144, 255, 0.2));
+  box-shadow: 0 4px 16px var(--shadow-color, rgba(24, 144, 255, 0.15));
 }
 
 .logo-icon {
@@ -437,7 +439,7 @@ const handleLogout = async () => {
 .logo-title {
   font-size: 18px;
   font-weight: 700;
-  background: linear-gradient(135deg, #1890ff 0%, #40a9ff 100%);
+  background: linear-gradient(135deg, var(--primary-color, #1890ff) 0%, var(--secondary-color, #40a9ff) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -458,6 +460,7 @@ const handleLogout = async () => {
 .header-right {
   display: flex;
   align-items: center;
+  gap: 12px;
 }
 
 .user-dropdown {
@@ -490,8 +493,8 @@ const handleLogout = async () => {
 
 .user-dropdown:hover {
   background: rgba(255, 255, 255, 0.95);
-  border-color: rgba(24, 144, 255, 0.3);
-  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.15);
+  border-color: var(--primary-color, rgba(24, 144, 255, 0.3));
+  box-shadow: 0 4px 12px var(--shadow-color, rgba(24, 144, 255, 0.15));
 }
 
 .user-dropdown:hover::before {
@@ -507,22 +510,22 @@ const handleLogout = async () => {
 }
 
 .user-avatar {
-  background: linear-gradient(135deg, #1890ff 0%, #40a9ff 100%);
+  background: linear-gradient(135deg, var(--primary-color, #1890ff) 0%, var(--secondary-color, #40a9ff) 100%);
   color: white;
   font-weight: bold;
   margin-right: 8px;
   border: 2px solid rgba(255, 255, 255, 0.3);
   transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.2);
+  box-shadow: 0 2px 8px var(--shadow-color, rgba(24, 144, 255, 0.2));
   width: 32px;
   height: 32px;
   font-size: 14px;
 }
 
 .user-dropdown:hover .user-avatar {
-  background: linear-gradient(135deg, #096dd9 0%, #1890ff 100%);
+  background: linear-gradient(135deg, #096dd9 0%, var(--primary-color, #1890ff) 100%);
   border-color: rgba(255, 255, 255, 0.5);
-  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
+  box-shadow: 0 4px 12px var(--shadow-color, rgba(24, 144, 255, 0.3));
 }
 
 .user-details {
@@ -549,11 +552,11 @@ const handleLogout = async () => {
 }
 
 .user-dropdown:hover .username {
-  color: #1890ff;
+  color: var(--primary-color, #1890ff);
 }
 
 .user-dropdown:hover .user-role {
-  color: #40a9ff;
+  color: var(--secondary-color, #40a9ff);
 }
 
 .dropdown-icon {
@@ -567,7 +570,7 @@ const handleLogout = async () => {
 
 .user-dropdown:hover .dropdown-icon {
   transform: rotate(180deg);
-  color: #1890ff;
+  color: var(--primary-color, #1890ff);
 }
 
 /* 用户菜单美化 */
@@ -587,12 +590,12 @@ const handleLogout = async () => {
   display: flex;
   align-items: center;
   padding: 12px 16px;
-  background: linear-gradient(135deg, #1890ff 0%, #40a9ff 100%);
+  background: linear-gradient(135deg, var(--primary-color, #1890ff) 0%, var(--secondary-color, #40a9ff) 100%);
   border-radius: 8px;
   margin: 6px;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.25);
+  box-shadow: 0 2px 8px var(--shadow-color, rgba(24, 144, 255, 0.25));
 }
 
 .menu-header::before {
@@ -835,12 +838,12 @@ const handleLogout = async () => {
 /* 菜单选中样式 */
 .sider :deep(.ant-menu-item-selected) {
   background-color: #e6f7ff !important;
-  border-right: 3px solid #1890ff !important;
-  color: #1890ff !important;
+  border-right: 3px solid var(--primary-color, #1890ff) !important;
+  color: var(--primary-color, #1890ff) !important;
 }
 
 .sider :deep(.ant-menu-item-selected .anticon) {
-  color: #1890ff !important;
+  color: var(--primary-color, #1890ff) !important;
 }
 
 .sider :deep(.ant-menu-item:hover) {
@@ -848,11 +851,11 @@ const handleLogout = async () => {
 }
 
 .sider :deep(.ant-menu-submenu-selected > .ant-menu-submenu-title) {
-  color: #1890ff !important;
+  color: var(--primary-color, #1890ff) !important;
 }
 
 .sider :deep(.ant-menu-submenu-selected > .ant-menu-submenu-title .anticon) {
-  color: #1890ff !important;
+  color: var(--primary-color, #1890ff) !important;
 }
 
 .main-content {

@@ -1,3 +1,12 @@
+:root {
+  --primary-color: #1890ff;
+  --secondary-color: #40a9ff;
+  --background-color: #f0f2f5;
+  --text-color: #333333;
+  --border-color: #f0f0f0;
+  --shadow-color: rgba(24, 144, 255, 0.08);
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -36,6 +45,52 @@ html, body {
 
 .main-content {
   padding: 24px;
-  background: #f0f2f5;
+  background: var(--background-color);
   min-height: calc(100vh - 64px);
+}
+
+/* 主题样式 */
+.theme-default {
+  --primary-color: #1890ff;
+  --secondary-color: #40a9ff;
+  --background-color: #f0f2f5;
+  --text-color: #333333;
+  --border-color: #f0f0f0;
+  --shadow-color: rgba(24, 144, 255, 0.08);
+}
+
+.theme-dark {
+  --primary-color: #722ed1;
+  --secondary-color: #9254de;
+  --background-color: #141414;
+  --text-color: #ffffff;
+  --border-color: #303030;
+  --shadow-color: rgba(114, 46, 209, 0.08);
+}
+
+.theme-green {
+  --primary-color: #52c41a;
+  --secondary-color: #73d13d;
+  --background-color: #f6ffed;
+  --text-color: #333333;
+  --border-color: #d9f7be;
+  --shadow-color: rgba(82, 196, 26, 0.08);
+}
+
+.theme-orange {
+  --primary-color: #fa8c16;
+  --secondary-color: #ffa940;
+  --background-color: #fff7e6;
+  --text-color: #333333;
+  --border-color: #ffe7ba;
+  --shadow-color: rgba(250, 140, 22, 0.08);
+}
+
+.theme-red {
+  --primary-color: #f5222d;
+  --secondary-color: #ff4d4f;
+  --background-color: #fff2f0;
+  --text-color: #333333;
+  --border-color: #ffccc7;
+  --shadow-color: rgba(245, 34, 45, 0.08);
 }
