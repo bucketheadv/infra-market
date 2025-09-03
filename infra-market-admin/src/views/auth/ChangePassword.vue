@@ -1,89 +1,105 @@
 <template>
-  <div class="change-password-container">
-    <div class="change-password-wrapper">
-      <div class="change-password-header">
+  <div class="change-password-form">
+    <div class="form-header">
+      <div class="header-content">
         <div class="header-icon">
           <KeyOutlined />
         </div>
-        <h1 class="header-title">修改密码</h1>
-        <p class="header-subtitle">为了您的账户安全，请设置一个强密码</p>
+        <div class="header-text">
+          <div class="header-title">修改密码</div>
+          <div class="header-subtitle">为了您的账户安全，请设置一个强密码</div>
+        </div>
       </div>
-      
-      <a-card :bordered="false" class="change-password-card">
+    </div>
+
+    <div class="form-content">
+      <a-card class="form-card" :bordered="false">
         <a-form
+          ref="formRef"
           :model="formData"
           :rules="rules"
-          ref="formRef"
-          layout="vertical"
-          @finish="handleSubmit"
-          class="password-form"
+          :label-col="{ span: 2 }"
+          :wrapper-col="{ span: 22 }"
+          class="password-form-content"
+          size="small"
+          layout="horizontal"
         >
-          <a-form-item label="原密码" name="oldPassword">
-            <a-input-password
-              v-model:value="formData.oldPassword"
-              placeholder="请输入原密码"
-              size="large"
-              class="password-input"
-            >
-              <template #prefix>
-                <LockOutlined class="input-icon" />
-              </template>
-            </a-input-password>
-          </a-form-item>
-
-          <a-form-item label="新密码" name="newPassword">
-            <a-input-password
-              v-model:value="formData.newPassword"
-              placeholder="请输入新密码"
-              size="large"
-              class="password-input"
-            >
-              <template #prefix>
-                <KeyOutlined class="input-icon" />
-              </template>
-            </a-input-password>
-            <div class="password-tips">
-              <span class="tip-text">密码长度至少6位，建议包含字母、数字和特殊字符</span>
+          <!-- 密码信息区域 -->
+          <div class="form-section">
+            <div class="section-header">
+              <div class="section-icon">
+                <LockOutlined />
+              </div>
+              <div class="section-title">密码信息</div>
+              <div class="section-subtitle">输入原密码并设置新的安全密码</div>
             </div>
-          </a-form-item>
+            
+            <a-form-item label="原密码" name="oldPassword">
+              <a-input-password
+                v-model:value="formData.oldPassword"
+                placeholder="请输入原密码"
+                size="middle"
+                class="form-input"
+              >
+                <template #prefix>
+                  <LockOutlined class="input-icon" />
+                </template>
+              </a-input-password>
+            </a-form-item>
+            
+            <a-form-item label="新密码" name="newPassword">
+              <a-input-password
+                v-model:value="formData.newPassword"
+                placeholder="请输入新密码"
+                size="middle"
+                class="form-input"
+              >
+                <template #prefix>
+                  <KeyOutlined class="input-icon" />
+                </template>
+              </a-input-password>
+              <div class="password-tips">
+                <span class="tip-text">密码长度至少6位，建议包含字母、数字和特殊字符</span>
+              </div>
+            </a-form-item>
+            
+            <a-form-item label="确认密码" name="confirmPassword">
+              <a-input-password
+                v-model:value="formData.confirmPassword"
+                placeholder="请再次输入新密码"
+                size="middle"
+                class="form-input"
+              >
+                <template #prefix>
+                  <CheckCircleOutlined class="input-icon" />
+                </template>
+              </a-input-password>
+            </a-form-item>
+          </div>
 
-          <a-form-item label="确认新密码" name="confirmPassword">
-            <a-input-password
-              v-model:value="formData.confirmPassword"
-              placeholder="请再次输入新密码"
-              size="large"
-              class="password-input"
-            >
-              <template #prefix>
-                <CheckCircleOutlined class="input-icon" />
-              </template>
-            </a-input-password>
-          </a-form-item>
-
-          <a-form-item class="submit-item">
-            <ThemeButton
-              variant="primary"
-              size="medium"
-              :icon="SaveOutlined"
-              :disabled="loading"
-              class="submit-btn"
-              @click="handleSubmit"
-              style="width: 100%;"
-            >
-              确认修改
-            </ThemeButton>
-          </a-form-item>
-          
-          <div class="form-footer">
-            <ThemeButton 
-              variant="ghost" 
-              size="small"
-              :icon="ArrowLeftOutlined"
-              @click="goBack"
-              class="back-btn"
-            >
-              返回
-            </ThemeButton>
+          <!-- 操作按钮区域 -->
+          <div class="form-actions">
+            <a-space size="small">
+              <ThemeButton 
+                variant="primary" 
+                size="small"
+                :icon="SaveOutlined"
+                :disabled="loading"
+                @click="handleSubmit"
+                class="submit-btn"
+              >
+                确认修改
+              </ThemeButton>
+              <ThemeButton 
+                variant="secondary"
+                size="small"
+                :icon="ArrowLeftOutlined"
+                @click="goBack"
+                class="cancel-btn"
+              >
+                返回
+              </ThemeButton>
+            </a-space>
           </div>
         </a-form>
       </a-card>
@@ -100,7 +116,8 @@ import {
   LockOutlined, 
   CheckCircleOutlined, 
   SaveOutlined,
-  ArrowLeftOutlined 
+  ArrowLeftOutlined,
+  CloseOutlined
 } from '@ant-design/icons-vue'
 import { authApi } from '@/api/auth'
 import ThemeButton from '@/components/ThemeButton.vue'
@@ -117,19 +134,51 @@ const formData = reactive({
 })
 
 const validateConfirmPassword = async (_rule: any, value: string) => {
-  if (value && value !== formData.newPassword) {
+  if (!value) {
+    return Promise.resolve()
+  }
+  if (value !== formData.newPassword) {
     throw new Error('两次输入的密码不一致')
   }
+  return Promise.resolve()
 }
 
 const rules = {
   oldPassword: [
     { required: true, message: '请输入原密码', trigger: 'blur' },
-    { min: 6, message: '密码长度不能少于6位', trigger: 'blur' }
+    { min: 6, message: '密码长度不能少于6位', trigger: 'blur' },
+    { max: 20, message: '密码长度不能超过20位', trigger: 'blur' }
   ],
   newPassword: [
     { required: true, message: '请输入新密码', trigger: 'blur' },
-    { min: 6, message: '密码长度不能少于6位', trigger: 'blur' }
+    { min: 6, message: '密码长度不能少于6位', trigger: 'blur' },
+    { max: 20, message: '密码长度不能超过20位', trigger: 'blur' },
+    { 
+      validator: (rule: any, value: string) => {
+        if (value && value === formData.oldPassword) {
+          throw new Error('新密码不能与原密码相同')
+        }
+        return Promise.resolve()
+      }, 
+      trigger: 'blur' 
+    },
+    {
+      validator: (rule: any, value: string) => {
+        if (!value) return Promise.resolve()
+        
+        // 检查密码强度
+        const hasLetter = /[a-zA-Z]/.test(value)
+        const hasNumber = /\d/.test(value)
+        const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(value)
+        
+        if (!hasLetter && !hasNumber && !hasSpecial) {
+          throw new Error('密码必须包含字母、数字或特殊字符')
+        }
+        
+        return Promise.resolve()
+      },
+      trigger: 'blur'
+    }
   ],
   confirmPassword: [
     { required: true, message: '请确认新密码', trigger: 'blur' },
@@ -139,6 +188,9 @@ const rules = {
 
 const handleSubmit = async () => {
   try {
+    // 表单验证
+    await formRef.value?.validate()
+    
     loading.value = true
     
     await authApi.changePassword({
@@ -151,7 +203,12 @@ const handleSubmit = async () => {
     // 清空表单
     formRef.value?.resetFields()
   } catch (error: any) {
-    message.error(error.message || '密码修改失败')
+    if (error?.errorFields) {
+      // 表单验证失败
+      message.error('请填写完整的表单信息')
+    } else {
+      message.error(error.message || '密码修改失败')
+    }
   } finally {
     loading.value = false
   }
@@ -163,111 +220,199 @@ const goBack = () => {
 </script>
 
 <style scoped>
-.change-password-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: calc(100vh - 64px);
+.change-password-form {
+  min-height: 100%;
   background: #f0f2f5;
-  padding: 16px;
-  position: relative;
+  padding: 0;
 }
 
-.change-password-container::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(24,144,255,0.1)"/><circle cx="75" cy="75" r="1" fill="rgba(24,144,255,0.1)"/><circle cx="50" cy="10" r="0.5" fill="rgba(24,144,255,0.1)"/><circle cx="10" cy="60" r="0.5" fill="rgba(24,144,255,0.1)"/><circle cx="90" cy="40" r="0.5" fill="rgba(24,144,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
-  opacity: 0.2;
+.form-header {
+  margin-bottom: 8px;
+  padding: 0 16px;
+  margin-top: 16px;
 }
 
-.change-password-wrapper {
-  width: 100%;
-  max-width: 400px;
-  position: relative;
-  z-index: 1;
-}
-
-.change-password-header {
-  text-align: center;
-  margin-bottom: 20px;
-  color: #333;
+.header-content {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border-radius: 6px;
+  padding: 12px 16px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  border: 1px solid #f0f0f0;
 }
 
 .header-icon {
-  width: 48px;
-  height: 48px;
-  background: linear-gradient(135deg, #1890ff 0%, #40a9ff 100%);
-  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, var(--primary-color, #1890ff), var(--secondary-color, #40a9ff));
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 12px;
-  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.2);
-  border: 2px solid rgba(255, 255, 255, 0.8);
+  margin-right: 12px;
+  box-shadow: 0 2px 6px var(--shadow-color, rgba(24, 144, 255, 0.15));
 }
 
 .header-icon :deep(.anticon) {
-  font-size: 20px;
+  font-size: 18px;
   color: white;
 }
 
+.header-text {
+  flex: 1;
+}
+
 .header-title {
-  font-size: 20px;
+  margin: 0 0 2px 0;
+  font-size: 15px;
   font-weight: 600;
-  margin: 0 0 8px;
-  color: #333;
+  color: #1a1a1a;
+  line-height: 1.2;
 }
 
 .header-subtitle {
-  font-size: 13px;
-  color: #666;
   margin: 0;
+  font-size: 11px;
+  color: #666;
+  line-height: 1.2;
+}
+
+.form-content {
+  padding: 0 16px 16px;
+}
+
+.form-card {
+  border-radius: 6px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  border: 1px solid #f0f0f0;
+}
+
+.password-form-content {
+  padding: 12px 0;
+}
+
+/* 调整表单标签的对齐方式 */
+.password-form-content :deep(.ant-form-item-label) {
+  text-align: right;
+  padding-right: 6px;
+  line-height: 32px;
+}
+
+/* 确保所有标签垂直对齐 */
+.password-form-content :deep(.ant-form-item) {
+  margin-bottom: 20px;
+}
+
+.password-form-content :deep(.ant-form-item-label > label) {
+  height: 32px;
+  line-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+/* 统一所有表单项的标签对齐 */
+.password-form-content :deep(.ant-form-item-label) {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  height: 32px;
+}
+
+/* 确保输入框区域对齐 */
+.password-form-content :deep(.ant-form-item-control) {
+  display: flex;
+  align-items: flex-start;
+  min-height: 32px;
+}
+
+/* 优化标签列宽度，减少占用空间 */
+.password-form-content :deep(.ant-col-2) {
+  flex: 0 0 8.333333%;
+  max-width: 8.333333%;
+}
+
+/* 确保输入框有足够空间 */
+.password-form-content :deep(.ant-col-22) {
+  flex: 0 0 91.666667%;
+  max-width: 91.666667%;
+}
+
+/* 确保所有输入框完美对齐 */
+.password-form-content :deep(.ant-form-item-control) {
+  display: flex;
+  align-items: center;
+}
+
+.password-form-content :deep(.ant-form-item-control-input) {
+  width: 100%;
+}
+
+.password-form-content :deep(.ant-form-item-control-input-content) {
+  width: 100%;
+}
+
+.form-section {
+  margin-bottom: 24px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.section-icon {
+  width: 20px;
+  height: 20px;
+  background: linear-gradient(135deg, var(--primary-color, #1890ff), var(--secondary-color, #40a9ff));
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 6px;
+  box-shadow: 0 1px 3px var(--shadow-color, rgba(24, 144, 255, 0.12));
+}
+
+.section-icon :deep(.anticon) {
+  font-size: 10px;
+  color: white;
+}
+
+.section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-right: 6px;
+}
+
+.section-subtitle {
+  font-size: 10px;
+  color: #666;
   font-weight: 400;
 }
 
-.change-password-card {
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  border: 1px solid #f0f0f0;
-  overflow: hidden;
-}
-
-.change-password-card :deep(.ant-card-body) {
-  padding: 24px;
-}
-
-.password-form {
-  margin-top: 0;
-}
-
-.password-form :deep(.ant-form-item-label > label) {
-  font-weight: 500;
-  color: #333;
-  font-size: 13px;
-  margin-bottom: 6px;
-}
-
-.password-input {
+.form-input {
   border-radius: 4px;
-  border: 1px solid #d9d9d9;
-  transition: all 0.3s ease;
-  background: #fff;
+  transition: all 0.2s ease;
   font-size: 13px;
+  width: 100%;
+  min-width: 300px;
 }
 
-.password-input:hover {
-  border-color: #40a9ff;
+.form-input:hover {
+  border-color: var(--primary-color, #1890ff);
+  box-shadow: 0 0 0 1px var(--shadow-color, rgba(24, 144, 255, 0.1));
 }
 
-.password-input:focus,
-.password-input:focus-within {
-  border-color: #1890ff;
-  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+.form-input:focus {
+  border-color: var(--primary-color, #1890ff);
+  box-shadow: 0 0 0 1px var(--shadow-color, rgba(24, 144, 255, 0.15));
 }
 
 .input-icon {
@@ -285,94 +430,113 @@ const goBack = () => {
   line-height: 1.3;
 }
 
-.submit-item {
-  margin-top: 20px;
-  margin-bottom: 12px;
+.form-actions {
+  padding: 12px 0 0 0;
+  margin-top: 16px;
+  border-top: 1px solid #f0f0f0;
+  text-align: center;
 }
 
 .submit-btn {
-  height: 40px;
   border-radius: 4px;
-  font-size: 14px;
-  font-weight: 500;
-  background: #1890ff;
-  border: none;
-  box-shadow: 0 2px 6px rgba(24, 144, 255, 0.2);
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
+  min-width: 100px;
+  font-size: 13px;
 }
 
 .submit-btn:hover {
-  background: #40a9ff;
-  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px var(--shadow-color, rgba(24, 144, 255, 0.2));
 }
 
-.submit-btn:active {
-  background: #096dd9;
-}
-
-.form-footer {
-  text-align: center;
-  margin-top: 16px;
-}
-
-.back-btn {
-  color: #666;
-  font-size: 13px;
-  padding: 6px 12px;
+.cancel-btn {
   border-radius: 4px;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
+  min-width: 80px;
+  font-size: 13px;
 }
 
-.back-btn:hover {
-  color: #1890ff;
-  background: rgba(24, 144, 255, 0.05);
+.cancel-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 /* 响应式设计 */
 @media (max-width: 768px) {
-  .change-password-container {
-    padding: 12px;
+  .form-content {
+    padding: 0 16px 16px;
   }
   
-  .change-password-wrapper {
-    max-width: 100%;
+  .form-header {
+    padding: 0 16px;
+    margin-top: 12px;
+  }
+  
+  .header-content {
+    padding: 14px 18px;
   }
   
   .header-icon {
-    width: 40px;
-    height: 40px;
-    margin-bottom: 10px;
-  }
-  
-  .header-icon :deep(.anticon) {
-    font-size: 16px;
+    width: 32px;
+    height: 32px;
+    margin-right: 10px;
   }
   
   .header-title {
-    font-size: 18px;
+    font-size: 15px;
   }
   
   .header-subtitle {
-    font-size: 12px;
+    font-size: 11px;
   }
   
-  .change-password-card :deep(.ant-card-body) {
-    padding: 20px;
+  .password-form-content {
+    padding: 14px 0;
+  }
+  
+  .form-section {
+    margin-bottom: 18px;
+  }
+  
+  .section-header {
+    margin-bottom: 14px;
   }
 }
 
 @media (max-width: 480px) {
-  .change-password-card :deep(.ant-card-body) {
-    padding: 16px;
+  .form-content {
+    padding: 0 12px 12px;
+  }
+  
+  .form-header {
+    padding: 0 12px;
+    margin-top: 10px;
+  }
+  
+  .header-content {
+    padding: 12px 16px;
+  }
+  
+  .header-icon {
+    width: 28px;
+    height: 28px;
+    margin-right: 8px;
   }
   
   .header-title {
-    font-size: 16px;
+    font-size: 14px;
   }
   
-  .submit-btn {
-    height: 36px;
-    font-size: 13px;
+  .header-subtitle {
+    font-size: 10px;
+  }
+  
+  .password-form-content {
+    padding: 12px 0;
+  }
+  
+  .form-section {
+    margin-bottom: 16px;
   }
 }
 </style>
