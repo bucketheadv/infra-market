@@ -212,6 +212,8 @@ const breadcrumbItems = computed((): BreadcrumbItem[] => {
 .breadcrumb {
   font-size: 14px;
   line-height: 1.5;
+  display: flex;
+  align-items: center;
 }
 
 .breadcrumb :deep(.ant-breadcrumb-separator) {
@@ -223,6 +225,7 @@ const breadcrumbItems = computed((): BreadcrumbItem[] => {
 .breadcrumb :deep(.ant-breadcrumb-item) {
   display: flex;
   align-items: center;
+  min-height: 32px;
 }
 
 .breadcrumb-link {
@@ -236,6 +239,7 @@ const breadcrumbItems = computed((): BreadcrumbItem[] => {
   align-items: center;
   gap: 6px;
   white-space: nowrap;
+  line-height: 1;
 }
 
 .breadcrumb-link:hover {
@@ -253,6 +257,7 @@ const breadcrumbItems = computed((): BreadcrumbItem[] => {
   border-radius: 4px;
   display: inline-block;
   white-space: nowrap;
+  line-height: 1;
 }
 
 .breadcrumb-text {
@@ -261,6 +266,7 @@ const breadcrumbItems = computed((): BreadcrumbItem[] => {
   margin: -4px -8px;
   display: inline-block;
   white-space: nowrap;
+  line-height: 1;
 }
 
 .breadcrumb-home {
