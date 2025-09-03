@@ -1,13 +1,13 @@
 <template>
-  <div class="user-form-container">
+  <div class="user-form">
     <div class="form-header">
       <div class="header-content">
         <div class="header-icon">
           <UserOutlined />
         </div>
         <div class="header-text">
-          <h1 class="header-title">{{ isEdit ? '编辑用户' : '创建用户' }}</h1>
-          <p class="header-subtitle">{{ isEdit ? '修改用户信息和权限设置' : '创建新的系统用户账户' }}</p>
+          <div class="header-title">{{ isEdit ? '编辑用户' : '创建用户' }}</div>
+          <div class="header-subtitle">{{ isEdit ? '修改用户信息和权限设置' : '创建新的系统用户账户' }}</div>
         </div>
       </div>
     </div>
@@ -18,9 +18,11 @@
           ref="formRef"
           :model="form"
           :rules="rules"
-          :label-col="{ span: 4 }"
-          :wrapper-col="{ span: 20 }"
-          class="user-form"
+          :label-col="{ span: 2 }"
+          :wrapper-col="{ span: 22 }"
+          class="user-form-content"
+          size="small"
+          layout="horizontal"
         >
           <!-- 基本信息区域 -->
           <div class="form-section">
@@ -31,42 +33,36 @@
               <div class="section-title">基本信息</div>
             </div>
             
-            <a-row :gutter="16">
-              <a-col :xs="24" :lg="12">
-                <a-form-item label="用户名" name="username">
-                  <a-input
-                    v-model:value="form.username"
-                    placeholder="请输入用户名"
-                    :disabled="isEdit"
-                    size="large"
-                    class="form-input"
-                  >
-                    <template #prefix>
-                      <UserOutlined class="input-icon" />
-                    </template>
-                  </a-input>
-                </a-form-item>
-              </a-col>
-              
-              <a-col :xs="24" :lg="12">
-                <a-form-item
-                  v-if="!isEdit"
-                  label="密码"
-                  name="password"
-                >
-                  <a-input-password
-                    v-model:value="form.password"
-                    placeholder="请输入密码"
-                    size="large"
-                    class="form-input"
-                  >
-                    <template #prefix>
-                      <LockOutlined class="input-icon" />
-                    </template>
-                  </a-input-password>
-                </a-form-item>
-              </a-col>
-            </a-row>
+            <a-form-item label="用户名" name="username">
+              <a-input
+                v-model:value="form.username"
+                placeholder="请输入用户名"
+                :disabled="isEdit"
+                size="middle"
+                class="form-input"
+              >
+                <template #prefix>
+                  <UserOutlined class="input-icon" />
+                </template>
+              </a-input>
+            </a-form-item>
+            
+            <a-form-item
+              v-if="!isEdit"
+              label="密码"
+              name="password"
+            >
+              <a-input-password
+                v-model:value="form.password"
+                placeholder="请输入密码"
+                size="middle"
+                class="form-input"
+              >
+                <template #prefix>
+                  <LockOutlined class="input-icon" />
+                </template>
+              </a-input-password>
+            </a-form-item>
           </div>
 
           <!-- 联系信息区域 -->
@@ -78,37 +74,31 @@
               <div class="section-title">联系信息</div>
             </div>
             
-            <a-row :gutter="16">
-              <a-col :xs="24" :lg="12">
-                <a-form-item label="邮箱" name="email">
-                  <a-input
-                    v-model:value="form.email"
-                    placeholder="请输入邮箱地址"
-                    size="large"
-                    class="form-input"
-                  >
-                    <template #prefix>
-                      <MailOutlined class="input-icon" />
-                    </template>
-                  </a-input>
-                </a-form-item>
-              </a-col>
-              
-              <a-col :xs="24" :lg="12">
-                <a-form-item label="手机号" name="phone">
-                  <a-input
-                    v-model:value="form.phone"
-                    placeholder="请输入手机号码"
-                    size="large"
-                    class="form-input"
-                  >
-                    <template #prefix>
-                      <PhoneOutlined class="input-icon" />
-                    </template>
-                  </a-input>
-                </a-form-item>
-              </a-col>
-            </a-row>
+            <a-form-item label="邮箱" name="email">
+              <a-input
+                v-model:value="form.email"
+                placeholder="请输入邮箱地址"
+                size="middle"
+                class="form-input"
+              >
+                <template #prefix>
+                  <MailOutlined class="input-icon" />
+                </template>
+              </a-input>
+            </a-form-item>
+            
+            <a-form-item label="手机号" name="phone">
+              <a-input
+                v-model:value="form.phone"
+                placeholder="请输入手机号码"
+                size="middle"
+                class="form-input"
+              >
+                <template #prefix>
+                  <PhoneOutlined class="input-icon" />
+                </template>
+              </a-input>
+            </a-form-item>
           </div>
 
           <!-- 权限设置区域 -->
@@ -118,6 +108,7 @@
                 <SafetyCertificateOutlined />
               </div>
               <div class="section-title">权限设置</div>
+              <div class="section-subtitle">选择用户角色，决定可访问的功能模块</div>
             </div>
             
             <a-form-item label="角色分配" name="roleIds">
@@ -127,7 +118,7 @@
                 placeholder="请选择用户角色"
                 :options="roleOptions"
                 :loading="roleLoading"
-                size="large"
+                size="middle"
                 class="form-select"
                 :max-tag-count="3"
                 :max-tag-placeholder="(omittedValues: any[]) => `+${omittedValues.length}个角色`"
@@ -136,19 +127,15 @@
                   <TeamOutlined class="select-icon" />
                 </template>
               </a-select>
-              <div class="form-help">
-                <InfoCircleOutlined />
-                <span>选择角色将决定用户可访问的功能模块</span>
-              </div>
             </a-form-item>
           </div>
 
           <!-- 操作按钮区域 -->
-          <a-form-item :wrapper-col="{ offset: 4, span: 20 }">
-            <a-space size="middle">
+          <div class="form-actions">
+            <a-space size="small">
               <ThemeButton 
                 variant="primary" 
-                size="medium"
+                size="small"
                 :icon="CheckOutlined"
                 :disabled="loading"
                 @click="handleSubmit"
@@ -158,7 +145,7 @@
               </ThemeButton>
               <ThemeButton 
                 variant="secondary"
-                size="medium"
+                size="small"
                 :icon="CloseOutlined"
                 @click="handleCancel"
                 class="cancel-btn"
@@ -166,7 +153,7 @@
                 取消
               </ThemeButton>
             </a-space>
-          </a-form-item>
+          </div>
         </a-form>
       </a-card>
     </div>
@@ -311,40 +298,42 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.user-form-container {
-  min-height: 100vh;
+.user-form {
+  min-height: 100%;
   background: #f0f2f5;
-  padding: 16px;
+  padding: 0;
 }
 
 .form-header {
-  margin-bottom: 16px;
+  margin-bottom: 8px;
+  padding: 0 16px;
+  margin-top: 16px;
 }
 
 .header-content {
   display: flex;
   align-items: center;
   background: #fff;
-  border-radius: 4px;
+  border-radius: 6px;
   padding: 12px 16px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
   border: 1px solid #f0f0f0;
 }
 
 .header-icon {
-  width: 32px;
-  height: 32px;
-  background: linear-gradient(135deg, #1890ff, #40a9ff);
-  border-radius: 4px;
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, var(--primary-color, #1890ff), var(--secondary-color, #40a9ff));
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 10px;
-  box-shadow: 0 1px 3px rgba(24, 144, 255, 0.2);
+  margin-right: 12px;
+  box-shadow: 0 2px 6px var(--shadow-color, rgba(24, 144, 255, 0.15));
 }
 
 .header-icon :deep(.anticon) {
-  font-size: 14px;
+  font-size: 18px;
   color: white;
 }
 
@@ -353,8 +342,8 @@ onMounted(async () => {
 }
 
 .header-title {
-  margin: 0 0 3px 0;
-  font-size: 16px;
+  margin: 0 0 2px 0;
+  font-size: 15px;
   font-weight: 600;
   color: #1a1a1a;
   line-height: 1.2;
@@ -362,246 +351,248 @@ onMounted(async () => {
 
 .header-subtitle {
   margin: 0;
-  font-size: 12px;
+  font-size: 11px;
   color: #666;
-  line-height: 1.3;
+  line-height: 1.2;
 }
 
 .form-content {
-  max-width: 100%;
-  margin: 0;
+  padding: 0 16px 16px;
 }
 
 .form-card {
   border-radius: 6px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
   border: 1px solid #f0f0f0;
-  background: #fff;
 }
 
-.user-form {
-  padding: 0;
+.user-form-content {
+  padding: 12px 0;
 }
 
-/* 表单标签字体大小 */
-.user-form :deep(.ant-form-item-label > label) {
-  font-size: 12px;
-  color: #333;
-  font-weight: 500;
+/* 调整表单标签的对齐方式 */
+.user-form-content :deep(.ant-form-item-label) {
+  text-align: right;
+  padding-right: 6px;
+  line-height: 32px;
 }
 
-/* 表单验证错误信息字体大小 */
-.user-form :deep(.ant-form-item-explain-error) {
-  font-size: 11px;
+/* 确保所有标签垂直对齐 */
+.user-form-content :deep(.ant-form-item) {
+  margin-bottom: 20px;
+}
+
+.user-form-content :deep(.ant-form-item-label > label) {
+  height: 32px;
+  line-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+/* 统一所有表单项的标签对齐 */
+.user-form-content :deep(.ant-form-item-label) {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  height: 32px;
+}
+
+/* 确保输入框区域对齐 */
+.user-form-content :deep(.ant-form-item-control) {
+  display: flex;
+  align-items: flex-start;
+  min-height: 32px;
+}
+
+/* 优化标签列宽度，减少占用空间 */
+.user-form-content :deep(.ant-col-2) {
+  flex: 0 0 8.333333%;
+  max-width: 8.333333%;
+}
+
+/* 确保输入框有足够空间 */
+.user-form-content :deep(.ant-col-22) {
+  flex: 0 0 91.666667%;
+  max-width: 91.666667%;
+}
+
+/* 确保所有输入框完美对齐 */
+.user-form-content :deep(.ant-form-item-control) {
+  display: flex;
+  align-items: center;
+}
+
+.user-form-content :deep(.ant-form-item-control-input) {
+  width: 100%;
+}
+
+.user-form-content :deep(.ant-form-item-control-input-content) {
+  width: 100%;
 }
 
 .form-section {
-  margin-bottom: 12px;
-  padding: 12px;
-  background: #fafafa;
-  border-radius: 4px;
-  border: 1px solid #f0f0f0;
-  transition: all 0.3s ease;
-}
-
-.form-section:hover {
-  background: #f5f5f5;
-  border-color: #d9d9d9;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  margin-bottom: 24px;
 }
 
 .section-header {
   display: flex;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   padding-bottom: 6px;
   border-bottom: 1px solid #f0f0f0;
 }
 
 .section-icon {
-  width: 24px;
-  height: 24px;
-  background: linear-gradient(135deg, #1890ff, #40a9ff);
-  border-radius: 3px;
+  width: 20px;
+  height: 20px;
+  background: linear-gradient(135deg, var(--primary-color, #1890ff), var(--secondary-color, #40a9ff));
+  border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 8px;
-  box-shadow: 0 1px 2px rgba(24, 144, 255, 0.2);
+  margin-right: 6px;
+  box-shadow: 0 1px 3px var(--shadow-color, rgba(24, 144, 255, 0.12));
 }
 
 .section-icon :deep(.anticon) {
-  font-size: 11px;
+  font-size: 10px;
   color: white;
 }
 
 .section-title {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   color: #1a1a1a;
+  margin-right: 6px;
+}
+
+.section-subtitle {
+  font-size: 10px;
+  color: #666;
+  font-weight: 400;
 }
 
 .form-input,
 .form-select {
   border-radius: 4px;
-  border: 1px solid #d9d9d9;
-  transition: all 0.3s ease;
-  font-size: 12px;
+  transition: all 0.2s ease;
+  font-size: 13px;
+  width: 100%;
+  min-width: 300px;
 }
 
 .form-input:hover,
 .form-select:hover {
-  border-color: #40a9ff;
+  border-color: var(--primary-color, #1890ff);
+  box-shadow: 0 0 0 1px var(--shadow-color, rgba(24, 144, 255, 0.1));
 }
 
 .form-input:focus,
 .form-select:focus {
-  border-color: #1890ff;
-  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
-}
-
-/* 输入框占位符文字大小 */
-.form-input::placeholder,
-.form-select::placeholder {
-  font-size: 11px;
-  color: #bfbfbf;
-}
-
-/* 下拉框样式调整 */
-.form-select :deep(.ant-select-selector) {
-  border-radius: 4px !important;
-  border: 1px solid #d9d9d9 !important;
-  box-shadow: none !important;
-  font-size: 12px !important;
-}
-
-.form-select:hover :deep(.ant-select-selector) {
-  border-color: #40a9ff !important;
-}
-
-.form-select:focus-within :deep(.ant-select-selector) {
-  border-color: #1890ff !important;
-  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2) !important;
-}
-
-/* 下拉框选项样式 */
-.form-select :deep(.ant-select-dropdown) {
-  border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
-
-.form-select :deep(.ant-select-item) {
-  font-size: 12px;
-  padding: 6px 10px;
-}
-
-.form-select :deep(.ant-select-item-option-selected) {
-  background-color: #e6f7ff;
-  color: #1890ff;
-}
-
-/* 下拉框标签样式 */
-.form-select :deep(.ant-select-selection-item) {
-  font-size: 12px !important;
-}
-
-.form-select :deep(.ant-select-selection-placeholder) {
-  font-size: 11px !important;
-  color: #bfbfbf !important;
+  border-color: var(--primary-color, #1890ff);
+  box-shadow: 0 0 0 1px var(--shadow-color, rgba(24, 144, 255, 0.15));
 }
 
 .input-icon,
 .select-icon {
   color: #bfbfbf;
-  transition: color 0.3s ease;
-  font-size: 11px;
-}
-
-.form-input:focus-within .input-icon,
-.form-select:focus-within .select-icon {
-  color: #1890ff;
-  font-size: 11px;
-}
-
-.form-help {
-  display: flex;
-  align-items: center;
-  margin-top: 4px;
-  padding: 4px 8px;
-  background: rgba(24, 144, 255, 0.05);
-  border-radius: 3px;
-  border-left: 2px solid #1890ff;
-}
-
-.form-help :deep(.anticon) {
-  color: #1890ff;
-  margin-right: 4px;
-  font-size: 11px;
-}
-
-.form-help span {
-  font-size: 11px;
-  color: #666;
-  line-height: 1.3;
+  font-size: 12px;
 }
 
 .form-actions {
-  text-align: center;
-  padding: 20px 16px 20px;
-  border-top: 1px solid #f0f0f0;
+  padding: 12px 0 0 0;
   margin-top: 16px;
+  border-top: 1px solid #f0f0f0;
+  text-align: center;
 }
 
 .submit-btn {
-  height: 32px;
-  padding: 0 16px;
-  border-radius: 6px;
-  font-weight: 500;
-  background: #1890ff;
-  border: none;
-  box-shadow: 0 1px 3px rgba(24, 144, 255, 0.2);
+  border-radius: 4px;
   transition: all 0.2s ease;
+  min-width: 100px;
+  font-size: 13px;
 }
 
 .submit-btn:hover {
-  background: #40a9ff;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
+  box-shadow: 0 2px 8px var(--shadow-color, rgba(24, 144, 255, 0.2));
 }
 
 .cancel-btn {
-  height: 32px;
-  padding: 0 16px;
-  border-radius: 6px;
-  font-weight: 500;
-  background: #f5f5f5;
-  color: #666;
+  border-radius: 4px;
   transition: all 0.2s ease;
-  border: none;
+  min-width: 80px;
+  font-size: 13px;
 }
 
 .cancel-btn:hover {
-  background: #e6f7ff;
-  color: #1890ff;
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.15);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 /* 响应式设计 */
 @media (max-width: 768px) {
-  .user-form-container {
-    padding: 16px;
+  .form-content {
+    padding: 0 16px 16px;
+  }
+  
+  .form-header {
+    padding: 0 16px;
+    margin-top: 12px;
   }
   
   .header-content {
-    padding: 16px 20px;
-    flex-direction: column;
-    text-align: center;
+    padding: 14px 18px;
   }
   
   .header-icon {
-    margin-right: 0;
-    margin-bottom: 12px;
+    width: 32px;
+    height: 32px;
+    margin-right: 10px;
+  }
+  
+  .header-title {
+    font-size: 15px;
+  }
+  
+  .header-subtitle {
+    font-size: 11px;
+  }
+  
+  .user-form-content {
+    padding: 14px 0;
+  }
+  
+  .form-section {
+    margin-bottom: 18px;
+  }
+  
+  .section-header {
+    margin-bottom: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .form-content {
+    padding: 0 12px 12px;
+  }
+  
+  .form-header {
+    padding: 0 12px;
+    margin-top: 10px;
+  }
+  
+  .header-content {
+    padding: 12px 16px;
+  }
+  
+  .header-icon {
+    width: 28px;
+    height: 28px;
+    margin-right: 8px;
   }
   
   .header-title {
@@ -612,60 +603,12 @@ onMounted(async () => {
     font-size: 10px;
   }
   
+  .user-form-content {
+    padding: 12px 0;
+  }
+  
   .form-section {
-    padding: 16px;
     margin-bottom: 16px;
-  }
-  
-  .section-header {
-    flex-direction: column;
-    text-align: center;
-  }
-  
-  .section-icon {
-    margin-right: 0;
-    margin-bottom: 12px;
-  }
-  
-  .form-actions {
-    padding: 20px 16px 16px;
-  }
-  
-  .submit-btn,
-  .cancel-btn {
-    width: 100%;
-    margin-bottom: 12px;
-  }
-}
-
-@media (max-width: 480px) {
-  .user-form-container {
-    padding: 12px;
-  }
-  
-  .header-content {
-    padding: 12px 16px;
-  }
-  
-  .header-icon {
-    width: 32px;
-    height: 32px;
-  }
-  
-  .header-icon :deep(.anticon) {
-    font-size: 14px;
-  }
-  
-  .header-title {
-    font-size: 13px;
-  }
-  
-  .form-section {
-    padding: 16px;
-  }
-  
-  .form-actions {
-    padding: 20px 16px 16px;
   }
 }
 </style>

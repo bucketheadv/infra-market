@@ -1,112 +1,208 @@
 <template>
   <div class="permission-form">
-    <a-card :title="isEdit ? '编辑权限' : '创建权限'">
-              <a-form
+    <div class="form-header">
+      <div class="header-content">
+        <div class="header-icon">
+          <SafetyCertificateOutlined />
+        </div>
+        <div class="header-text">
+          <div class="header-title">{{ isEdit ? '编辑权限' : '创建权限' }}</div>
+          <div class="header-subtitle">{{ isEdit ? '修改权限信息和配置' : '创建新的权限并配置属性' }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-content">
+      <a-card class="form-card" :bordered="false">
+        <a-form
           ref="formRef"
           :model="form"
           :rules="rules"
-          :label-col="{ span: 4 }"
-          :wrapper-col="{ span: 16 }"
+          :label-col="{ span: 2 }"
+          :wrapper-col="{ span: 22 }"
+          class="permission-form-content"
+          size="small"
+          layout="horizontal"
         >
-        <a-form-item label="权限名称" name="name">
-          <a-input
-            v-model:value="form.name"
-            placeholder="请输入权限名称"
-          />
-        </a-form-item>
-        
-        <a-form-item label="权限编码" name="code">
-          <a-input
-            v-model:value="form.code"
-            placeholder="请输入权限编码"
-            :disabled="isEdit"
-          />
-        </a-form-item>
-        
-        <a-form-item label="权限类型" name="type">
-          <a-select
-            v-model:value="form.type"
-            placeholder="请选择权限类型"
-          >
-            <a-select-option value="menu">菜单</a-select-option>
-            <a-select-option value="button">按钮</a-select-option>
-          </a-select>
-        </a-form-item>
-        
-        <a-form-item label="父级权限" name="parentId">
-          <a-tree-select
-            v-model:value="form.parentId"
-            :tree-data="permissionTree"
-            :loading="permissionLoading"
-            placeholder="请选择父级权限"
-            allow-clear
-            :field-names="{
-              children: 'children',
-              label: 'name',
-              value: 'id',
-            }"
-          />
-        </a-form-item>
-        
-        <a-form-item label="路径" name="path">
-          <a-input
-            v-model:value="form.path"
-            placeholder="请输入路径"
-          />
-        </a-form-item>
-        
-        <a-form-item label="图标" name="icon">
-          <a-select
-            v-model:value="form.icon"
-            placeholder="请选择图标"
-            allow-clear
-            show-search
-            :filter-option="filterIconOption"
-          >
-            <a-select-option
-              v-for="icon in iconOptions"
-              :key="icon.value"
-              :value="icon.value"
-            >
-              <span style="margin-right: 8px;">
-                <component :is="icon.component" />
-              </span>
-              {{ icon.label }}
-            </a-select-option>
-          </a-select>
-        </a-form-item>
-        
-        <a-form-item label="排序" name="sort">
-          <a-input-number
-            v-model:value="form.sort"
-            placeholder="请输入排序值"
-            :min="0"
-            :max="999"
-            style="width: 100%;"
-          />
-        </a-form-item>
-        
-        <a-form-item :wrapper-col="{ offset: 4, span: 16 }">
-          <a-space>
-            <ThemeButton 
-              variant="primary" 
-              size="small"
-              :disabled="loading"
-              @click="handleSubmit"
-            >
-              {{ isEdit ? '更新' : '创建' }}
-            </ThemeButton>
-            <ThemeButton 
-              variant="secondary"
-              size="small"
-              @click="handleCancel"
-            >
-              取消
-            </ThemeButton>
-          </a-space>
-        </a-form-item>
-      </a-form>
-    </a-card>
+          <!-- 基本信息区域 -->
+          <div class="form-section">
+            <div class="section-header">
+              <div class="section-icon">
+                <IdcardOutlined />
+              </div>
+              <div class="section-title">基本信息</div>
+            </div>
+            
+            <a-form-item label="权限名称" name="name">
+              <a-input
+                v-model:value="form.name"
+                placeholder="请输入权限名称"
+                size="middle"
+                class="form-input"
+              >
+                <template #prefix>
+                  <UserOutlined class="input-icon" />
+                </template>
+              </a-input>
+            </a-form-item>
+            
+            <a-form-item label="权限编码" name="code">
+              <a-input
+                v-model:value="form.code"
+                placeholder="请输入权限编码"
+                :disabled="isEdit"
+                size="middle"
+                class="form-input"
+              >
+                <template #prefix>
+                  <KeyOutlined class="input-icon" />
+                </template>
+              </a-input>
+            </a-form-item>
+            
+            <a-form-item label="权限类型" name="type">
+              <a-select
+                v-model:value="form.type"
+                placeholder="请选择权限类型"
+                size="middle"
+                class="form-select"
+              >
+                <a-select-option value="menu">
+                  <div class="select-option-content">
+                    <MenuOutlined class="option-icon" />
+                    <span>菜单权限</span>
+                  </div>
+                </a-select-option>
+                <a-select-option value="button">
+                  <div class="select-option-content">
+                    <AppstoreOutlined class="option-icon" />
+                    <span>按钮权限</span>
+                  </div>
+                </a-select-option>
+              </a-select>
+            </a-form-item>
+          </div>
+
+          <!-- 层级关系区域 -->
+          <div class="form-section">
+            <div class="section-header">
+              <div class="section-icon">
+                <ClusterOutlined />
+              </div>
+              <div class="section-title">层级关系</div>
+              <div class="section-subtitle">设置权限的层级结构和访问路径</div>
+            </div>
+            
+            <a-form-item label="父级权限" name="parentId">
+              <a-tree-select
+                v-model:value="form.parentId"
+                :tree-data="permissionTree"
+                :loading="permissionLoading"
+                placeholder="请选择父级权限（可选）"
+                allow-clear
+                size="middle"
+                class="form-tree-select"
+                :field-names="{
+                  children: 'children',
+                  label: 'name',
+                  value: 'id',
+                }"
+                :dropdown-style="{ maxHeight: '300px', overflow: 'auto' }"
+              >
+                <template #suffixIcon>
+                  <FolderOutlined />
+                </template>
+              </a-tree-select>
+            </a-form-item>
+            
+            <a-form-item label="访问路径" name="path">
+              <a-input
+                v-model:value="form.path"
+                placeholder="请输入访问路径，如：/system/users"
+                size="middle"
+                class="form-input"
+              >
+                <template #prefix>
+                  <LinkOutlined class="input-icon" />
+                </template>
+              </a-input>
+            </a-form-item>
+          </div>
+
+          <!-- 显示设置区域 -->
+          <div class="form-section">
+            <div class="section-header">
+              <div class="section-icon">
+                <EyeOutlined />
+              </div>
+              <div class="section-title">显示设置</div>
+              <div class="section-subtitle">配置权限的显示样式和排序</div>
+            </div>
+            
+            <a-form-item label="图标" name="icon">
+              <a-select
+                v-model:value="form.icon"
+                placeholder="请选择图标（可选）"
+                allow-clear
+                show-search
+                size="middle"
+                class="form-select icon-select"
+                :filter-option="filterIconOption"
+                :dropdown-style="{ maxHeight: '300px', overflow: 'auto' }"
+              >
+                <a-select-option
+                  v-for="icon in iconOptions"
+                  :key="icon.value"
+                  :value="icon.value"
+                >
+                  <div class="icon-option">
+                    <component :is="icon.component" class="icon-display" />
+                    <span class="icon-label">{{ icon.label }}</span>
+                  </div>
+                </a-select-option>
+              </a-select>
+            </a-form-item>
+            
+            <a-form-item label="排序权重" name="sort">
+              <a-input-number
+                v-model:value="form.sort"
+                placeholder="请输入排序值，数字越小排序越靠前"
+                :min="0"
+                :max="999"
+                size="middle"
+                class="form-input-number"
+                style="width: 100%;"
+              />
+            </a-form-item>
+          </div>
+
+          <!-- 操作按钮区域 -->
+          <div class="form-actions">
+            <a-space size="small">
+              <ThemeButton 
+                variant="primary" 
+                size="small"
+                :icon="CheckOutlined"
+                :disabled="loading"
+                @click="handleSubmit"
+                class="submit-btn"
+              >
+                {{ isEdit ? '更新权限' : '创建权限' }}
+              </ThemeButton>
+              <ThemeButton 
+                variant="secondary"
+                size="small"
+                :icon="CloseOutlined"
+                @click="handleCancel"
+                class="cancel-btn"
+              >
+                取消
+              </ThemeButton>
+            </a-space>
+          </div>
+        </a-form>
+      </a-card>
+    </div>
   </div>
 </template>
 
@@ -285,6 +381,7 @@ import {
   UpOutlined,
   RightOutlined,
   LeftOutlined,
+  ArrowLeftOutlined,
   LoadingOutlined,
   Loading3QuartersOutlined,
   SyncOutlined,
@@ -297,8 +394,6 @@ import {
   SwapRightOutlined,
   ArrowUpOutlined,
   ArrowDownOutlined,
-  ArrowLeftOutlined,
-  ArrowRightOutlined,
   DoubleLeftOutlined,
   DoubleRightOutlined,
   VerticalLeftOutlined,
@@ -306,7 +401,6 @@ import {
   VerticalAlignTopOutlined,
   VerticalAlignMiddleOutlined,
   VerticalAlignBottomOutlined,
-
   AlignLeftOutlined,
   AlignCenterOutlined,
   AlignRightOutlined,
@@ -324,6 +418,7 @@ import {
   QuestionOutlined,
   InfoOutlined,
   ExclamationOutlined,
+  IdcardOutlined,
 } from '@ant-design/icons-vue'
 
 const router = useRouter()
@@ -582,6 +677,351 @@ onMounted(async () => {
 .permission-form {
   min-height: 100%;
   background: #f0f2f5;
-  padding: 24px;
+  padding: 0;
+}
+
+.form-header {
+  margin-bottom: 8px;
+  padding: 0 16px;
+  margin-top: 16px;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border-radius: 6px;
+  padding: 12px 16px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  border: 1px solid #f0f0f0;
+}
+
+.header-icon {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, var(--primary-color, #1890ff), var(--secondary-color, #40a9ff));
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12px;
+  box-shadow: 0 2px 6px var(--shadow-color, rgba(24, 144, 255, 0.15));
+}
+
+.header-icon :deep(.anticon) {
+  font-size: 18px;
+  color: white;
+}
+
+.header-text {
+  flex: 1;
+}
+
+.header-title {
+  margin: 0 0 2px 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1a1a;
+  line-height: 1.2;
+}
+
+.header-subtitle {
+  margin: 0;
+  font-size: 11px;
+  color: #666;
+  line-height: 1.2;
+}
+
+.form-content {
+  padding: 0 16px 16px;
+}
+
+.form-card {
+  border-radius: 6px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  border: 1px solid #f0f0f0;
+}
+
+.permission-form-content {
+  padding: 12px 0;
+}
+
+/* 调整表单标签的对齐方式 */
+.permission-form-content :deep(.ant-form-item-label) {
+  text-align: right;
+  padding-right: 6px;
+  line-height: 32px;
+}
+
+/* 确保所有标签垂直对齐 */
+.permission-form-content :deep(.ant-form-item) {
+  margin-bottom: 20px;
+}
+
+.permission-form-content :deep(.ant-form-item-label > label) {
+  height: 32px;
+  line-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+/* 统一所有表单项的标签对齐 */
+.permission-form-content :deep(.ant-form-item-label) {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  height: 32px;
+}
+
+/* 确保输入框区域对齐 */
+.permission-form-content :deep(.ant-form-item-control) {
+  display: flex;
+  align-items: flex-start;
+  min-height: 32px;
+}
+
+/* 优化标签列宽度，减少占用空间 */
+.permission-form-content :deep(.ant-col-2) {
+  flex: 0 0 8.333333%;
+  max-width: 8.333333%;
+}
+
+/* 确保输入框有足够空间 */
+.permission-form-content :deep(.ant-col-22) {
+  flex: 0 0 91.666667%;
+  max-width: 91.666667%;
+}
+
+/* 确保所有输入框完美对齐 */
+.permission-form-content :deep(.ant-form-item-control) {
+  display: flex;
+  align-items: center;
+}
+
+.permission-form-content :deep(.ant-form-item-control-input) {
+  width: 100%;
+}
+
+.permission-form-content :deep(.ant-form-item-control-input-content) {
+  width: 100%;
+}
+
+.form-section {
+  margin-bottom: 24px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.section-icon {
+  width: 20px;
+  height: 20px;
+  background: linear-gradient(135deg, var(--primary-color, #1890ff), var(--secondary-color, #40a9ff));
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 6px;
+  box-shadow: 0 1px 3px var(--shadow-color, rgba(24, 144, 255, 0.12));
+}
+
+.section-icon :deep(.anticon) {
+  font-size: 10px;
+  color: white;
+}
+
+.section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-right: 6px;
+}
+
+.section-subtitle {
+  font-size: 10px;
+  color: #666;
+  font-weight: 400;
+}
+
+.form-input,
+.form-select,
+.form-tree-select,
+.form-input-number {
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  font-size: 13px;
+  width: 100%;
+  min-width: 300px;
+}
+
+.form-input:hover,
+.form-select:hover,
+.form-tree-select:hover,
+.form-input-number:hover {
+  border-color: var(--primary-color, #1890ff);
+  box-shadow: 0 0 0 1px var(--shadow-color, rgba(24, 144, 255, 0.1));
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-tree-select:focus,
+.form-input-number:focus {
+  border-color: var(--primary-color, #1890ff);
+  box-shadow: 0 0 0 1px var(--shadow-color, rgba(24, 144, 255, 0.15));
+}
+
+.input-icon {
+  color: #bfbfbf;
+  font-size: 12px;
+}
+
+.select-option-content {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.option-icon {
+  color: var(--primary-color, #1890ff);
+}
+
+.icon-select {
+  min-width: 180px;
+}
+
+.icon-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 0;
+}
+
+.icon-display {
+  font-size: 14px;
+  color: var(--primary-color, #1890ff);
+  width: 16px;
+  text-align: center;
+}
+
+.icon-label {
+  font-size: 13px;
+}
+
+.form-actions {
+  padding: 12px 0 0 0;
+  margin-top: 16px;
+  border-top: 1px solid #f0f0f0;
+  text-align: center;
+}
+
+.submit-btn {
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  min-width: 100px;
+  font-size: 13px;
+}
+
+.submit-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px var(--shadow-color, rgba(24, 144, 255, 0.2));
+}
+
+.cancel-btn {
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  min-width: 80px;
+  font-size: 13px;
+}
+
+.cancel-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .form-content {
+    padding: 0 16px 16px;
+  }
+  
+  .form-header {
+    padding: 0 16px;
+    margin-top: 12px;
+  }
+  
+  .header-content {
+    padding: 14px 18px;
+  }
+  
+  .header-icon {
+    width: 32px;
+    height: 32px;
+    margin-right: 10px;
+  }
+  
+  .header-title {
+    font-size: 15px;
+  }
+  
+  .header-subtitle {
+    font-size: 11px;
+  }
+  
+  .permission-form-content {
+    padding: 14px 0;
+  }
+  
+  .form-section {
+    margin-bottom: 18px;
+  }
+  
+  .section-header {
+    margin-bottom: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .form-content {
+    padding: 0 12px 12px;
+  }
+  
+  .form-header {
+    padding: 0 12px;
+    margin-top: 10px;
+  }
+  
+  .header-content {
+    padding: 12px 16px;
+  }
+  
+  .header-icon {
+    width: 28px;
+    height: 28px;
+    margin-right: 8px;
+  }
+  
+  .header-title {
+    font-size: 14px;
+  }
+  
+  .header-subtitle {
+    font-size: 10px;
+  }
+  
+  .permission-form-content {
+    padding: 12px 0;
+  }
+  
+  .form-section {
+    margin-bottom: 16px;
+  }
 }
 </style>
