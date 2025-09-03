@@ -14,7 +14,7 @@ import org.springframework.security.web.SecurityFilterChain
 @Configuration
 @EnableWebSecurity
 class SecurityConfig {
-    
+
     @Bean
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
         http
@@ -23,7 +23,7 @@ class SecurityConfig {
             .authorizeHttpRequests { auth ->
                 auth.anyRequest().permitAll()
             }
-        
+
         return http.build()
     }
 }

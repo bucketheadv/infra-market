@@ -1,7 +1,44 @@
 <template>
   <a-layout class="main-layout">
     <a-layout-header class="header">
-              <div class="logo">基础设施市场</div>
+      <div class="logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- 主建筑结构 -->
+            <path d="M4 8L12 4L20 8V18L12 22L4 18V8Z" fill="url(#gradient1)" stroke="url(#gradient2)" stroke-width="0.5"/>
+            <!-- 内部结构线 -->
+            <path d="M12 4V22" stroke="url(#gradient2)" stroke-width="0.5" opacity="0.6"/>
+            <path d="M4 8L20 8" stroke="url(#gradient2)" stroke-width="0.5" opacity="0.6"/>
+            <path d="M4 18L20 18" stroke="url(#gradient2)" stroke-width="0.5" opacity="0.6"/>
+            <!-- 连接点 -->
+            <circle cx="12" cy="8" r="1.5" fill="url(#gradient3)"/>
+            <circle cx="12" cy="18" r="1.5" fill="url(#gradient3)"/>
+            <!-- 装饰性元素 -->
+            <path d="M8 6L16 6" stroke="url(#gradient2)" stroke-width="1" stroke-linecap="round" opacity="0.8"/>
+            <path d="M8 20L16 20" stroke="url(#gradient2)" stroke-width="1" stroke-linecap="round" opacity="0.8"/>
+            <!-- 渐变定义 -->
+            <defs>
+              <linearGradient id="gradient1" x1="4" y1="4" x2="20" y2="22" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#1890ff"/>
+                <stop offset="0.5" stop-color="#40a9ff"/>
+                <stop offset="1" stop-color="#69c0ff"/>
+              </linearGradient>
+              <linearGradient id="gradient2" x1="4" y1="4" x2="20" y2="22" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#1890ff"/>
+                <stop offset="1" stop-color="#40a9ff"/>
+              </linearGradient>
+              <linearGradient id="gradient3" x1="10.5" y1="6.5" x2="13.5" y2="19.5" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#ffffff"/>
+                <stop offset="1" stop-color="#e6f7ff"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <div class="logo-text">
+          <span class="logo-title">基础设施市场</span>
+          <span class="logo-subtitle">Infra Market</span>
+        </div>
+      </div>
       <div class="header-right">
         <a-dropdown>
           <a class="user-dropdown">
@@ -334,21 +371,88 @@ const handleLogout = async () => {
 }
 
 .logo {
-  font-size: 20px;
-  font-weight: 700;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  text-shadow: 0 2px 4px rgba(102, 126, 234, 0.1);
-  letter-spacing: 0.5px;
-  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
   cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(24, 144, 255, 0.1);
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.08), 0 0 0 1px rgba(24, 144, 255, 0.05);
+  position: relative;
+  overflow: hidden;
+}
+
+.logo::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(24, 144, 255, 0.1), transparent);
+  transition: left 0.6s ease;
+}
+
+.logo:hover::before {
+  left: 100%;
 }
 
 .logo:hover {
-  transform: scale(1.05);
-  text-shadow: 0 4px 8px rgba(102, 126, 234, 0.2);
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(24, 144, 255, 0.2);
+  box-shadow: 0 4px 16px rgba(24, 144, 255, 0.15);
+}
+
+.logo-icon {
+  width: 36px;
+  height: 36px;
+  margin-right: 12px;
+  flex-shrink: 0;
+  filter: drop-shadow(0 2px 4px rgba(24, 144, 255, 0.2));
+  transition: all 0.3s ease;
+}
+
+.logo:hover .logo-icon {
+  filter: drop-shadow(0 4px 8px rgba(24, 144, 255, 0.3));
+  transform: scale(1.05) rotate(2deg);
+}
+
+.logo-icon svg {
+  transition: all 0.3s ease;
+}
+
+.logo:hover .logo-icon svg {
+  filter: brightness(1.1);
+}
+
+.logo-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.logo-title {
+  font-size: 18px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #1890ff 0%, #40a9ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.2;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+}
+
+.logo-subtitle {
+  font-size: 11px;
+  color: #666;
+  line-height: 1.2;
+  letter-spacing: 0.3px;
+  font-weight: 500;
+  opacity: 0.8;
 }
 
 .header-right {
@@ -764,7 +868,21 @@ const handleLogout = async () => {
   }
   
   .logo {
-    font-size: 18px;
+    padding: 6px 10px;
+  }
+  
+  .logo-icon {
+    width: 28px;
+    height: 28px;
+    margin-right: 8px;
+  }
+  
+  .logo-title {
+    font-size: 16px;
+  }
+  
+  .logo-subtitle {
+    font-size: 10px;
   }
   
   .user-dropdown {
@@ -799,7 +917,21 @@ const handleLogout = async () => {
   }
   
   .logo {
-    font-size: 16px;
+    padding: 4px 8px;
+  }
+  
+  .logo-icon {
+    width: 24px;
+    height: 24px;
+    margin-right: 6px;
+  }
+  
+  .logo-title {
+    font-size: 14px;
+  }
+  
+  .logo-subtitle {
+    font-size: 9px;
   }
   
   .user-dropdown {
