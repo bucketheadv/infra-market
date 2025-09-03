@@ -3,10 +3,9 @@
     <a-card>
       <template #title>权限管理</template>
       <template #extra>
-        <a-button type="primary" @click="handleCreate">
-          <PlusOutlined />
+        <ThemeButton variant="primary" size="medium" :icon="PlusOutlined" @click="handleCreate">
           创建权限
-        </a-button>
+        </ThemeButton>
       </template>
       
       <!-- 搜索表单 -->
@@ -57,14 +56,12 @@
           <a-col :xs="24" :sm="24" :md="24" :lg="24">
             <a-form-item>
               <a-space>
-                <a-button type="primary" @click="handleSearch">
-                  <SearchOutlined />
+                <ThemeButton variant="primary" size="medium" :icon="SearchOutlined" @click="handleSearch">
                   搜索
-                </a-button>
-                <a-button @click="handleReset">
-                  <ReloadOutlined />
+                </ThemeButton>
+                <ThemeButton variant="secondary" size="medium" :icon="ReloadOutlined" @click="handleReset">
                   重置
-                </a-button>
+                </ThemeButton>
               </a-space>
             </a-form-item>
           </a-col>
@@ -103,40 +100,39 @@
           
           <template v-else-if="column.key === 'action'">
             <div class="action-buttons">
-              <a-button 
-                type="link" 
+              <ThemeButton 
+                variant="ghost" 
                 size="small" 
                 class="action-btn edit-btn"
+                :icon="EditOutlined"
                 @click="handleEdit(record)"
               >
-                <EditOutlined />
                 编辑
-              </a-button>
-              <a-button
-                type="link"
+              </ThemeButton>
+              <ThemeButton
+                variant="ghost"
                 size="small"
                 class="action-btn status-btn"
                 :class="{ 'disable-btn': record.status === 'active' }"
+                :icon="record.status === 'active' ? CheckCircleOutlined : StopOutlined"
                 @click="handleToggleStatus(record)"
               >
-                <CheckCircleOutlined v-if="record.status === 'active'" />
-                <StopOutlined v-else />
                 {{ record.status === 'active' ? '禁用' : '启用' }}
-              </a-button>
+              </ThemeButton>
               <a-popconfirm
                 title="确定要删除这个权限吗？"
                 ok-text="确定"
                 cancel-text="取消"
                 @confirm="handleDelete(record)"
               >
-                <a-button 
-                  type="link" 
+                <ThemeButton 
+                  variant="ghost" 
                   size="small" 
                   class="action-btn delete-btn"
+                  :icon="DeleteOutlined"
                 >
-                  <DeleteOutlined />
                   删除
-                </a-button>
+                </ThemeButton>
               </a-popconfirm>
             </div>
           </template>
@@ -164,6 +160,7 @@ import {
   DeleteOutlined,
 } from '@ant-design/icons-vue'
 import { permissionApi } from '@/api/permission'
+import ThemeButton from '@/components/ThemeButton.vue'
 import type { Permission, PageParams } from '@/types'
 
 const router = useRouter()
@@ -500,11 +497,11 @@ onMounted(() => {
 .action-btn {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
+  gap: 3px;
   padding: 3px 6px;
   border-radius: 4px;
-  transition: all 0.3s ease;
-  font-size: 10px;
+  transition: all 0.2s ease;
+  font-size: 11px;
   height: 24px;
   font-weight: 500;
   white-space: nowrap;
@@ -514,7 +511,7 @@ onMounted(() => {
 
 .action-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
 }
 
 .edit-btn {
@@ -522,8 +519,8 @@ onMounted(() => {
 }
 
 .edit-btn:hover {
-  background-color: #e6f7ff;
-  color: #1890ff;
+  background-color: #1890ff;
+  color: white;
 }
 
 .status-btn {
@@ -531,8 +528,8 @@ onMounted(() => {
 }
 
 .status-btn:hover {
-  background-color: #f6ffed;
-  color: #52c41a;
+  background-color: #52c41a;
+  color: white;
 }
 
 .disable-btn {
@@ -540,8 +537,8 @@ onMounted(() => {
 }
 
 .disable-btn:hover {
-  background-color: #fffbe6;
-  color: #faad14;
+  background-color: #faad14;
+  color: white;
 }
 
 .delete-btn {
@@ -549,8 +546,8 @@ onMounted(() => {
 }
 
 .delete-btn:hover {
-  background-color: #fff2f0;
-  color: #ff4d4f;
+  background-color: #ff4d4f;
+  color: white;
 }
 
 /* 分页样式优化 */
@@ -567,15 +564,15 @@ onMounted(() => {
 }
 
 .permission-table :deep(.ant-pagination-item:hover) {
-  border-color: #1890ff;
+  border-color: var(--primary-color, #1890ff);
   transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(24, 144, 255, 0.2);
+  box-shadow: 0 2px 4px var(--shadow-color, rgba(24, 144, 255, 0.2));
 }
 
 .permission-table :deep(.ant-pagination-item-active) {
-  background: #1890ff;
-  border-color: #1890ff;
-  box-shadow: 0 2px 4px rgba(24, 144, 255, 0.3);
+  background: var(--primary-color, #1890ff);
+  border-color: var(--primary-color, #1890ff);
+  box-shadow: 0 2px 4px var(--shadow-color, rgba(24, 144, 255, 0.3));
 }
 
 .permission-table :deep(.ant-pagination-item-active a) {
@@ -592,13 +589,48 @@ onMounted(() => {
 
 .permission-table :deep(.ant-pagination-prev:hover),
 .permission-table :deep(.ant-pagination-next:hover) {
-  border-color: #1890ff;
+  border-color: var(--primary-color, #1890ff);
   transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(24, 144, 255, 0.2);
+  box-shadow: 0 2px 4px var(--shadow-color, rgba(24, 144, 255, 0.2));
 }
 
+/* 分页跳转和每页条数选择器 */
 .permission-table :deep(.ant-pagination-options) {
   margin-left: 16px;
+}
+
+.permission-table :deep(.ant-pagination-options-quick-jumper) {
+  margin-left: 8px;
+}
+
+.permission-table :deep(.ant-pagination-options-quick-jumper input) {
+  border-radius: 4px;
+  border: 1px solid #d9d9d9;
+  transition: all 0.3s ease;
+}
+
+.permission-table :deep(.ant-pagination-options-quick-jumper input:hover) {
+  border-color: var(--primary-color, #1890ff);
+}
+
+.permission-table :deep(.ant-pagination-options-quick-jumper input:focus) {
+  border-color: var(--primary-color, #1890ff);
+  box-shadow: 0 0 0 2px var(--shadow-color, rgba(24, 144, 255, 0.2));
+}
+
+.permission-table :deep(.ant-select-selector) {
+  border-radius: 4px;
+  border: 1px solid #d9d9d9;
+  transition: all 0.3s ease;
+}
+
+.permission-table :deep(.ant-select:hover .ant-select-selector) {
+  border-color: var(--primary-color, #1890ff);
+}
+
+.permission-table :deep(.ant-select-focused .ant-select-selector) {
+  border-color: var(--primary-color, #1890ff);
+  box-shadow: 0 0 0 2px var(--shadow-color, rgba(24, 144, 255, 0.2));
 }
 
 .permission-table :deep(.ant-pagination-options .ant-select) {

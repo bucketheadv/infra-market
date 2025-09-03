@@ -7,10 +7,13 @@ export interface ThemeConfig {
   label: string
   primaryColor: string
   secondaryColor: string
+  accentColor: string
   backgroundColor: string
   textColor: string
   borderColor: string
   shadowColor: string
+  lightColor: string
+  lightAccentColor: string
   icon: string
 }
 
@@ -21,10 +24,13 @@ export const themes: ThemeConfig[] = [
     label: '默认主题',
     primaryColor: '#1890ff',
     secondaryColor: '#40a9ff',
+    accentColor: '#69c0ff',
     backgroundColor: '#f0f2f5',
     textColor: '#333333',
     borderColor: '#f0f0f0',
     shadowColor: 'rgba(24, 144, 255, 0.08)',
+    lightColor: '#ffffff',
+    lightAccentColor: '#e6f7ff',
     icon: '🌊'
   },
   {
@@ -32,10 +38,13 @@ export const themes: ThemeConfig[] = [
     label: '深色主题',
     primaryColor: '#722ed1',
     secondaryColor: '#9254de',
+    accentColor: '#b37feb',
     backgroundColor: '#141414',
     textColor: '#ffffff',
     borderColor: '#303030',
     shadowColor: 'rgba(114, 46, 209, 0.08)',
+    lightColor: '#ffffff',
+    lightAccentColor: '#f9f0ff',
     icon: '🌙'
   },
   {
@@ -43,10 +52,13 @@ export const themes: ThemeConfig[] = [
     label: '绿色主题',
     primaryColor: '#52c41a',
     secondaryColor: '#73d13d',
+    accentColor: '#95de64',
     backgroundColor: '#f6ffed',
     textColor: '#333333',
     borderColor: '#d9f7be',
     shadowColor: 'rgba(82, 196, 26, 0.08)',
+    lightColor: '#ffffff',
+    lightAccentColor: '#f6ffed',
     icon: '🌿'
   },
   {
@@ -54,10 +66,13 @@ export const themes: ThemeConfig[] = [
     label: '橙色主题',
     primaryColor: '#fa8c16',
     secondaryColor: '#ffa940',
+    accentColor: '#ffc53d',
     backgroundColor: '#fff7e6',
     textColor: '#333333',
     borderColor: '#ffe7ba',
     shadowColor: 'rgba(250, 140, 22, 0.08)',
+    lightColor: '#ffffff',
+    lightAccentColor: '#fff7e6',
     icon: '🍊'
   },
   {
@@ -65,10 +80,13 @@ export const themes: ThemeConfig[] = [
     label: '红色主题',
     primaryColor: '#f5222d',
     secondaryColor: '#ff4d4f',
+    accentColor: '#ff7875',
     backgroundColor: '#fff2f0',
     textColor: '#333333',
     borderColor: '#ffccc7',
     shadowColor: 'rgba(245, 34, 45, 0.08)',
+    lightColor: '#ffffff',
+    lightAccentColor: '#fff2f0',
     icon: '🌹'
   }
 ]
@@ -101,10 +119,13 @@ export const useThemeStore = defineStore('theme', () => {
     const root = document.documentElement
     root.style.setProperty('--primary-color', theme.primaryColor)
     root.style.setProperty('--secondary-color', theme.secondaryColor)
+    root.style.setProperty('--accent-color', theme.accentColor)
     root.style.setProperty('--background-color', theme.backgroundColor)
     root.style.setProperty('--text-color', theme.textColor)
     root.style.setProperty('--border-color', theme.borderColor)
     root.style.setProperty('--shadow-color', theme.shadowColor)
+    root.style.setProperty('--light-color', theme.lightColor)
+    root.style.setProperty('--light-accent-color', theme.lightAccentColor)
     
     // 更新html和body类名用于全局样式控制
     document.documentElement.className = document.documentElement.className.replace(/theme-\w+/g, '')

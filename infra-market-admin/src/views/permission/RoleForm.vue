@@ -1,14 +1,13 @@
 <template>
   <div class="role-form">
     <a-card :title="isEdit ? '编辑角色' : '创建角色'">
-      <a-form
-        ref="formRef"
-        :model="form"
-        :rules="rules"
-        :label-col="{ span: 4 }"
-        :wrapper-col="{ span: 16 }"
-        @finish="handleSubmit"
-      >
+              <a-form
+          ref="formRef"
+          :model="form"
+          :rules="rules"
+          :label-col="{ span: 4 }"
+          :wrapper-col="{ span: 16 }"
+        >
         <a-form-item label="角色名称" name="name">
           <a-input
             v-model:value="form.name"
@@ -52,10 +51,21 @@
         
         <a-form-item :wrapper-col="{ offset: 4, span: 16 }">
           <a-space>
-            <a-button type="primary" html-type="submit" :loading="loading">
+            <ThemeButton 
+              variant="primary" 
+              size="small"
+              :disabled="loading"
+              @click="handleSubmit"
+            >
               {{ isEdit ? '更新' : '创建' }}
-            </a-button>
-            <a-button @click="handleCancel">取消</a-button>
+            </ThemeButton>
+            <ThemeButton 
+              variant="secondary"
+              size="small"
+              @click="handleCancel"
+            >
+              取消
+            </ThemeButton>
           </a-space>
         </a-form-item>
       </a-form>
@@ -69,6 +79,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { message } from 'ant-design-vue'
 import { roleApi } from '@/api/role'
 import { permissionApi } from '@/api/permission'
+import ThemeButton from '@/components/ThemeButton.vue'
 import type { RoleForm, Permission } from '@/types'
 
 const router = useRouter()
@@ -151,8 +162,12 @@ const handlePermissionCheck = (checkedKeys: any) => {
 
 // 提交表单
 const handleSubmit = async () => {
-  loading.value = true
   try {
+    // 表单验证
+    await formRef.value?.validate()
+    
+    loading.value = true
+    
     if (isEdit.value) {
       await roleApi.updateRole(Number(route.params.id), form)
       message.success('角色更新成功')
@@ -162,7 +177,12 @@ const handleSubmit = async () => {
     }
     router.push('/system/roles')
   } catch (error: any) {
-    message.error(error.message || (isEdit.value ? '角色更新失败' : '角色创建失败'))
+    if (error?.errorFields) {
+      // 表单验证失败
+      message.error('请填写完整的表单信息')
+    } else {
+      message.error(error.message || (isEdit.value ? '角色更新失败' : '角色创建失败'))
+    }
   } finally {
     loading.value = false
   }

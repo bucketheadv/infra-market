@@ -43,6 +43,7 @@ declare module 'vue' {
     ATreeSelect: typeof import('ant-design-vue/es')['TreeSelect']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    ThemeButton: typeof import('./src/components/ThemeButton.vue')['default']
     ThemeSelector: typeof import('./src/components/ThemeSelector.vue')['default']
   }
 }

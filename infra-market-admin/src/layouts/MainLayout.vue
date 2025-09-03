@@ -19,17 +19,17 @@
             <!-- 渐变定义 -->
             <defs>
               <linearGradient id="gradient1" x1="4" y1="4" x2="20" y2="22" gradientUnits="userSpaceOnUse">
-                <stop stop-color="#1890ff"/>
-                <stop offset="0.5" stop-color="#40a9ff"/>
-                <stop offset="1" stop-color="#69c0ff"/>
+                <stop stop-color="var(--primary-color, #1890ff)"/>
+                <stop offset="0.5" stop-color="var(--secondary-color, #40a9ff)"/>
+                <stop offset="1" stop-color="var(--accent-color, #69c0ff)"/>
               </linearGradient>
               <linearGradient id="gradient2" x1="4" y1="4" x2="20" y2="22" gradientUnits="userSpaceOnUse">
-                <stop stop-color="#1890ff"/>
-                <stop offset="1" stop-color="#40a9ff"/>
+                <stop stop-color="var(--primary-color, #1890ff)"/>
+                <stop offset="1" stop-color="var(--secondary-color, #40a9ff)"/>
               </linearGradient>
               <linearGradient id="gradient3" x1="10.5" y1="6.5" x2="13.5" y2="19.5" gradientUnits="userSpaceOnUse">
-                <stop stop-color="#ffffff"/>
-                <stop offset="1" stop-color="#e6f7ff"/>
+                <stop stop-color="var(--light-color, #ffffff)"/>
+                <stop offset="1" stop-color="var(--light-accent-color, #e6f7ff)"/>
               </linearGradient>
             </defs>
           </svg>
@@ -111,7 +111,7 @@
             <span>仪表盘</span>
           </a-menu-item>
           
-
+          
           
           <!-- 动态菜单 -->
           <template v-for="menu in validMenus" :key="menu.id">
@@ -220,49 +220,49 @@ const getIconComponent = (iconName: string) => {
   return iconMap[iconName] || QuestionOutlined
 }
 
-// 更新菜单状态的函数
-const updateMenuState = (path: string) => {
-  isUpdatingFromRoute.value = true
-  
-  // 特殊处理仪表盘
-  if (path === '/') {
-    selectedKeys.value = ['dashboard']
-    // 保持现有的展开状态，不清空
-    isUpdatingFromRoute.value = false
-    return
-  }
-  
-  // 根据路径找到对应的菜单ID和父菜单ID
-  const findMenuInfoByPath = (menus: any[], targetPath: string): { menuId: string | null, parentId: string | null } => {
-    for (const menu of menus) {
-      if (menu.path === targetPath) {
-        return { menuId: menu.id.toString(), parentId: null }
-      }
-      if (menu.children) {
-        for (const child of menu.children) {
-          if (child.path === targetPath) {
-            return { menuId: child.id.toString(), parentId: menu.id.toString() }
+  // 更新菜单状态的函数
+  const updateMenuState = (path: string) => {
+    isUpdatingFromRoute.value = true
+    
+    // 特殊处理仪表盘
+    if (path === '/') {
+      selectedKeys.value = ['dashboard']
+      // 保持现有的展开状态，不清空
+      isUpdatingFromRoute.value = false
+      return
+    }
+    
+    // 根据路径找到对应的菜单ID和父菜单ID
+    const findMenuInfoByPath = (menus: any[], targetPath: string): { menuId: string | null, parentId: string | null } => {
+      for (const menu of menus) {
+        if (menu.path === targetPath) {
+          return { menuId: menu.id.toString(), parentId: null }
+        }
+        if (menu.children) {
+          for (const child of menu.children) {
+            if (child.path === targetPath) {
+              return { menuId: child.id.toString(), parentId: menu.id.toString() }
+            }
           }
         }
       }
+      return { menuId: null, parentId: null }
     }
-    return { menuId: null, parentId: null }
+    
+    const { menuId, parentId } = findMenuInfoByPath(validMenus.value, path)
+    selectedKeys.value = menuId ? [menuId.toString()] : []
+    
+    // 设置展开的菜单状态
+    if (parentId) {
+      // 如果是子菜单，确保父菜单展开
+      const currentOpenKeys = new Set(openKeys.value)
+      currentOpenKeys.add(parentId.toString())
+      openKeys.value = Array.from(currentOpenKeys)
+    }
+    // 如果是顶级菜单，保持现有的展开状态
+    
+    isUpdatingFromRoute.value = false
   }
-  
-  const { menuId, parentId } = findMenuInfoByPath(validMenus.value, path)
-  selectedKeys.value = menuId ? [menuId.toString()] : []
-  
-  // 设置展开的菜单状态
-  if (parentId) {
-    // 如果是子菜单，确保父菜单展开
-    const currentOpenKeys = new Set(openKeys.value)
-    currentOpenKeys.add(parentId.toString())
-    openKeys.value = Array.from(currentOpenKeys)
-  }
-  // 如果是顶级菜单，保持现有的展开状态
-  
-  isUpdatingFromRoute.value = false
-}
 
 // 监听路由变化，更新选中的菜单项
 watch(
@@ -288,36 +288,36 @@ watch(
   { immediate: true }
 )
 
-// 菜单点击处理
-const handleMenuClick = ({ key }: { key: string }) => {
-  // 特殊处理仪表盘
-  if (key === 'dashboard') {
-    router.push('/')
-    return
-  }
-  
-  // 根据菜单ID找到对应的路径
-  const findPathById = (menus: any[], targetId: string): string | null => {
-    for (const menu of menus) {
-      if (menu.id == targetId) {
-        return menu.path
-      }
-      if (menu.children) {
-        for (const child of menu.children) {
-          if (child.id == targetId) {
-            return child.path
+  // 菜单点击处理
+  const handleMenuClick = ({ key }: { key: string }) => {
+    // 特殊处理仪表盘
+    if (key === 'dashboard') {
+      router.push('/')
+      return
+    }
+    
+    // 根据菜单ID找到对应的路径
+    const findPathById = (menus: any[], targetId: string): string | null => {
+      for (const menu of menus) {
+        if (menu.id == targetId) {
+          return menu.path
+        }
+        if (menu.children) {
+          for (const child of menu.children) {
+            if (child.id == targetId) {
+              return child.path
+            }
           }
         }
       }
+      return null
     }
-    return null
+    
+    const path = findPathById(validMenus.value, key)
+    if (path) {
+      router.push(path)
+    }
   }
-  
-  const path = findPathById(validMenus.value, key)
-  if (path) {
-    router.push(path)
-  }
-}
 
 // 菜单展开/收起处理
 const handleOpenChange = (keys: string[]) => {
@@ -405,10 +405,12 @@ const handleLogout = async () => {
 
 .logo-icon svg {
   transition: all 0.3s ease;
+  filter: drop-shadow(0 2px 4px var(--shadow-color, rgba(24, 144, 255, 0.2)));
 }
 
 .logo:hover .logo-icon svg {
-  filter: brightness(1.1);
+  filter: brightness(1.1) drop-shadow(0 4px 8px var(--shadow-color, rgba(24, 144, 255, 0.3)));
+  transform: scale(1.05);
 }
 
 .logo-text {
@@ -420,19 +422,21 @@ const handleLogout = async () => {
   font-size: 20px;
   font-weight: 300;
   font-family: 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  color: #0f172a;
+  color: var(--primary-color, #0f172a);
   line-height: 1.1;
   letter-spacing: -0.025em;
   margin-bottom: 3px;
+  transition: color 0.3s ease;
 }
 
 .logo-subtitle {
   font-size: 11px;
   font-weight: 300;
   font-family: 'Inter', 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  color: #475569;
+  color: var(--secondary-color, #475569);
   line-height: 1.2;
   letter-spacing: 0.02em;
+  transition: color 0.3s ease;
 }
 
 .header-right {

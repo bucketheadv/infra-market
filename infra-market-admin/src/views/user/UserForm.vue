@@ -20,7 +20,6 @@
           :rules="rules"
           :label-col="{ span: 4 }"
           :wrapper-col="{ span: 20 }"
-          @finish="handleSubmit"
           class="user-form"
         >
           <!-- 基本信息区域 -->
@@ -145,32 +144,29 @@
           </div>
 
           <!-- 操作按钮区域 -->
-          <div class="form-actions">
-            <a-space size="large">
-              <a-button 
-                type="primary" 
-                html-type="submit" 
-                :loading="loading"
-                size="large"
+          <a-form-item :wrapper-col="{ offset: 4, span: 20 }">
+            <a-space size="middle">
+              <ThemeButton 
+                variant="primary" 
+                size="medium"
+                :icon="CheckOutlined"
+                :disabled="loading"
+                @click="handleSubmit"
                 class="submit-btn"
               >
-                <template #icon>
-                  <CheckOutlined />
-                </template>
                 {{ isEdit ? '更新用户' : '创建用户' }}
-              </a-button>
-              <a-button 
+              </ThemeButton>
+              <ThemeButton 
+                variant="secondary"
+                size="medium"
+                :icon="CloseOutlined"
                 @click="handleCancel"
-                size="large"
                 class="cancel-btn"
               >
-                <template #icon>
-                  <CloseOutlined />
-                </template>
                 取消
-              </a-button>
+              </ThemeButton>
             </a-space>
-          </div>
+          </a-form-item>
         </a-form>
       </a-card>
     </div>
@@ -196,6 +192,7 @@ import {
 } from '@ant-design/icons-vue'
 import { userApi } from '@/api/user'
 import { roleApi } from '@/api/role'
+import ThemeButton from '@/components/ThemeButton.vue'
 import type { UserForm, Role } from '@/types'
 
 const router = useRouter()
@@ -226,9 +223,11 @@ const rules = computed(() => ({
     { min: 6, message: '密码长度不能少于6位', trigger: 'blur' },
   ],
   email: [
+    { required: true, message: '请输入邮箱地址', trigger: 'blur' },
     { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' },
   ],
   phone: [
+    { required: true, message: '请输入手机号', trigger: 'blur' },
     { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号格式', trigger: 'blur' },
   ],
   roleIds: [
@@ -271,8 +270,12 @@ const fetchUser = async (id: number) => {
 
 // 提交表单
 const handleSubmit = async () => {
-  loading.value = true
   try {
+    // 表单验证
+    await formRef.value?.validate()
+    
+    loading.value = true
+    
     if (isEdit.value) {
       await userApi.updateUser(Number(route.params.id), form)
       message.success('用户更新成功')
@@ -281,8 +284,13 @@ const handleSubmit = async () => {
       message.success('用户创建成功')
     }
     router.push('/system/users')
-  } catch (error) {
-    message.error(isEdit.value ? '用户更新失败' : '用户创建失败')
+  } catch (error: any) {
+    if (error?.errorFields) {
+      // 表单验证失败
+      message.error('请填写完整的表单信息')
+    } else {
+      message.error(isEdit.value ? '用户更新失败' : '用户创建失败')
+    }
   } finally {
     loading.value = false
   }
@@ -539,41 +547,44 @@ onMounted(async () => {
 
 .form-actions {
   text-align: center;
-  padding: 16px 12px 12px;
+  padding: 20px 16px 20px;
   border-top: 1px solid #f0f0f0;
-  margin-top: 12px;
+  margin-top: 16px;
 }
 
 .submit-btn {
   height: 32px;
   padding: 0 16px;
-  border-radius: 4px;
+  border-radius: 6px;
   font-weight: 500;
   background: #1890ff;
   border: none;
   box-shadow: 0 1px 3px rgba(24, 144, 255, 0.2);
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
 .submit-btn:hover {
   background: #40a9ff;
+  transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
 }
 
 .cancel-btn {
   height: 32px;
   padding: 0 16px;
-  border-radius: 4px;
+  border-radius: 6px;
   font-weight: 500;
-  border: 1px solid #d9d9d9;
+  background: #f5f5f5;
   color: #666;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
+  border: none;
 }
 
 .cancel-btn:hover {
-  border-color: #40a9ff;
+  background: #e6f7ff;
   color: #1890ff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.15);
 }
 
 /* 响应式设计 */

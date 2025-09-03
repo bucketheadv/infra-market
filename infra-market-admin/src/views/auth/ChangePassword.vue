@@ -61,30 +61,29 @@
           </a-form-item>
 
           <a-form-item class="submit-item">
-            <a-button
-              type="primary"
-              html-type="submit"
-              size="large"
-              :loading="loading"
-              block
+            <ThemeButton
+              variant="primary"
+              size="medium"
+              :icon="SaveOutlined"
+              :disabled="loading"
               class="submit-btn"
+              @click="handleSubmit"
+              style="width: 100%;"
             >
-              <template #icon>
-                <SaveOutlined />
-              </template>
               确认修改
-            </a-button>
+            </ThemeButton>
           </a-form-item>
           
           <div class="form-footer">
-            <a-button 
-              type="link" 
+            <ThemeButton 
+              variant="ghost" 
+              size="small"
+              :icon="ArrowLeftOutlined"
               @click="goBack"
               class="back-btn"
             >
-              <ArrowLeftOutlined />
               返回
-            </a-button>
+            </ThemeButton>
           </div>
         </a-form>
       </a-card>
@@ -104,6 +103,7 @@ import {
   ArrowLeftOutlined 
 } from '@ant-design/icons-vue'
 import { authApi } from '@/api/auth'
+import ThemeButton from '@/components/ThemeButton.vue'
 import type { FormInstance } from 'ant-design-vue'
 
 const router = useRouter()

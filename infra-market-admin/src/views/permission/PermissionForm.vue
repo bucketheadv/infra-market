@@ -1,14 +1,13 @@
 <template>
   <div class="permission-form">
     <a-card :title="isEdit ? '编辑权限' : '创建权限'">
-      <a-form
-        ref="formRef"
-        :model="form"
-        :rules="rules"
-        :label-col="{ span: 4 }"
-        :wrapper-col="{ span: 16 }"
-        @finish="handleSubmit"
-      >
+              <a-form
+          ref="formRef"
+          :model="form"
+          :rules="rules"
+          :label-col="{ span: 4 }"
+          :wrapper-col="{ span: 16 }"
+        >
         <a-form-item label="权限名称" name="name">
           <a-input
             v-model:value="form.name"
@@ -89,10 +88,21 @@
         
         <a-form-item :wrapper-col="{ offset: 4, span: 16 }">
           <a-space>
-            <a-button type="primary" html-type="submit" :loading="loading">
+            <ThemeButton 
+              variant="primary" 
+              size="small"
+              :disabled="loading"
+              @click="handleSubmit"
+            >
               {{ isEdit ? '更新' : '创建' }}
-            </a-button>
-            <a-button @click="handleCancel">取消</a-button>
+            </ThemeButton>
+            <ThemeButton 
+              variant="secondary"
+              size="small"
+              @click="handleCancel"
+            >
+              取消
+            </ThemeButton>
           </a-space>
         </a-form-item>
       </a-form>
@@ -106,6 +116,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { message } from 'ant-design-vue'
 import { permissionApi } from '@/api/permission'
 import { useAuthStore } from '@/stores/auth'
+import ThemeButton from '@/components/ThemeButton.vue'
 import type { PermissionForm, Permission } from '@/types'
 import {
   SettingOutlined,
@@ -524,21 +535,30 @@ const fetchPermission = async (id: number) => {
 
 // 提交表单
 const handleSubmit = async () => {
-  loading.value = true
   try {
-          if (isEdit.value) {
-        await permissionApi.updatePermission(Number(route.params.id), form)
-        message.success('权限更新成功')
-        // 刷新用户权限数据和菜单
-        await authStore.getCurrentUser()
-        await authStore.getUserMenus()
-      } else {
+    // 表单验证
+    await formRef.value?.validate()
+    
+    loading.value = true
+    
+    if (isEdit.value) {
+      await permissionApi.updatePermission(Number(route.params.id), form)
+      message.success('权限更新成功')
+      // 刷新用户权限数据和菜单
+      await authStore.getCurrentUser()
+      await authStore.getUserMenus()
+    } else {
       await permissionApi.createPermission(form)
       message.success('权限创建成功')
     }
     router.push('/system/permissions')
   } catch (error: any) {
-    message.error(error.message || (isEdit.value ? '权限更新失败' : '权限创建失败'))
+    if (error?.errorFields) {
+      // 表单验证失败
+      message.error('请填写完整的表单信息')
+    } else {
+      message.error(error.message || (isEdit.value ? '权限更新失败' : '权限创建失败'))
+    }
   } finally {
     loading.value = false
   }
