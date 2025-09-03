@@ -84,9 +84,11 @@ const buildBreadcrumbPath = (menus: Permission[], targetPath: string): Breadcrum
       }
       if (menu.children && menu.children.length > 0) {
         if (findPath(menu.children, currentPath)) {
+          // 对于有子菜单的父级菜单，不设置为可点击（path: undefined）
+          // 这样可以避免分类菜单被误点击
           path.unshift({
             title: menu.name,
-            path: menu.path,
+            path: undefined,
             icon: menu.icon
           })
           return true
