@@ -169,6 +169,7 @@ import {
   QuestionOutlined,
   KeyOutlined,
   DownOutlined,
+  ToolOutlined,
 } from '@ant-design/icons-vue'
 
 const router = useRouter()
@@ -200,10 +201,10 @@ const validMenus = computed(() => {
   return userMenus.value.filter(menu => menu && menu.name)
 })
 
-// 权限检查
-const hasPermission = (permission: string) => {
-  return authStore.hasPermission(permission)
-}
+// 权限检查（暂时保留，可能后续会用到）
+// const hasPermission = (permission: string) => {
+//   return authStore.hasPermission(permission)
+// }
 
 // 获取图标组件
 const getIconComponent = (iconName: string) => {
@@ -218,6 +219,7 @@ const getIconComponent = (iconName: string) => {
     ShoppingOutlined,
     AppstoreOutlined,
     FileTextOutlined,
+    ToolOutlined,
   }
   return iconMap[iconName] || QuestionOutlined
 }
@@ -251,14 +253,15 @@ const getIconComponent = (iconName: string) => {
       return { menuId: null, parentId: null }
     }
     
-    // 特殊处理编辑页面：根据路径前缀找到对应的列表页面
-    const findMenuInfoByPathPrefix = (menus: any[], targetPath: string): { menuId: string | null, parentId: string | null } => {
-      // 处理编辑页面的路径模式
-      const editPatterns = [
-        { prefix: '/system/users/', listPath: '/system/users' },
-        { prefix: '/system/roles/', listPath: '/system/roles' },
-        { prefix: '/system/permissions/', listPath: '/system/permissions' }
-      ]
+          // 特殊处理编辑页面：根据路径前缀找到对应的列表页面
+      const findMenuInfoByPathPrefix = (menus: any[], targetPath: string): { menuId: string | null, parentId: string | null } => {
+        // 处理编辑页面的路径模式
+        const editPatterns = [
+          { prefix: '/system/users/', listPath: '/system/users' },
+          { prefix: '/system/roles/', listPath: '/system/roles' },
+          { prefix: '/system/permissions/', listPath: '/system/permissions' },
+          { prefix: '/tools/interface/', listPath: '/tools/interface' }
+        ]
       
       for (const pattern of editPatterns) {
         if (targetPath.startsWith(pattern.prefix)) {

@@ -137,6 +137,35 @@ const breadcrumbItems = computed((): BreadcrumbItem[] => {
         title: '修改密码',
         path: undefined
       })
+    } else if (pathSegments[0] === 'tools') {
+      items.push({
+        title: '工具',
+        path: undefined
+      })
+      
+      if (pathSegments[1] === 'interface') {
+        items.push({
+          title: '接口管理',
+          path: '/tools/interface'
+        })
+        
+        if (pathSegments[2] === 'create') {
+          items.push({
+            title: '创建接口',
+            path: undefined
+          })
+        } else if (pathSegments[3] === 'edit') {
+          items.push({
+            title: '编辑接口',
+            path: undefined
+          })
+        } else if (pathSegments[3] === 'execute') {
+          items.push({
+            title: '接口执行',
+            path: undefined
+          })
+        }
+      }
     } else if (pathSegments[0] === 'system') {
       // 系统管理模块的备选处理
       items.push({

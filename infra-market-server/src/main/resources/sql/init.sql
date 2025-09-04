@@ -153,6 +153,61 @@ SELECT 4, id FROM `permission_info` WHERE status = 'active' AND code IN (
     'system:manage', 'user:list', 'role:list', 'permission:list'
 );
 
+-- 接口管理表
+CREATE TABLE IF NOT EXISTS `api_interface` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    `name` VARCHAR(100) NOT NULL COMMENT '接口名称',
+    `method` VARCHAR(10) NOT NULL COMMENT '请求方法：GET、POST、PUT、DELETE等',
+    `url` VARCHAR(500) NOT NULL COMMENT '接口URL',
+    `description` VARCHAR(500) NULL COMMENT '接口描述',
+    `post_type` VARCHAR(50) NULL COMMENT 'POST类型：application/json、application/x-www-form-urlencoded',
+    `params` TEXT NULL COMMENT '参数配置JSON',
+    `status` INT NOT NULL DEFAULT 1 COMMENT '状态：1-启用，0-禁用',
+    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`),
+    KEY `idx_name` (`name`),
+    KEY `idx_method` (`method`),
+    KEY `idx_status` (`status`),
+    KEY `idx_create_time` (`create_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='接口管理表';
 
+-- 插入工具管理相关权限
+-- 先插入工具管理菜单
+INSERT INTO `permission_info` (`name`, `code`, `type`, `parent_id`, `path`, `icon`, `sort`, `status`) VALUES
+('工具管理', 'tool:manage', 'menu', NULL, '/tools', 'ToolOutlined', 2, 'active');
 
+-- 插入接口管理菜单（作为工具管理的子菜单）
+SET @tool_manage_id = (SELECT id FROM `permission_info` WHERE code = 'tool:manage');
+INSERT INTO `permission_info` (`name`, `code`, `type`, `parent_id`, `path`, `icon`, `sort`, `status`) VALUES
+('接口管理', 'interface:manage', 'menu', @tool_manage_id, '/tools/interface', 'ApiOutlined', 1, 'active');
+
+-- 插入接口管理相关的按钮权限
+SET @interface_manage_id = (SELECT id FROM `permission_info` WHERE code = 'interface:manage');
+INSERT INTO `permission_info` (`name`, `code`, `type`, `parent_id`, `path`, `icon`, `sort`, `status`) VALUES
+('接口列表', 'interface:list', 'button', @interface_manage_id, NULL, NULL, 1, 'active'),
+('接口查看', 'interface:view', 'button', @interface_manage_id, NULL, NULL, 2, 'active'),
+('接口创建', 'interface:create', 'button', @interface_manage_id, NULL, NULL, 3, 'active'),
+('接口编辑', 'interface:update', 'button', @interface_manage_id, NULL, NULL, 4, 'active'),
+('接口删除', 'interface:delete', 'button', @interface_manage_id, NULL, NULL, 5, 'active'),
+('接口执行', 'interface:execute', 'button', @interface_manage_id, NULL, NULL, 6, 'active');
+
+-- 更新角色权限关联，为超级管理员和管理员添加工具管理权限
+INSERT INTO `role_permission` (`role_id`, `permission_id`) 
+SELECT 1, id FROM `permission_info` WHERE status = 'active' AND (code LIKE 'tool:%' OR code LIKE 'interface:%');
+
+INSERT INTO `role_permission` (`role_id`, `permission_id`) 
+SELECT 2, id FROM `permission_info` WHERE status = 'active' AND (code LIKE 'tool:%' OR code LIKE 'interface:%');
+
+-- 为普通用户添加接口查看权限
+INSERT INTO `role_permission` (`role_id`, `permission_id`) 
+SELECT 3, id FROM `permission_info` WHERE status = 'active' AND code IN (
+    'tool:manage', 'interface:manage', 'interface:list', 'interface:view'
+);
+
+-- 为访客添加接口查看权限
+INSERT INTO `role_permission` (`role_id`, `permission_id`) 
+SELECT 4, id FROM `permission_info` WHERE status = 'active' AND code IN (
+    'tool:manage', 'interface:manage', 'interface:list', 'interface:view'
+);
 

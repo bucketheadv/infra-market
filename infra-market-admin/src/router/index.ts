@@ -84,6 +84,30 @@ const routes: RouteRecordRaw[] = [
         name: 'ChangePassword',
         component: () => import('@/views/auth/ChangePassword.vue'),
         meta: { title: '修改密码' }
+      },
+      {
+        path: '/tools/interface',
+        name: 'InterfaceList',
+        component: () => import('@/views/interface/InterfaceList.vue'),
+        meta: { title: '接口管理', permission: 'interface:list' }
+      },
+      {
+        path: '/tools/interface/create',
+        name: 'InterfaceCreate',
+        component: () => import('@/views/interface/InterfaceEdit.vue'),
+        meta: { title: '创建接口', permission: 'interface:create' }
+      },
+      {
+        path: '/tools/interface/:id/edit',
+        name: 'InterfaceEdit',
+        component: () => import('@/views/interface/InterfaceEdit.vue'),
+        meta: { title: '编辑接口', permission: 'interface:update' }
+      },
+      {
+        path: '/tools/interface/:id/execute',
+        name: 'InterfaceExecute',
+        component: () => import('@/views/interface/InterfaceExecutePage.vue'),
+        meta: { title: '接口执行', permission: 'interface:execute' }
       }
     ]
   }
