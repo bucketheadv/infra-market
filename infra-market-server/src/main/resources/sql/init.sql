@@ -172,12 +172,12 @@ CREATE TABLE IF NOT EXISTS `api_interface` (
     KEY `idx_create_time` (`create_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='接口管理表';
 
--- 插入工具管理相关权限
--- 先插入工具管理菜单
+-- 插入工具相关权限
+-- 先插入工具菜单
 INSERT INTO `permission_info` (`name`, `code`, `type`, `parent_id`, `path`, `icon`, `sort`, `status`) VALUES
 ('工具', 'tool:manage', 'menu', NULL, '/tools', 'ToolOutlined', 2, 'active');
 
--- 插入接口管理菜单（作为工具管理的子菜单）
+-- 插入接口管理菜单（作为工具的子菜单）
 SET @tool_manage_id = (SELECT id FROM `permission_info` WHERE code = 'tool:manage');
 INSERT INTO `permission_info` (`name`, `code`, `type`, `parent_id`, `path`, `icon`, `sort`, `status`) VALUES
 ('接口管理', 'interface:manage', 'menu', @tool_manage_id, '/tools/interface', 'ApiOutlined', 1, 'active');
@@ -192,7 +192,7 @@ INSERT INTO `permission_info` (`name`, `code`, `type`, `parent_id`, `path`, `ico
 ('接口删除', 'interface:delete', 'button', @interface_manage_id, NULL, NULL, 5, 'active'),
 ('接口执行', 'interface:execute', 'button', @interface_manage_id, NULL, NULL, 6, 'active');
 
--- 更新角色权限关联，为超级管理员和管理员添加工具管理权限
+-- 更新角色权限关联，为超级管理员和管理员添加工具权限
 INSERT INTO `role_permission` (`role_id`, `permission_id`) 
 SELECT 1, id FROM `permission_info` WHERE status = 'active' AND (code LIKE 'tool:%' OR code LIKE 'interface:%');
 
