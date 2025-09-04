@@ -11,7 +11,8 @@ enum class DataTypeEnum(val code: String, val description: String) {
     BOOLEAN("BOOLEAN", "布尔值"),
     DATE("DATE", "日期"),
     DATETIME("DATETIME", "日期时间"),
-    JSON("JSON", "JSON对象");
+    JSON("JSON", "JSON对象"),
+    ARRAY("ARRAY", "数组");
 
     companion object {
         fun fromCode(code: String): DataTypeEnum? {

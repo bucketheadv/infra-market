@@ -16,15 +16,21 @@ export interface ApiInterface {
   bodyParams?: ApiParam[]
 }
 
+export interface SelectOption {
+  value: string
+  label?: string
+}
+
 export interface ApiParam {
   name: string
+  chineseName?: string
   paramType: string
   inputType: string
   dataType: string
   required?: boolean
-  defaultValue?: string
+  defaultValue?: string | any[]
   changeable?: boolean
-  options?: string[]
+  options?: SelectOption[]
   description?: string
   sort?: number
 }
@@ -43,13 +49,9 @@ export interface ApiInterfaceForm {
 
 export interface ApiExecuteRequest {
   interfaceId?: number
-  url: string
-  method: string
-  postType?: string
   headers?: Record<string, string>
   urlParams?: Record<string, any>
   bodyParams?: Record<string, any>
-  body?: string
 }
 
 export interface ApiExecuteResponse {
@@ -92,6 +94,11 @@ export const interfaceApi = {
     return request.delete<boolean>(`/api/interface/${id}`)
   },
 
+  // 更新接口状态
+  updateStatus: (id: number, status: number) => {
+    return request.put<ApiInterface>(`/api/interface/${id}/status?status=${status}`)
+  },
+
   // 执行接口
   execute: (data: ApiExecuteRequest) => {
     return request.post<ApiExecuteResponse>('/api/interface/execute', data)
@@ -118,6 +125,7 @@ export const PARAM_TYPES = [
 export const INPUT_TYPES = [
   { value: 'TEXT', label: '文本框' },
   { value: 'SELECT', label: '下拉框' },
+  { value: 'MULTI_SELECT', label: '多选下拉框' },
   { value: 'DATE', label: '日期' },
   { value: 'DATETIME', label: '日期时间' },
   { value: 'NUMBER', label: '数字' },
@@ -136,7 +144,8 @@ export const DATA_TYPES = [
   { value: 'BOOLEAN', label: '布尔值' },
   { value: 'DATE', label: '日期' },
   { value: 'DATETIME', label: '日期时间' },
-  { value: 'JSON', label: 'JSON对象' }
+  { value: 'JSON', label: 'JSON对象' },
+  { value: 'ARRAY', label: '数组' }
 ]
 
 export const POST_TYPES = [

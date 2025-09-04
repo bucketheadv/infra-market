@@ -62,6 +62,13 @@ class ApiInterfaceController(
         return ResponseEntity.ok(ApiResponse.success(result))
     }
 
+    @PutMapping("/{id}/status")
+    @RequiresPermission("interface:update")
+    fun updateStatus(@PathVariable id: Long, @RequestParam status: Int): ResponseEntity<ApiResponse<ApiInterfaceDto>> {
+        val apiInterface = apiInterfaceService.updateStatus(id, status)
+        return ResponseEntity.ok(ApiResponse.success(apiInterface))
+    }
+
     @PostMapping("/execute")
     @RequiresPermission("interface:execute")
     fun execute(@Valid @RequestBody request: ApiExecuteRequestDto): ResponseEntity<ApiResponse<ApiExecuteResponseDto>> {

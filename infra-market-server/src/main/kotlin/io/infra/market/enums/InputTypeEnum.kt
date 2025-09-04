@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonValue
 enum class InputTypeEnum(@JsonValue val code: String, val description: String) {
     TEXT("TEXT", "文本框"),
     SELECT("SELECT", "下拉框"),
+    MULTI_SELECT("MULTI_SELECT", "多选下拉框"),
     DATE("DATE", "日期"),
     DATETIME("DATETIME", "日期时间"),
     NUMBER("NUMBER", "数字"),

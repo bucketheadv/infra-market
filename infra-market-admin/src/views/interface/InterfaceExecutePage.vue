@@ -62,7 +62,7 @@
 
         <a-row :gutter="24" class="content-row">
         <!-- 左侧：参数配置 -->
-        <a-col :span="12">
+        <a-col :span="14">
           <div class="form-section">
             <div class="section-header">
               <div class="section-icon">
@@ -81,20 +81,23 @@
                   <a-row v-for="param in urlParams" :key="param.name" class="param-row">
                     <a-col :span="8">
                       <label class="param-label">
-                        {{ param.name }}
+                        {{ getParamDisplayName(param) }}
                         <span v-if="param.required" class="required">*</span>
+                        <a-tooltip v-if="param.description" :title="param.description" placement="top">
+                          <QuestionCircleOutlined class="help-icon" />
+                        </a-tooltip>
                       </label>
                     </a-col>
                     <a-col :span="16">
                       <a-form-item
                         :name="['params', param.name]"
-                        :rules="param.required ? [{ required: true, message: `请输入${param.name}` }] : []"
+                        :rules="param.required ? [{ required: true, message: `请输入${getParamDisplayName(param)}` }] : []"
                       >
                         <!-- 代码编辑器弹窗按钮 -->
                         <div v-if="param.inputType === 'CODE'" class="code-editor-input">
                           <a-input
                             :value="getCodePreview(executeForm.params[param.name])"
-                            :placeholder="`请输入${param.name}`"
+                            :placeholder="`请输入${getParamDisplayName(param)}`"
                             :disabled="!param.changeable"
                             readonly
                             class="code-preview-input"
@@ -120,8 +123,8 @@
                           v-else
                           :is="getInputComponent(param)"
                           v-bind="getInputBindings(param, 'params')"
-                          :placeholder="`请输入${param.name}`"
-                          :options="param.options"
+                          :placeholder="`请输入${getParamDisplayName(param)}`"
+                          :options="getSelectOptions(param)"
                           :disabled="!param.changeable"
                           :required="param.required"
                         />
@@ -136,20 +139,23 @@
                   <a-row v-for="param in headerParams" :key="param.name" class="param-row">
                     <a-col :span="8">
                       <label class="param-label">
-                        {{ param.name }}
+                        {{ getParamDisplayName(param) }}
                         <span v-if="param.required" class="required">*</span>
+                        <a-tooltip v-if="param.description" :title="param.description" placement="top">
+                          <QuestionCircleOutlined class="help-icon" />
+                        </a-tooltip>
                       </label>
                     </a-col>
                     <a-col :span="16">
                       <a-form-item
                         :name="['headers', param.name]"
-                        :rules="param.required ? [{ required: true, message: `请输入${param.name}` }] : []"
+                        :rules="param.required ? [{ required: true, message: `请输入${getParamDisplayName(param)}` }] : []"
                       >
                         <!-- 代码编辑器弹窗按钮 -->
                         <div v-if="param.inputType === 'CODE'" class="code-editor-input">
                           <a-input
                             :value="getCodePreview(executeForm.headers[param.name])"
-                            :placeholder="`请输入${param.name}`"
+                            :placeholder="`请输入${getParamDisplayName(param)}`"
                             :disabled="!param.changeable"
                             readonly
                             class="code-preview-input"
@@ -175,8 +181,8 @@
                           v-else
                           :is="getInputComponent(param)"
                           v-bind="getInputBindings(param, 'headers')"
-                          :placeholder="`请输入${param.name}`"
-                          :options="param.options"
+                          :placeholder="`请输入${getParamDisplayName(param)}`"
+                          :options="getSelectOptions(param)"
                           :disabled="!param.changeable"
                           :required="param.required"
                         />
@@ -191,20 +197,23 @@
                   <a-row v-for="param in bodyParams" :key="param.name" class="param-row">
                     <a-col :span="8">
                       <label class="param-label">
-                        {{ param.name }}
+                        {{ getParamDisplayName(param) }}
                         <span v-if="param.required" class="required">*</span>
+                        <a-tooltip v-if="param.description" :title="param.description" placement="top">
+                          <QuestionCircleOutlined class="help-icon" />
+                        </a-tooltip>
                       </label>
                     </a-col>
                     <a-col :span="16">
                       <a-form-item
                         :name="['bodyParams', param.name]"
-                        :rules="param.required ? [{ required: true, message: `请输入${param.name}` }] : []"
+                        :rules="param.required ? [{ required: true, message: `请输入${getParamDisplayName(param)}` }] : []"
                       >
                         <!-- 代码编辑器弹窗按钮 -->
                         <div v-if="param.inputType === 'CODE'" class="code-editor-input">
                           <a-input
                             :value="getCodePreview(executeForm.bodyParams[param.name])"
-                            :placeholder="`请输入${param.name}`"
+                            :placeholder="`请输入${getParamDisplayName(param)}`"
                             :disabled="!param.changeable"
                             readonly
                             class="code-preview-input"
@@ -230,8 +239,8 @@
                           v-else
                           :is="getInputComponent(param)"
                           v-bind="getInputBindings(param, 'bodyParams')"
-                          :placeholder="`请输入${param.name}`"
-                          :options="param.options"
+                          :placeholder="`请输入${getParamDisplayName(param)}`"
+                          :options="getSelectOptions(param)"
                           :disabled="!param.changeable"
                           :required="param.required"
                         />
@@ -249,7 +258,7 @@
         </a-col>
 
         <!-- 右侧：执行结果 -->
-        <a-col :span="12">
+        <a-col :span="10">
           <div class="form-section">
             <div class="section-header">
               <div class="section-icon">
@@ -316,11 +325,11 @@
               variant="primary" 
               size="small"
               :icon="PlayCircleOutlined"
-              :disabled="executing"
+              :disabled="executing || interfaceData?.status !== 1"
               @click="handleExecute"
               class="submit-btn"
             >
-              执行接口
+              {{ interfaceData?.status !== 1 ? '接口已禁用' : '执行接口' }}
             </ThemeButton>
             <ThemeButton 
               variant="secondary"
@@ -352,7 +361,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
-import { PlayCircleOutlined, CloseOutlined } from '@ant-design/icons-vue'
+import { PlayCircleOutlined, CloseOutlined, QuestionCircleOutlined } from '@ant-design/icons-vue'
 import { interfaceApi, POST_TYPES, type ApiInterface, type ApiParam, type ApiExecuteRequest, type ApiExecuteResponse } from '@/api/interface'
 import ThemeButton from '@/components/ThemeButton.vue'
 import CodeEditor from '@/components/CodeEditor.vue'
@@ -423,21 +432,36 @@ const initializeFormData = () => {
   // 初始化URL参数
   interfaceData.value.urlParams?.forEach(param => {
     if (param.defaultValue !== undefined) {
-      executeForm.params[param.name] = param.defaultValue
+      // 多选下拉框的默认值应该是数组
+      if (param.inputType === 'MULTI_SELECT') {
+        executeForm.params[param.name] = Array.isArray(param.defaultValue) ? param.defaultValue : []
+      } else {
+        executeForm.params[param.name] = param.defaultValue
+      }
     }
   })
   
   // 初始化Header参数
   interfaceData.value.headerParams?.forEach(param => {
     if (param.defaultValue !== undefined) {
-      executeForm.headers[param.name] = param.defaultValue
+      // 多选下拉框的默认值应该是数组
+      if (param.inputType === 'MULTI_SELECT') {
+        executeForm.headers[param.name] = Array.isArray(param.defaultValue) ? param.defaultValue : []
+      } else {
+        executeForm.headers[param.name] = param.defaultValue
+      }
     }
   })
   
   // 初始化Body参数
   interfaceData.value.bodyParams?.forEach(param => {
     if (param.defaultValue !== undefined) {
-      executeForm.bodyParams[param.name] = param.defaultValue
+      // 多选下拉框的默认值应该是数组
+      if (param.inputType === 'MULTI_SELECT') {
+        executeForm.bodyParams[param.name] = Array.isArray(param.defaultValue) ? param.defaultValue : []
+      } else {
+        executeForm.bodyParams[param.name] = param.defaultValue
+      }
     }
   })
 }
@@ -451,15 +475,18 @@ const handleBack = () => {
 const handleExecute = async () => {
   if (!interfaceData.value) return
   
+  // 检查接口状态
+  if (interfaceData.value.status !== 1) {
+    message.error('接口已禁用，无法执行')
+    return
+  }
+  
   try {
     executing.value = true
     executeResult.value = null
     
     const request: ApiExecuteRequest = {
       interfaceId: interfaceData.value.id!,
-      url: interfaceData.value.url!,
-      method: interfaceData.value.method!,
-      postType: interfaceData.value.postType,
       headers: executeForm.headers,
       urlParams: executeForm.params,
       bodyParams: executeForm.bodyParams
@@ -483,6 +510,8 @@ const getInputComponent = (param: ApiParam) => {
   switch (param.inputType) {
     case 'SELECT':
       return 'a-select'
+    case 'MULTI_SELECT':
+      return 'a-select'
     case 'TEXTAREA':
       return 'a-textarea'
     case 'CODE':
@@ -505,10 +534,26 @@ const getInputBindings = (param: ApiParam, type: 'params' | 'headers' | 'bodyPar
     ...getCodeEditorProps(param)
   }
   
+  // 为SELECT和MULTI_SELECT类型添加属性
+  let selectProps = {}
+  if (param.inputType === 'SELECT' && !param.required) {
+    selectProps = { allowClear: true }
+  } else if (param.inputType === 'MULTI_SELECT') {
+    // 多选下拉框：非必填且有值时才显示清空按钮
+    const hasValue = executeForm[type][param.name] && 
+      Array.isArray(executeForm[type][param.name]) && 
+      executeForm[type][param.name].length > 0
+    selectProps = { 
+      mode: 'multiple',
+      allowClear: !param.required && hasValue
+    }
+  }
+  
   // 根据组件类型选择不同的 v-model 绑定方式
   if (param.inputType === 'CODE') {
     return {
       ...baseProps,
+      ...selectProps,
       modelValue: executeForm[type][param.name] || '',
       'onUpdate:modelValue': (value: string) => {
         executeForm[type][param.name] = value
@@ -517,6 +562,7 @@ const getInputBindings = (param: ApiParam, type: 'params' | 'headers' | 'bodyPar
   } else {
     return {
       ...baseProps,
+      ...selectProps,
       value: executeForm[type][param.name],
       'onUpdate:value': (value: any) => {
         executeForm[type][param.name] = value
@@ -648,6 +694,25 @@ const getCodePreview = (value: string | undefined): string => {
   return value
 }
 
+// 获取参数显示名称
+const getParamDisplayName = (param: ApiParam): string => {
+  if (param.chineseName) {
+    return `${param.chineseName}（${param.name}）`
+  }
+  return param.name
+}
+
+// 获取下拉选项
+const getSelectOptions = (param: ApiParam) => {
+  if ((param.inputType === 'SELECT' || param.inputType === 'MULTI_SELECT') && param.options) {
+    return param.options.map(option => ({
+      label: option.label || option.value,
+      value: option.value
+    }))
+  }
+  return []
+}
+
 const getCodeLanguage = (): string => {
   if (currentCodeParam.value?.param.dataType === 'JSON') {
     return 'json'
@@ -657,7 +722,7 @@ const getCodeLanguage = (): string => {
 
 const getCodePlaceholder = (): string => {
   if (currentCodeParam.value) {
-    return `请输入${currentCodeParam.value.param.name}...`
+    return `请输入${getParamDisplayName(currentCodeParam.value.param)}...`
   }
   return '请输入代码...'
 }
@@ -726,7 +791,7 @@ const formatDateTime = (dateTime: string | Date | undefined): string => {
 
 .form-header {
   margin-bottom: 8px;
-  padding: 0 16px;
+  padding: 0 12px;
   margin-top: 16px;
 }
 
@@ -777,7 +842,7 @@ const formatDateTime = (dateTime: string | Date | undefined): string => {
 }
 
 .form-content {
-  padding: 0 16px 16px;
+  padding: 0 12px 16px;
 }
 
 .form-card {
@@ -884,7 +949,9 @@ const formatDateTime = (dateTime: string | Date | undefined): string => {
 }
 
 .param-label {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 4px;
   margin-bottom: 8px;
   font-weight: 500;
   color: #333;
@@ -893,6 +960,17 @@ const formatDateTime = (dateTime: string | Date | undefined): string => {
 .required {
   color: #ff4d4f;
   margin-left: 4px;
+}
+
+.help-icon {
+  color: #8c8c8c;
+  font-size: 12px;
+  cursor: help;
+  transition: color 0.2s ease;
+}
+
+.help-icon:hover {
+  color: #1890ff;
 }
 
 .no-params {
@@ -980,7 +1058,6 @@ const formatDateTime = (dateTime: string | Date | undefined): string => {
 
 .content-row {
   margin: 0;
-  margin-right: 24px;
 }
 
 .card-title {

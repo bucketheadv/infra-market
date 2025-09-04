@@ -26,17 +26,26 @@ data class ApiInterfaceDto(
 )
 
 /**
+ * 下拉选项DTO
+ */
+data class SelectOptionDto(
+    var value: String? = null,
+    var label: String? = null
+)
+
+/**
  * 接口参数DTO
  */
 data class ApiParamDto(
     var name: String? = null,
+    var chineseName: String? = null,
     var paramType: ParamTypeEnum? = null,
     var inputType: InputTypeEnum? = null,
     var dataType: DataTypeEnum? = null,
     var required: Boolean? = null,
-    var defaultValue: String? = null,
+    var defaultValue: Any? = null,
     var changeable: Boolean? = null,
-    var options: List<String>? = null,
+    var options: List<SelectOptionDto>? = null,
     var description: String? = null,
     var sort: Int? = null
 )
@@ -72,13 +81,9 @@ data class ApiInterfaceQueryDto(
  */
 data class ApiExecuteRequestDto(
     var interfaceId: Long? = null,
-    var url: String? = null,
-    var method: HttpMethodEnum? = null,
-    var postType: PostTypeEnum? = null,
     var headers: Map<String, String>? = null,
     var urlParams: Map<String, Any>? = null,
-    var bodyParams: Map<String, Any>? = null,
-    var body: String? = null
+    var bodyParams: Map<String, Any>? = null
 )
 
 /**

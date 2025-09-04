@@ -7,17 +7,28 @@
         基本信息
       </div>
       <a-row :gutter="[16, 12]">
-        <a-col :span="12">
-          <a-form-item label="参数名" :name="[paramType, index, 'name']" class="form-item-modern">
+        <a-col :span="8">
+          <a-form-item label="参数名" :name="[paramType, index, 'name']" class="form-item-modern" :rules="[{ required: true, message: '请输入参数名' }]">
             <a-input
               v-model:value="param.name"
               placeholder="请输入参数名"
               :disabled="disabled"
               class="modern-input"
+              @input="handleParamNameChange"
             />
           </a-form-item>
         </a-col>
-        <a-col :span="12">
+        <a-col :span="8">
+          <a-form-item label="中文名" :name="[paramType, index, 'chineseName']" class="form-item-modern">
+            <a-input
+              v-model:value="param.chineseName"
+              placeholder="请输入中文名（可选）"
+              :disabled="disabled"
+              class="modern-input"
+            />
+          </a-form-item>
+        </a-col>
+        <a-col :span="8">
           <a-form-item label="输入类型" :name="[paramType, index, 'inputType']" class="form-item-modern">
             <a-select
               v-model:value="param.inputType"
@@ -150,32 +161,42 @@
     </div>
 
     <!-- 下拉选项区域 -->
-    <div v-if="param.inputType === 'SELECT'" class="form-section">
+    <div v-if="param.inputType === 'SELECT' || param.inputType === 'MULTI_SELECT'" class="form-section">
       <div class="section-title">
         <span class="title-icon">📋</span>
         下拉选项
       </div>
       <div class="options-container">
         <div
-          v-for="(_, optionIndex) in (param.options || [])"
+          v-for="(option, optionIndex) in (param.options || [])"
           :key="optionIndex"
           class="option-item"
         >
           <div class="option-number">{{ optionIndex + 1 }}</div>
-          <a-input
-            v-model:value="param.options![optionIndex]"
-            placeholder="请输入选项值"
-            :disabled="disabled"
-            class="option-input"
-          />
+          <div class="option-inputs">
+            <a-input
+              v-model:value="option.value"
+              placeholder="选项值（必填）"
+              :disabled="disabled"
+              class="option-value-input"
+              :class="{ 'error': !option.value || option.value.trim() === '' }"
+              @input="handleOptionValueChange"
+            />
+            <a-input
+              v-model:value="option.label"
+              placeholder="显示标签（可选）"
+              :disabled="disabled"
+              class="option-label-input"
+            />
+          </div>
           <ThemeButton
             v-if="!disabled"
             variant="danger"
             size="small"
+            :icon="DeleteOutlined"
             class="option-remove-btn"
             @click="handleRemoveOption(optionIndex)"
           >
-            🗑️
           </ThemeButton>
         </div>
         <ThemeButton
@@ -221,6 +242,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { DeleteOutlined } from '@ant-design/icons-vue'
 import { INPUT_TYPES, DATA_TYPES, type ApiParam } from '@/api/interface'
 import ThemeButton from '@/components/ThemeButton.vue'
 import CodeEditorModal from '@/components/CodeEditorModal.vue'
@@ -239,7 +261,8 @@ const props = defineProps<Props>()
 const emit = defineEmits<{
   'input-type-change': [paramType: string, index: number]
   'data-type-change': [paramType: string, index: number, dataType: string]
-  'default-value-change': [paramType: string, index: number, defaultValue: string]
+  'default-value-change': [paramType: string, index: number, defaultValue: string | any[]]
+  'param-name-change': [paramType: string, index: number, name: string]
   'add-option': [paramType: string, index: number]
   'remove-option': [paramType: string, index: number, optionIndex: number]
 }>()
@@ -270,6 +293,10 @@ const handleInputTypeChange = () => {
     newDataType = 'STRING'
   } else if (inputType === 'URL') {
     newDataType = 'STRING'
+  } else if (inputType === 'SELECT') {
+    newDataType = 'STRING' // 下拉框默认为字符串类型
+  } else if (inputType === 'MULTI_SELECT') {
+    newDataType = 'ARRAY' // 多选下拉框默认为数组类型
   } else {
     newDataType = 'STRING'
   }
@@ -278,14 +305,22 @@ const handleInputTypeChange = () => {
   emit('data-type-change', props.paramType, props.index, newDataType)
   
   // 清空默认值，因为类型可能不匹配
-  emit('default-value-change', props.paramType, props.index, '')
+  if (inputType === 'MULTI_SELECT') {
+    emit('default-value-change', props.paramType, props.index, [])
+  } else {
+    emit('default-value-change', props.paramType, props.index, '')
+  }
   
   emit('input-type-change', props.paramType, props.index)
 }
 
 const handleDataTypeChange = () => {
   // 当数据类型改变时，清空默认值
-  emit('default-value-change', props.paramType, props.index, '')
+  if (props.param.dataType === 'ARRAY') {
+    emit('default-value-change', props.paramType, props.index, [])
+  } else {
+    emit('default-value-change', props.paramType, props.index, '')
+  }
 }
 
 const getAvailableDataTypes = () => {
@@ -307,6 +342,8 @@ const getAvailableDataTypes = () => {
     case 'TEXT':
     case 'SELECT':
       return DATA_TYPES.filter(type => type.value === 'STRING')
+    case 'MULTI_SELECT':
+      return DATA_TYPES.filter(type => type.value === 'ARRAY')
     default:
       return DATA_TYPES
   }
@@ -316,47 +353,82 @@ const getDefaultValueComponent = () => {
   const inputType = props.param.inputType
   const dataType = props.param.dataType
   
-  // 如果输入类型是代码编辑器，使用Monaco Editor
-  if (inputType === 'CODE') {
-    return 'CodeEditor'
-  }
-  
-  switch (dataType) {
-    case 'INTEGER':
-    case 'LONG':
-    case 'DOUBLE':
-      return 'a-input-number'
-    case 'BOOLEAN':
+  // 根据输入类型选择组件
+  switch (inputType) {
+    case 'SELECT':
       return 'a-select'
+    case 'MULTI_SELECT':
+      return 'a-select'
+    case 'TEXTAREA':
+      return 'a-textarea'
+    case 'CODE':
+      return 'CodeEditor'
+    case 'NUMBER':
+      return 'a-input-number'
     case 'DATE':
       return 'a-date-picker'
     case 'DATETIME':
       return 'a-date-picker'
-    case 'JSON':
-      return 'CodeEditor'
     default:
-      return 'a-input'
+      // 根据数据类型选择组件
+      switch (dataType) {
+        case 'INTEGER':
+        case 'LONG':
+        case 'DOUBLE':
+          return 'a-input-number'
+        case 'BOOLEAN':
+          return 'a-select'
+        case 'DATE':
+          return 'a-date-picker'
+        case 'DATETIME':
+          return 'a-date-picker'
+        case 'JSON':
+          return 'CodeEditor'
+        default:
+          return 'a-input'
+      }
   }
 }
 
 const getDefaultValuePlaceholder = () => {
+  const inputType = props.param.inputType
   const dataType = props.param.dataType
-  switch (dataType) {
-    case 'INTEGER':
-    case 'LONG':
-      return '请输入整数'
-    case 'DOUBLE':
+  
+  // 根据输入类型设置占位符
+  switch (inputType) {
+    case 'SELECT':
+      return '请选择默认值（可选）'
+    case 'MULTI_SELECT':
+      return '请选择默认值（可选）'
+    case 'TEXTAREA':
+      return '请输入多行文本'
+    case 'CODE':
+      return '请输入代码'
+    case 'NUMBER':
       return '请输入数字'
-    case 'BOOLEAN':
-      return '请选择布尔值'
     case 'DATE':
       return '请选择日期'
     case 'DATETIME':
       return '请选择日期时间'
-    case 'JSON':
-      return '请输入JSON格式数据'
     default:
-      return '请输入默认值'
+      // 根据数据类型设置占位符
+      switch (dataType) {
+        case 'INTEGER':
+        case 'LONG':
+          return '请输入整数'
+        case 'DOUBLE':
+          return '请输入数字'
+        case 'BOOLEAN':
+          return '请选择布尔值'
+        case 'DATE':
+          return '请选择日期'
+        case 'DATETIME':
+          return '请选择日期时间'
+        case 'JSON':
+          return '请输入JSON格式数据'
+        default:
+          return '请输入默认值'
+      }
   }
 }
 
@@ -392,6 +464,25 @@ const getDefaultValueBindings = () => {
 const getDefaultValueProps = () => {
   const inputType = props.param.inputType
   const dataType = props.param.dataType
+  
+  // SELECT类型使用下拉框选项
+  if (inputType === 'SELECT') {
+    return {
+      options: getSelectOptions(),
+      allowClear: true,
+      placeholder: '请选择默认值（可选）'
+    }
+  }
+  
+  // MULTI_SELECT类型使用多选下拉框选项
+  if (inputType === 'MULTI_SELECT') {
+    return {
+      options: getSelectOptions(),
+      mode: 'multiple',
+      allowClear: !!(props.param.defaultValue && Array.isArray(props.param.defaultValue) && props.param.defaultValue.length > 0),
+      placeholder: '请选择默认值（可选）'
+    }
+  }
   
   // 代码编辑器属性
   if (inputType === 'CODE') {
@@ -459,6 +550,27 @@ const handleRemoveOption = (optionIndex: number) => {
   emit('remove-option', props.paramType, props.index, optionIndex)
 }
 
+const handleOptionValueChange = () => {
+  // 触发响应式更新，让错误状态实时更新
+  // 这里不需要额外处理，v-model已经处理了数据更新
+}
+
+const handleParamNameChange = () => {
+  // 通知父组件参数名发生变化
+  emit('param-name-change', props.paramType, props.index, props.param.name)
+}
+
+// 获取下拉选项
+const getSelectOptions = () => {
+  if ((props.param.inputType === 'SELECT' || props.param.inputType === 'MULTI_SELECT') && props.param.options) {
+    return props.param.options.map(option => ({
+      label: option.label || option.value,
+      value: option.value
+    }))
+  }
+  return []
+}
+
 // 代码编辑器相关方法
 const getCodePreview = (value: string | undefined): string => {
   if (!value || value.trim() === '') {
@@ -502,18 +614,18 @@ const handleCodeCancel = () => {
 }
 
 .form-section {
-  margin-bottom: 24px;
-  padding: 20px;
-  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-  border-radius: 12px;
-  border: 1px solid #e1e4e8;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
+  margin-bottom: 4px;
+  padding: 4px;
+  background: transparent;
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+  transition: none;
 }
 
 .form-section:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  border-color: #d0d7de;
+  box-shadow: none;
+  border-color: transparent;
 }
 
 .form-section:last-child {
@@ -523,26 +635,80 @@ const handleCodeCancel = () => {
 .section-title {
   display: flex;
   align-items: center;
-  font-size: 16px;
+  font-size: 12px;
   font-weight: 600;
   color: #24292f;
-  margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 2px solid #e1e4e8;
+  margin-bottom: 4px;
+  padding-bottom: 2px;
+  border-bottom: 1px solid #e1e4e8;
 }
 
 .title-icon {
-  margin-right: 8px;
-  font-size: 18px;
+  margin-right: 3px;
+  font-size: 11px;
 }
 
 .form-item-modern {
-  margin-bottom: 16px;
+  margin-bottom: 4px;
 }
 
 .form-item-modern :deep(.ant-form-item-label) {
   font-weight: 500;
   color: #24292f;
+  font-size: 12px;
+}
+
+.form-item-modern :deep(.ant-form-item-label > label) {
+  font-size: 12px;
+}
+
+.form-item-modern :deep(.ant-input) {
+  font-size: 12px;
+  border-radius: 6px;
+  border: 1px solid #d9d9d9;
+  transition: all 0.2s ease;
+  padding: 6px 11px;
+  height: 32px;
+}
+
+.form-item-modern :deep(.ant-input:hover) {
+  border-color: #40a9ff;
+}
+
+.form-item-modern :deep(.ant-input:focus) {
+  border-color: #1890ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
+
+.form-item-modern :deep(.ant-select-selector) {
+  font-size: 12px;
+  border-radius: 6px;
+  border: 1px solid #d9d9d9;
+  transition: all 0.2s ease;
+  padding: 4px 11px;
+  height: 32px;
+}
+
+.form-item-modern :deep(.ant-select-selector:hover) {
+  border-color: #40a9ff;
+}
+
+.form-item-modern :deep(.ant-select-focused .ant-select-selector) {
+  border-color: #1890ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
+
+.form-item-modern :deep(.ant-select-selection-item) {
+  font-size: 12px;
+  line-height: 24px;
+}
+
+.form-item-modern :deep(.ant-checkbox-wrapper) {
+  font-size: 12px;
+}
+
+.form-item-modern :deep(.ant-checkbox-wrapper span) {
+  font-size: 12px;
 }
 
 .modern-input,
@@ -598,36 +764,37 @@ const handleCodeCancel = () => {
   align-items: center;
   font-weight: 500;
   color: #24292f;
+  font-size: 12px;
 }
 
 .checkbox-icon {
   margin-right: 6px;
-  font-size: 14px;
+  font-size: 11px;
 }
 
 .options-container {
-  border: 1px solid #d0d7de;
-  border-radius: 12px;
-  padding: 16px;
-  background: linear-gradient(135deg, #f6f8fa 0%, #eaeef2 100%);
-  margin-top: 8px;
+  border: 1px solid #e8e8e8;
+  border-radius: 6px;
+  padding: 8px;
+  background: #fafafa;
+  margin-top: 4px;
 }
 
 .option-item {
   display: flex;
   align-items: center;
-  margin-bottom: 12px;
-  padding: 12px;
+  margin-bottom: 6px;
+  padding: 6px;
   background: #ffffff;
-  border-radius: 8px;
-  border: 1px solid #e1e4e8;
+  border-radius: 6px;
+  border: 1px solid #e8e8e8;
   transition: all 0.2s ease;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .option-item:hover {
-  border-color: #0969da;
-  box-shadow: 0 2px 4px rgba(9, 105, 218, 0.1);
+  border-color: #1890ff;
+  box-shadow: 0 2px 4px rgba(24, 144, 255, 0.1);
   transform: translateY(-1px);
 }
 
@@ -650,12 +817,49 @@ const handleCodeCancel = () => {
   flex-shrink: 0;
 }
 
+.option-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  margin-right: 12px;
+}
+
+.option-value-input,
+.option-label-input {
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  font-size: 12px;
+  padding: 6px 11px;
+  height: 32px;
+  background: #ffffff;
+}
+
+.option-value-input:focus,
+.option-label-input:focus {
+  border-color: #1890ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+  outline: none;
+}
+
+.option-value-input:hover,
+.option-label-input:hover {
+  border-color: #40a9ff;
+}
+
+.option-value-input.error {
+  border-color: #ff4d4f;
+  box-shadow: 0 0 0 3px rgba(255, 77, 79, 0.1);
+}
+
 .option-input {
   flex: 1;
   margin-right: 12px;
   border: none;
   background: transparent;
   box-shadow: none;
+  font-size: 12px;
 }
 
 .option-input:focus {
@@ -664,8 +868,13 @@ const handleCodeCancel = () => {
 
 .option-remove-btn {
   flex-shrink: 0;
-  border-radius: 6px;
+  border-radius: 3px;
   transition: all 0.2s ease;
+  width: 18px !important;
+  height: 18px !important;
+  padding: 0 !important;
+  min-width: 18px !important;
+  font-size: 7px !important;
 }
 
 .option-remove-btn:hover {
@@ -674,12 +883,15 @@ const handleCodeCancel = () => {
 
 .add-option-btn {
   width: 100%;
-  border-radius: 8px;
-  border: 2px dashed #d0d7de;
+  border-radius: 3px;
+  border: 1px dashed #d0d7de;
   background: transparent;
   color: #656d76;
   transition: all 0.2s ease;
-  margin-top: 8px;
+  margin-top: 2px;
+  font-size: 9px !important;
+  padding: 2px 6px !important;
+  height: 18px !important;
 }
 
 .add-option-btn:hover {

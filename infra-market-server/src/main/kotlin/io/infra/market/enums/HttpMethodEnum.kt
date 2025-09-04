@@ -14,7 +14,7 @@ enum class HttpMethodEnum(val code: String, val description: String) {
 
     companion object {
         fun fromCode(code: String): HttpMethodEnum? {
-            return values().find { it.code == code }
+            return entries.find { it.code == code }
         }
     }
 }

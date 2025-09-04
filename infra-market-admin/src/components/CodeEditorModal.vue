@@ -57,7 +57,7 @@
           ref="editorRef"
           v-model="editorValue"
           :language="selectedLanguage"
-          :height="250"
+          :height="400"
           :options="{
             minimap: { enabled: true },
             scrollBeyondLastLine: false,
@@ -250,7 +250,7 @@ defineExpose({
 .modal-content {
   display: flex;
   flex-direction: column;
-  height: 60vh;
+  height: 75vh;
 }
 
 .toolbar {

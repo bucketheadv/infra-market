@@ -95,25 +95,26 @@
               <ThemeButton 
                 variant="ghost" 
                 size="small" 
-                class="action-btn view-btn"
-                :icon="EyeOutlined"
-                @click="handleView(record)"
-              >
-                查看
-              </ThemeButton>
-              <ThemeButton 
-                variant="ghost" 
-                size="small" 
                 class="action-btn edit-btn"
                 :icon="EditOutlined"
                 @click="handleEdit(record)"
               >
                 编辑
               </ThemeButton>
+              <ThemeButton
+                variant="ghost"
+                size="small"
+                class="action-btn status-btn"
+                :class="{ 'disable-btn': record.status === 1 }"
+                :icon="record.status === 1 ? CheckCircleOutlined : StopOutlined"
+                @click="handleToggleStatus(record)"
+              >
+                {{ record.status === 1 ? '禁用' : '启用' }}
+              </ThemeButton>
               <ThemeButton 
                 variant="ghost" 
                 size="small" 
-                class="action-btn status-btn"
+                class="action-btn execute-btn"
                 :icon="PlayCircleOutlined"
                 @click="handleExecute(record)"
               >
@@ -140,23 +141,15 @@
       </a-table>
     </a-card>
 
-    <!-- 接口表单弹窗 -->
-    <InterfaceForm
-      v-model:visible="formVisible"
-      :form-data="formData"
-      :is-edit="isEdit"
-      @success="handleFormSuccess"
-    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, h } from 'vue'
 import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
-import { PlusOutlined, SearchOutlined, ReloadOutlined, EyeOutlined, EditOutlined, PlayCircleOutlined, DeleteOutlined } from '@ant-design/icons-vue'
+import { PlusOutlined, SearchOutlined, ReloadOutlined, EditOutlined, PlayCircleOutlined, DeleteOutlined, CheckCircleOutlined, StopOutlined } from '@ant-design/icons-vue'
 import { interfaceApi, HTTP_METHODS, type ApiInterface } from '@/api/interface'
-import InterfaceForm from './InterfaceForm.vue'
 import ThemeButton from '@/components/ThemeButton.vue'
 
 const router = useRouter()
@@ -164,9 +157,6 @@ const router = useRouter()
 // 响应式数据
 const loading = ref(false)
 const dataSource = ref<ApiInterface[]>([])
-const formVisible = ref(false)
-const isEdit = ref(false)
-const formData = ref<ApiInterface | null>(null)
 
 // 搜索表单
 const searchForm = reactive({
@@ -187,6 +177,13 @@ const pagination = reactive({
 
 // 表格列配置
 const columns = [
+  {
+    title: 'ID',
+    dataIndex: 'id',
+    key: 'id',
+    width: 80,
+    align: 'center'
+  },
   {
     title: '接口名称',
     dataIndex: 'name',
@@ -215,7 +212,12 @@ const columns = [
     title: '状态',
     dataIndex: 'status',
     key: 'status',
-    width: 100
+    width: 100,
+    customRender: ({ record }: { record: ApiInterface }) => {
+      return h('a-tag', {
+        color: record.status === 1 ? 'green' : 'red'
+      }, record.status === 1 ? '启用' : '禁用')
+    }
   },
   {
     title: '创建时间',
@@ -226,7 +228,7 @@ const columns = [
   {
     title: '操作',
     key: 'action',
-    width: 200,
+    width: 250,
     fixed: 'right'
   }
 ]
@@ -271,11 +273,6 @@ const handleCreate = () => {
   router.push('/tools/interface/create')
 }
 
-const handleView = (record: ApiInterface) => {
-  formData.value = { ...record }
-  isEdit.value = false
-  formVisible.value = true
-}
 
 const handleEdit = (record: ApiInterface) => {
   router.push(`/tools/interface/${record.id}/edit`)
@@ -295,10 +292,17 @@ const handleExecute = (record: ApiInterface) => {
   router.push(`/tools/interface/${record.id}/execute`)
 }
 
-const handleFormSuccess = () => {
-  formVisible.value = false
-  loadData()
+const handleToggleStatus = async (record: ApiInterface) => {
+  try {
+    const newStatus = record.status === 1 ? 0 : 1
+    await interfaceApi.updateStatus(record.id!, newStatus)
+    message.success(newStatus === 1 ? '启用成功' : '禁用成功')
+    loadData()
+  } catch (error) {
+    message.error('状态更新失败')
+  }
 }
+
 
 const getMethodColor = (method: string) => {
   const colors: Record<string, string> = {
@@ -446,14 +450,6 @@ onMounted(() => {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
 }
 
-.view-btn {
-  color: #1890ff;
-}
-
-.view-btn:hover {
-  background-color: #1890ff;
-  color: white;
-}
 
 .edit-btn {
   color: #1890ff;
@@ -470,6 +466,24 @@ onMounted(() => {
 
 .status-btn:hover {
   background-color: #52c41a;
+  color: white;
+}
+
+.disable-btn {
+  color: #faad14;
+}
+
+.disable-btn:hover {
+  background-color: #faad14;
+  color: white;
+}
+
+.execute-btn {
+  color: #722ed1;
+}
+
+.execute-btn:hover {
+  background-color: #722ed1;
   color: white;
 }
 

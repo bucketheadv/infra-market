@@ -175,7 +175,7 @@ CREATE TABLE IF NOT EXISTS `api_interface` (
 -- 插入工具管理相关权限
 -- 先插入工具管理菜单
 INSERT INTO `permission_info` (`name`, `code`, `type`, `parent_id`, `path`, `icon`, `sort`, `status`) VALUES
-('工具管理', 'tool:manage', 'menu', NULL, '/tools', 'ToolOutlined', 2, 'active');
+('工具', 'tool:manage', 'menu', NULL, '/tools', 'ToolOutlined', 2, 'active');
 
 -- 插入接口管理菜单（作为工具管理的子菜单）
 SET @tool_manage_id = (SELECT id FROM `permission_info` WHERE code = 'tool:manage');

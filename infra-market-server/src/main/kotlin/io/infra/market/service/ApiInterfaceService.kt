@@ -74,17 +74,49 @@ class ApiInterfaceService(
         return apiInterfaceDao.removeById(id)
     }
 
+    @Transactional
+    fun updateStatus(id: Long, status: Int): ApiInterfaceDto {
+        val existingInterface = apiInterfaceDao.getById(id)
+            ?: throw RuntimeException("接口不存在")
+
+        existingInterface.status = status
+        existingInterface.updateTime = Date()
+        apiInterfaceDao.updateById(existingInterface)
+        
+        return convertToDto(existingInterface)
+    }
+
     fun execute(request: ApiExecuteRequestDto): ApiExecuteResponseDto {
         val startTime = System.currentTimeMillis()
         
         try {
+            // 从数据库获取接口信息
+            val interfaceId = request.interfaceId ?: throw RuntimeException("接口ID不能为空")
+            val interfaceInfo = apiInterfaceDao.getById(interfaceId)
+                ?: throw RuntimeException("接口不存在")
+            
+            // 检查接口状态
+            if (interfaceInfo.status != 1) {
+                return ApiExecuteResponseDto(
+                    status = 403,
+                    success = false,
+                    error = "接口已禁用，无法执行",
+                    responseTime = System.currentTimeMillis() - startTime
+                )
+            }
+            
+            // 从数据库读取接口基本信息
+            val url = interfaceInfo.url ?: throw RuntimeException("接口URL不能为空")
+            val method = HttpMethodEnum.fromCode(interfaceInfo.method ?: "GET")
+            val postType = interfaceInfo.postType?.let { PostTypeEnum.fromCode(it) }
+            
             val headers = HttpHeaders()
             request.headers?.forEach { (key, value) ->
                 headers.add(key, value)
             }
 
             // 构建URL参数
-            var url = request.url ?: ""
+            var finalUrl = url
             request.urlParams?.let { urlParams ->
                 if (urlParams.isNotEmpty()) {
                     val paramString = urlParams.entries
@@ -93,16 +125,16 @@ class ApiInterfaceService(
                             "$key=${encodeURIComponent(value.toString())}" 
                         }
                     if (paramString.isNotEmpty()) {
-                        url += (if (url.contains("?")) "&" else "?") + paramString
+                        finalUrl += (if (finalUrl.contains("?")) "&" else "?") + paramString
                     }
                 }
             }
 
             // 构建请求体
-            var body: String? = request.body
-            if (request.method != HttpMethodEnum.GET && request.bodyParams?.isNotEmpty() == true) {
+            var body: String? = null
+            if (method != HttpMethodEnum.GET && request.bodyParams?.isNotEmpty() == true) {
                 val bodyParams = request.bodyParams!!
-                when (request.postType) {
+                when (postType) {
                     PostTypeEnum.APPLICATION_X_WWW_FORM_URLENCODED -> {
                         // 表单格式
                         body = bodyParams.entries
@@ -120,11 +152,11 @@ class ApiInterfaceService(
                 }
             }
 
-            val httpMethod = HttpMethod.valueOf(request.method?.code ?: "GET")
+            val httpMethod = HttpMethod.valueOf(method!!.code)
             val httpEntity = HttpEntity(body, headers)
 
             val response: ResponseEntity<String> = restTemplate.exchange(
-                url,
+                finalUrl,
                 httpMethod,
                 httpEntity,
                 String::class.java
