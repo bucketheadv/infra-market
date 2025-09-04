@@ -650,27 +650,27 @@ onMounted(() => {
   }
 }
 
-/* 深色主题适配 */
-.theme-dark .stat-card {
-  background: #1f1f1f;
-  border-color: #303030;
+/* 紫色主题适配 */
+.theme-purple .stat-card {
+  background: var(--light-color);
+  border-color: var(--border-color);
 }
 
-.theme-dark .content-card {
-  background: #1f1f1f;
-  border-color: #303030;
+.theme-purple .content-card {
+  background: var(--light-color);
+  border-color: var(--border-color);
 }
 
-.theme-dark .card-header {
-  background: #262626;
-  border-color: #303030;
+.theme-purple .card-header {
+  background: var(--light-accent-color);
+  border-color: var(--border-color);
 }
 
-.theme-dark .info-item {
-  border-color: #303030;
+.theme-purple .info-item {
+  border-color: var(--border-color);
 }
 
-.theme-dark .user-list-item {
-  border-color: #303030;
+.theme-purple .user-list-item {
+  border-color: var(--border-color);
 }
 </style>

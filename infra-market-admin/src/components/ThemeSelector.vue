@@ -42,9 +42,9 @@
 </template>
 
 <script setup lang="ts">
-import { h, computed } from 'vue'
-import { SettingOutlined, CheckOutlined } from '@ant-design/icons-vue'
-import { useThemeStore, type ThemeConfig } from '@/stores/theme'
+import { computed } from 'vue'
+import { CheckOutlined } from '@ant-design/icons-vue'
+import { useThemeStore } from '@/stores/theme'
 import { message } from 'ant-design-vue'
 
 const themeStore = useThemeStore()
@@ -109,7 +109,7 @@ html.theme-default .theme-button::before {
   background: linear-gradient(135deg, #1890ff 0%, #40a9ff 100%) !important;
 }
 
-html.theme-dark .theme-button::before {
+html.theme-purple .theme-button::before {
   background: linear-gradient(135deg, #722ed1 0%, #9254de 100%) !important;
 }
 
@@ -136,7 +136,7 @@ html.theme-default .theme-button:hover {
   box-shadow: 0 3px 8px rgba(24, 144, 255, 0.2) !important;
 }
 
-html.theme-dark .theme-button:hover {
+html.theme-purple .theme-button:hover {
   box-shadow: 0 3px 8px rgba(114, 46, 209, 0.2) !important;
 }
 
@@ -157,7 +157,7 @@ html.theme-default .theme-button:hover {
   border-color: rgba(24, 144, 255, 0.3) !important;
 }
 
-html.theme-dark .theme-button:hover {
+html.theme-purple .theme-button:hover {
   border-color: rgba(114, 46, 209, 0.3) !important;
 }
 
@@ -182,7 +182,7 @@ html.theme-default .theme-button:hover::before {
   opacity: 0.1 !important;
 }
 
-html.theme-dark .theme-button:hover::before {
+html.theme-purple .theme-button:hover::before {
   opacity: 0.15 !important;
 }
 
@@ -205,7 +205,7 @@ html.theme-default .theme-button {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(24, 144, 255, 0.02) 100%) !important;
 }
 
-html.theme-dark .theme-button {
+html.theme-purple .theme-button {
   border-color: rgba(114, 46, 209, 0.15) !important;
   box-shadow: 0 1px 3px rgba(114, 46, 209, 0.1) !important;
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(114, 46, 209, 0.02) 100%) !important;
@@ -250,7 +250,7 @@ html.theme-default .theme-button:hover .theme-icon {
   color: #1890ff !important;
 }
 
-html.theme-dark .theme-button:hover .theme-icon {
+html.theme-purple .theme-button:hover .theme-icon {
   color: #722ed1 !important;
 }
 
@@ -271,7 +271,7 @@ html.theme-default .theme-icon {
   color: #1890ff !important;
 }
 
-html.theme-dark .theme-icon {
+html.theme-purple .theme-icon {
   color: #722ed1 !important;
 }
 

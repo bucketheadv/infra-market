@@ -59,12 +59,12 @@ html, body {
   --shadow-color: rgba(24, 144, 255, 0.08);
 }
 
-.theme-dark {
+.theme-purple {
   --primary-color: #722ed1;
   --secondary-color: #9254de;
-  --background-color: #141414;
-  --text-color: #ffffff;
-  --border-color: #303030;
+  --background-color: #f9f0ff;
+  --text-color: #333333;
+  --border-color: #d9d9d9;
   --shadow-color: rgba(114, 46, 209, 0.08);
 }
 

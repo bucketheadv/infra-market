@@ -34,18 +34,18 @@ export const themes: ThemeConfig[] = [
     icon: '🌊'
   },
   {
-    name: 'dark',
-    label: '深色主题',
+    name: 'purple',
+    label: '紫色主题',
     primaryColor: '#722ed1',
     secondaryColor: '#9254de',
     accentColor: '#b37feb',
-    backgroundColor: '#141414',
-    textColor: '#ffffff',
-    borderColor: '#303030',
+    backgroundColor: '#f9f0ff',
+    textColor: '#333333',
+    borderColor: '#d9d9d9',
     shadowColor: 'rgba(114, 46, 209, 0.08)',
     lightColor: '#ffffff',
-    lightAccentColor: '#f9f0ff',
-    icon: '🌙'
+    lightAccentColor: '#f0f0f0',
+    icon: '💜'
   },
   {
     name: 'green',

@@ -19,8 +19,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useThemeStore } from '@/stores/theme'
+// 主题按钮组件
 
 interface Props {
   variant?: 'primary' | 'secondary' | 'success' | 'warning' | 'danger' | 'ghost'
@@ -38,9 +37,6 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
   click: [event: MouseEvent]
 }>()
-
-const themeStore = useThemeStore()
-const currentTheme = computed(() => themeStore.currentTheme)
 
 const handleClick = (event: MouseEvent) => {
   if (!props.disabled) {
@@ -215,12 +211,12 @@ const handleClick = (event: MouseEvent) => {
   box-shadow: 0 4px 8px rgba(24, 144, 255, 0.3);
 }
 
-:root.theme-dark .theme-button--primary {
+:root.theme-purple .theme-button--primary {
   background: #722ed1;
   box-shadow: 0 2px 4px rgba(114, 46, 209, 0.2);
 }
 
-:root.theme-dark .theme-button--primary:hover:not(.theme-button--disabled) {
+:root.theme-purple .theme-button--primary:hover:not(.theme-button--disabled) {
   background: #9254de;
   box-shadow: 0 4px 8px rgba(114, 46, 209, 0.3);
 }

@@ -343,35 +343,35 @@ const breadcrumbItems = computed((): BreadcrumbItem[] => {
 }
 
 /* 主题色支持 */
-:root.theme-dark .breadcrumb-container {
-  background: #f0e6ff;
-  border-bottom-color: #d3adf7;
+:root.theme-purple .breadcrumb-container {
+  background: #f9f0ff;
+  border-bottom-color: #d9d9d9;
 }
 
-:root.theme-dark .breadcrumb-current {
-  background: rgba(114, 46, 209, 0.15);
-  color: #fff;
+:root.theme-purple .breadcrumb-current {
+  background: rgba(114, 46, 209, 0.1);
+  color: #333;
 }
 
-:root.theme-dark .breadcrumb-text {
-  color: #999;
-}
-
-:root.theme-dark .breadcrumb-link {
-  color: #b37feb;
-}
-
-:root.theme-dark .breadcrumb-link:hover {
-  color: #d3adf7;
-  background: rgba(114, 46, 209, 0.15);
-}
-
-:root.theme-dark .breadcrumb-icon {
-  color: #b37feb;
-}
-
-:root.theme-dark .breadcrumb :deep(.ant-breadcrumb-separator) {
+:root.theme-purple .breadcrumb-text {
   color: #666;
+}
+
+:root.theme-purple .breadcrumb-link {
+  color: #722ed1;
+}
+
+:root.theme-purple .breadcrumb-link:hover {
+  color: #9254de;
+  background: rgba(114, 46, 209, 0.1);
+}
+
+:root.theme-purple .breadcrumb-icon {
+  color: #722ed1;
+}
+
+:root.theme-purple .breadcrumb :deep(.ant-breadcrumb-separator) {
+  color: #d9d9d9;
 }
 
 :root.theme-green .breadcrumb-container {
