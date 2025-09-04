@@ -161,6 +161,6 @@ export const POST_TYPES = [
 ]
 
 export const TAGS = [
-  { value: 'TEST', label: '测试' },
-  { value: 'PRODUCTION', label: '正式' }
+  { value: 'TEST', label: '测试环境' },
+  { value: 'PRODUCTION', label: '正式环境' }
 ]

@@ -248,7 +248,7 @@ const columns = [
     title: '标签',
     dataIndex: 'tag',
     key: 'tag',
-    width: 60,
+    width: 100,
     customRender: ({ record }: { record: ApiInterface }) => {
       if (!record.tag) return '-'
       const tagInfo = TAGS.find(t => t.value === record.tag)

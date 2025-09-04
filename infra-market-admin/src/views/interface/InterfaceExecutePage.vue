@@ -324,6 +324,9 @@
         <!-- 操作按钮区域 -->
         <div class="form-actions">
           <a-space size="small">
+            <a-tag v-if="interfaceData?.tag" :color="getTagColor(interfaceData.tag)" class="interface-tag">
+              {{ getTagLabel(interfaceData.tag) }}
+            </a-tag>
             <ThemeButton 
               variant="primary" 
               size="small"
@@ -908,6 +911,13 @@ const formatDateTime = (dateTime: string | Date | undefined): string => {
   margin-top: 16px;
   border-top: 1px solid #f0f0f0;
   text-align: center;
+}
+
+.interface-tag {
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  margin-right: 8px;
 }
 
 .submit-btn {
