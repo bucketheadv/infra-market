@@ -143,12 +143,89 @@ const canFormat = computed(() => {
   return ['json', 'java', 'javascript', 'typescript', 'kotlin', 'html', 'css'].includes(selectedLanguage.value)
 })
 
+// 代码类型检测函数
+const detectCodeType = (code: string): string => {
+  if (!code || code.trim() === '') {
+    return props.language || 'json'
+  }
+  
+  const trimmedCode = code.trim()
+  
+  // JSON检测
+  if (trimmedCode.startsWith('{') && trimmedCode.endsWith('}') || 
+      trimmedCode.startsWith('[') && trimmedCode.endsWith(']')) {
+    try {
+      JSON.parse(trimmedCode)
+      return 'json'
+    } catch (e) {
+      // 可能是格式错误的JSON，但仍然返回json
+    }
+  }
+  
+  // XML检测
+  if (trimmedCode.startsWith('<') && trimmedCode.includes('>')) {
+    return 'xml'
+  }
+  
+  // SQL检测
+  const sqlKeywords = ['SELECT', 'INSERT', 'UPDATE', 'DELETE', 'CREATE', 'DROP', 'ALTER', 'FROM', 'WHERE', 'JOIN']
+  const upperCode = trimmedCode.toUpperCase()
+  if (sqlKeywords.some(keyword => upperCode.includes(keyword))) {
+    return 'sql'
+  }
+  
+  // YAML检测
+  if (trimmedCode.includes(':') && (trimmedCode.includes('-') || trimmedCode.includes('|'))) {
+    return 'yaml'
+  }
+  
+  // HTML检测
+  if (trimmedCode.includes('<html') || trimmedCode.includes('<div') || trimmedCode.includes('<p>')) {
+    return 'html'
+  }
+  
+  // CSS检测
+  if (trimmedCode.includes('{') && trimmedCode.includes('}') && 
+      (trimmedCode.includes('color:') || trimmedCode.includes('margin:') || trimmedCode.includes('padding:'))) {
+    return 'css'
+  }
+  
+  // JavaScript检测
+  if (trimmedCode.includes('function') || trimmedCode.includes('const ') || trimmedCode.includes('let ') || 
+      trimmedCode.includes('var ') || trimmedCode.includes('=>')) {
+    return 'javascript'
+  }
+  
+  // TypeScript检测
+  if (trimmedCode.includes('interface ') || trimmedCode.includes('type ') || 
+      trimmedCode.includes(': string') || trimmedCode.includes(': number')) {
+    return 'typescript'
+  }
+  
+  // Java检测
+  if (trimmedCode.includes('public class') || trimmedCode.includes('private ') || 
+      trimmedCode.includes('System.out.println')) {
+    return 'java'
+  }
+  
+  // Kotlin检测
+  if (trimmedCode.includes('fun ') || trimmedCode.includes('val ') || 
+      trimmedCode.includes('var ') && trimmedCode.includes(':')) {
+    return 'kotlin'
+  }
+  
+  // 默认返回传入的语言或json
+  return props.language || 'json'
+}
+
 // 监听props变化
 watch(() => props.visible, (newVal) => {
   visible.value = newVal
   if (newVal) {
     editorValue.value = props.value
-    selectedLanguage.value = props.language
+    // 自动检测代码类型
+    const detectedLanguage = detectCodeType(props.value)
+    selectedLanguage.value = detectedLanguage
   }
 })
 

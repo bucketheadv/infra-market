@@ -81,8 +81,8 @@
                 <!-- URL参数 -->
                 <div v-if="urlParams.length > 0" class="param-group">
                   <h4>URL参数</h4>
-                  <a-row v-for="param in urlParams" :key="param.name" class="param-row">
-                    <a-col :span="8">
+                  <a-row v-for="param in urlParams" :key="param.name" class="param-row" :gutter="[6, 0]">
+                    <a-col :span="6">
                       <label class="param-label">
                         {{ getParamDisplayName(param) }}
                         <span v-if="param.required" class="required">*</span>
@@ -91,7 +91,7 @@
                         </a-tooltip>
                       </label>
                     </a-col>
-                    <a-col :span="16">
+                    <a-col :span="18">
                       <a-form-item
                         :name="['params', param.name]"
                         :rules="param.required ? [{ required: true, message: `请输入${getParamDisplayName(param)}` }] : []"
@@ -139,8 +139,8 @@
                 <!-- Header参数 -->
                 <div v-if="headerParams.length > 0" class="param-group">
                   <h4>Header参数</h4>
-                  <a-row v-for="param in headerParams" :key="param.name" class="param-row">
-                    <a-col :span="8">
+                  <a-row v-for="param in headerParams" :key="param.name" class="param-row" :gutter="[6, 0]">
+                    <a-col :span="6">
                       <label class="param-label">
                         {{ getParamDisplayName(param) }}
                         <span v-if="param.required" class="required">*</span>
@@ -149,7 +149,7 @@
                         </a-tooltip>
                       </label>
                     </a-col>
-                    <a-col :span="16">
+                    <a-col :span="18">
                       <a-form-item
                         :name="['headers', param.name]"
                         :rules="param.required ? [{ required: true, message: `请输入${getParamDisplayName(param)}` }] : []"
@@ -197,8 +197,8 @@
                 <!-- Body参数 -->
                 <div v-if="bodyParams.length > 0 && interfaceData?.method !== 'GET'" class="param-group">
                   <h4>Body参数</h4>
-                  <a-row v-for="param in bodyParams" :key="param.name" class="param-row">
-                    <a-col :span="8">
+                  <a-row v-for="param in bodyParams" :key="param.name" class="param-row" :gutter="[6, 0]">
+                    <a-col :span="6">
                       <label class="param-label">
                         {{ getParamDisplayName(param) }}
                         <span v-if="param.required" class="required">*</span>
@@ -207,7 +207,7 @@
                         </a-tooltip>
                       </label>
                     </a-col>
-                    <a-col :span="16">
+                    <a-col :span="18">
                       <a-form-item
                         :name="['bodyParams', param.name]"
                         :rules="param.required ? [{ required: true, message: `请输入${getParamDisplayName(param)}` }] : []"
@@ -959,25 +959,27 @@ const formatDateTime = (dateTime: string | Date | undefined): string => {
 }
 
 .param-group {
-  margin-bottom: 24px;
+  margin-bottom: 12px;
 }
 
 .param-group h4 {
-  margin-bottom: 16px;
+  margin-bottom: 8px;
   color: #1890ff;
   font-weight: 600;
+  font-size: 13px;
 }
 
 .param-row {
-  margin-bottom: 16px;
+  margin-bottom: 8px;
 }
 
 .param-label {
   display: flex;
   align-items: center;
   gap: 4px;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
   font-weight: 500;
+  font-size: 12px;
   color: #333;
 }
 
