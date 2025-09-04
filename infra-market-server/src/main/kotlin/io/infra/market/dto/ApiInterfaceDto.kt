@@ -5,6 +5,7 @@ import io.infra.market.enums.ParamTypeEnum
 import io.infra.market.enums.DataTypeEnum
 import io.infra.market.enums.InputTypeEnum
 import io.infra.market.enums.PostTypeEnum
+import io.infra.market.enums.TagEnum
 import java.util.Date
 
 /**
@@ -20,6 +21,7 @@ data class ApiInterfaceDto(
     var createTime: Date? = null,
     var updateTime: Date? = null,
     var postType: PostTypeEnum? = null,
+    var tag: TagEnum? = null,
     var urlParams: List<ApiParamDto>? = null,
     var headerParams: List<ApiParamDto>? = null,
     var bodyParams: List<ApiParamDto>? = null
@@ -60,6 +62,7 @@ data class ApiInterfaceFormDto(
     var url: String? = null,
     var description: String? = null,
     var postType: PostTypeEnum? = null,
+    var tag: TagEnum? = null,
     var urlParams: List<ApiParamDto>? = null,
     var headerParams: List<ApiParamDto>? = null,
     var bodyParams: List<ApiParamDto>? = null
@@ -72,6 +75,7 @@ data class ApiInterfaceQueryDto(
     var name: String? = null,
     var method: HttpMethodEnum? = null,
     var status: Int? = null,
+    var tag: TagEnum? = null,
     var page: Int? = null,
     var size: Int? = null
 )

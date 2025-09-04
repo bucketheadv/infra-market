@@ -7,6 +7,7 @@ import io.infra.market.enums.HttpMethodEnum
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import io.infra.market.enums.PostTypeEnum
+import io.infra.market.enums.TagEnum
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.client.RestTemplate
@@ -84,6 +85,22 @@ class ApiInterfaceService(
         apiInterfaceDao.updateById(existingInterface)
         
         return convertToDto(existingInterface)
+    }
+
+    @Transactional
+    fun copy(id: Long): ApiInterfaceDto {
+        val existingInterface = apiInterfaceDao.getById(id)
+            ?: throw RuntimeException("接口不存在")
+
+        val newInterface = existingInterface.copy()
+        newInterface.id = null
+        newInterface.name = "${existingInterface.name}_副本"
+        newInterface.createTime = Date()
+        newInterface.updateTime = Date()
+        newInterface.status = 1
+
+        apiInterfaceDao.save(newInterface)
+        return convertToDto(newInterface)
     }
 
     fun execute(request: ApiExecuteRequestDto): ApiExecuteResponseDto {
@@ -217,6 +234,7 @@ class ApiInterfaceService(
             createTime = entity.createTime,
             updateTime = entity.updateTime,
             postType = entity.postType?.let { PostTypeEnum.fromCode(it) },
+            tag = entity.tag?.let { TagEnum.fromCode(it) },
             urlParams = urlParams,
             headerParams = headerParams,
             bodyParams = bodyParams
@@ -246,6 +264,7 @@ class ApiInterfaceService(
             url = form.url,
             description = form.description,
             postType = form.postType?.code,
+            tag = form.tag?.code,
             params = paramsJson
         )
     }

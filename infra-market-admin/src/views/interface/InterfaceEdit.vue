@@ -99,6 +99,23 @@
               </a-input>
             </a-form-item>
 
+            <a-form-item label="接口标签" name="tag">
+              <a-select
+                v-model:value="form.tag"
+                placeholder="请选择接口标签"
+                size="middle"
+                class="form-input"
+              >
+                <a-select-option
+                  v-for="tag in TAGS"
+                  :key="tag.value"
+                  :value="tag.value"
+                >
+                  {{ tag.label }}
+                </a-select-option>
+              </a-select>
+            </a-form-item>
+
             <a-form-item label="接口描述" name="description">
               <a-textarea
                 v-model:value="form.description"
@@ -313,7 +330,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import { PlusOutlined, ApiOutlined, IdcardOutlined, LinkOutlined, SettingOutlined, CheckOutlined, CloseOutlined, DeleteOutlined } from '@ant-design/icons-vue'
-import { interfaceApi, HTTP_METHODS, POST_TYPES, type ApiInterface, type ApiParam } from '@/api/interface'
+import { interfaceApi, HTTP_METHODS, POST_TYPES, TAGS, type ApiInterface, type ApiParam } from '@/api/interface'
 import ThemeButton from '@/components/ThemeButton.vue'
 import ParamForm from './ParamForm.vue'
 
@@ -333,6 +350,7 @@ const form = reactive({
   url: '',
   description: '',
   postType: '',
+  tag: '',
   urlParams: [] as ApiParam[],
   headerParams: [] as ApiParam[],
   bodyParams: [] as ApiParam[]
@@ -367,6 +385,7 @@ const initializeForm = () => {
     url: '',
     description: '',
     postType: '',
+    tag: '',
     urlParams: [],
     headerParams: [],
     bodyParams: []

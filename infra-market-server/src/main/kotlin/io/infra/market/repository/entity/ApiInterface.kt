@@ -19,4 +19,5 @@ data class ApiInterface(
     var postType: String? = null,
     var params: String? = null,
     var status: Int? = null,
+    var tag: String? = null,
 ) : BaseActiveRecordEntity<ApiInterface, Long>()

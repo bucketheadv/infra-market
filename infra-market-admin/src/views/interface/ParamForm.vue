@@ -50,7 +50,7 @@
       </a-row>
       
       <a-row :gutter="[16, 12]">
-        <a-col :span="12">
+        <a-col :span="8">
           <a-form-item label="数据类型" :name="[paramType, index, 'dataType']" class="form-item-modern">
             <a-select
               v-model:value="param.dataType"
@@ -69,7 +69,7 @@
             </a-select>
           </a-form-item>
         </a-col>
-        <a-col :span="12">
+        <a-col :span="16">
           <a-form-item label="默认值" class="form-item-modern">
             <!-- 代码编辑器弹窗按钮 -->
             <div v-if="param.inputType === 'CODE' || param.dataType === 'JSON'" class="code-editor-input">
@@ -154,6 +154,8 @@
               :disabled="disabled"
               class="modern-input-number"
               placeholder="排序"
+              size="small"
+              :controls="false"
             />
           </a-form-item>
         </a-col>
@@ -703,6 +705,27 @@ const handleCodeCancel = () => {
   line-height: 24px;
 }
 
+/* 多选下拉框样式调整 */
+.form-item-modern :deep(.ant-select-multiple .ant-select-selector) {
+  min-height: 32px;
+  height: auto;
+  padding: 2px 11px;
+}
+
+.form-item-modern :deep(.ant-select-multiple .ant-select-selection-overflow) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.form-item-modern :deep(.ant-select-multiple .ant-select-selection-item) {
+  margin: 2px 4px 2px 0;
+  height: 24px;
+  line-height: 22px;
+  font-size: 12px;
+}
+
 .form-item-modern :deep(.ant-checkbox-wrapper) {
   font-size: 12px;
 }
@@ -726,16 +749,65 @@ const handleCodeCancel = () => {
   box-shadow: 0 0 0 3px rgba(9, 105, 218, 0.1);
 }
 
+/* 数字输入框样式 - 与主题保持一致 */
 .modern-input-number {
   width: 100%;
   border-radius: 8px;
   border: 1px solid #d0d7de;
   transition: all 0.2s ease;
+  font-size: 12px;
+  height: 32px;
 }
 
 .modern-input-number:focus {
   border-color: #0969da;
   box-shadow: 0 0 0 3px rgba(9, 105, 218, 0.1);
+}
+
+/* 数字输入框内部样式 */
+.form-item-modern :deep(.modern-input-number .ant-input-number) {
+  width: 100%;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  height: 32px;
+}
+
+.form-item-modern :deep(.modern-input-number .ant-input-number .ant-input-number-input) {
+  height: 32px;
+  font-size: 12px;
+  text-align: center;
+  border: none;
+  background: transparent;
+  padding: 6px 11px;
+  color: #24292f;
+  line-height: 20px;
+  box-sizing: border-box;
+}
+
+.form-item-modern :deep(.modern-input-number .ant-input-number .ant-input-number-input::placeholder) {
+  color: #656d76;
+}
+
+.form-item-modern :deep(.modern-input-number .ant-input-number:hover) {
+  border: none;
+  box-shadow: none;
+}
+
+.form-item-modern :deep(.modern-input-number .ant-input-number-focused) {
+  border: none;
+  box-shadow: none;
+}
+
+.form-item-modern :deep(.modern-input-number .ant-input-number-disabled) {
+  background-color: #f6f8fa;
+  border-color: #d0d7de;
+  color: #656d76;
+}
+
+.form-item-modern :deep(.modern-input-number .ant-input-number-disabled .ant-input-number-input) {
+  color: #656d76;
+  background: transparent;
 }
 
 .checkbox-group {

@@ -20,11 +20,13 @@ class ApiInterfaceController(
     @RequiresPermission("interface:list")
     fun getList(@RequestParam(required = false) name: String?,
                 @RequestParam(required = false) method: String?,
-                @RequestParam(required = false) status: Int?): ResponseEntity<ApiResponse<List<ApiInterfaceDto>>> {
+                @RequestParam(required = false) status: Int?,
+                @RequestParam(required = false) tag: String?): ResponseEntity<ApiResponse<List<ApiInterfaceDto>>> {
         val query = ApiInterfaceQueryDto(
             name = name,
             method = io.infra.market.enums.HttpMethodEnum.fromCode(method ?: ""),
-            status = status
+            status = status,
+            tag = io.infra.market.enums.TagEnum.fromCode(tag ?: "")
         )
         val interfaces = apiInterfaceService.findAll(query)
         return ResponseEntity.ok(ApiResponse.success(interfaces))
@@ -66,6 +68,13 @@ class ApiInterfaceController(
     @RequiresPermission("interface:update")
     fun updateStatus(@PathVariable id: Long, @RequestParam status: Int): ResponseEntity<ApiResponse<ApiInterfaceDto>> {
         val apiInterface = apiInterfaceService.updateStatus(id, status)
+        return ResponseEntity.ok(ApiResponse.success(apiInterface))
+    }
+
+    @PostMapping("/{id}/copy")
+    @RequiresPermission("interface:create")
+    fun copy(@PathVariable id: Long): ResponseEntity<ApiResponse<ApiInterfaceDto>> {
+        val apiInterface = apiInterfaceService.copy(id)
         return ResponseEntity.ok(ApiResponse.success(apiInterface))
     }
 

@@ -11,6 +11,7 @@ export interface ApiInterface {
   createTime?: string
   updateTime?: string
   postType?: string
+  tag?: string
   urlParams?: ApiParam[]
   headerParams?: ApiParam[]
   bodyParams?: ApiParam[]
@@ -70,6 +71,7 @@ export const interfaceApi = {
     name?: string
     method?: string
     status?: number
+    tag?: string
   }) => {
     return request.get<ApiInterface[]>('/api/interface/list', { params })
   },
@@ -97,6 +99,11 @@ export const interfaceApi = {
   // 更新接口状态
   updateStatus: (id: number, status: number) => {
     return request.put<ApiInterface>(`/api/interface/${id}/status?status=${status}`)
+  },
+
+  // 复制接口
+  copy: (id: number) => {
+    return request.post<ApiInterface>(`/api/interface/${id}/copy`)
   },
 
   // 执行接口
@@ -151,4 +158,9 @@ export const DATA_TYPES = [
 export const POST_TYPES = [
   { value: 'application/json', label: 'application/json' },
   { value: 'application/x-www-form-urlencoded', label: 'application/x-www-form-urlencoded' }
+]
+
+export const TAGS = [
+  { value: 'TEST', label: '测试' },
+  { value: 'PRODUCTION', label: '正式' }
 ]

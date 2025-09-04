@@ -50,6 +50,23 @@
             </a-form-item>
           </a-col>
           <a-col :xs="24" :sm="12" :md="8" :lg="6">
+            <a-form-item label="标签">
+              <a-select
+                v-model:value="searchForm.tag"
+                placeholder="请选择标签"
+                allow-clear
+              >
+                <a-select-option
+                  v-for="tag in TAGS"
+                  :key="tag.value"
+                  :value="tag.value"
+                >
+                  {{ tag.label }}
+                </a-select-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+          <a-col :xs="24" :sm="12" :md="8" :lg="6">
             <a-form-item>
               <a-space>
                 <ThemeButton variant="primary" size="medium" :icon="SearchOutlined" @click="handleSearch">
@@ -101,6 +118,21 @@
               >
                 编辑
               </ThemeButton>
+              <a-popconfirm
+                title="确定要复制这个接口吗？"
+                ok-text="确定"
+                cancel-text="取消"
+                @confirm="handleCopy(record)"
+              >
+                <ThemeButton 
+                  variant="ghost" 
+                  size="small" 
+                  class="action-btn copy-btn"
+                  :icon="CopyOutlined"
+                >
+                  复制
+                </ThemeButton>
+              </a-popconfirm>
               <ThemeButton
                 variant="ghost"
                 size="small"
@@ -148,8 +180,8 @@
 import { ref, reactive, onMounted, h } from 'vue'
 import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
-import { PlusOutlined, SearchOutlined, ReloadOutlined, EditOutlined, PlayCircleOutlined, DeleteOutlined, CheckCircleOutlined, StopOutlined } from '@ant-design/icons-vue'
-import { interfaceApi, HTTP_METHODS, type ApiInterface } from '@/api/interface'
+import { PlusOutlined, SearchOutlined, ReloadOutlined, EditOutlined, PlayCircleOutlined, DeleteOutlined, CheckCircleOutlined, StopOutlined, CopyOutlined } from '@ant-design/icons-vue'
+import { interfaceApi, HTTP_METHODS, TAGS, type ApiInterface } from '@/api/interface'
 import ThemeButton from '@/components/ThemeButton.vue'
 
 const router = useRouter()
@@ -162,7 +194,8 @@ const dataSource = ref<ApiInterface[]>([])
 const searchForm = reactive({
   name: '',
   method: undefined,
-  status: undefined
+  status: undefined,
+  tag: undefined
 })
 
 // 分页配置
@@ -181,38 +214,54 @@ const columns = [
     title: 'ID',
     dataIndex: 'id',
     key: 'id',
-    width: 80,
+    width: 60,
     align: 'center'
   },
   {
     title: '接口名称',
     dataIndex: 'name',
     key: 'name',
-    width: 200
+    width: 120,
+    ellipsis: true
   },
   {
     title: '请求方法',
     dataIndex: 'method',
     key: 'method',
-    width: 100
+    width: 80
   },
   {
     title: '接口URL',
     dataIndex: 'url',
     key: 'url',
+    width: 200,
     ellipsis: true
   },
   {
     title: '描述',
     dataIndex: 'description',
     key: 'description',
+    width: 120,
     ellipsis: true
+  },
+  {
+    title: '标签',
+    dataIndex: 'tag',
+    key: 'tag',
+    width: 60,
+    customRender: ({ record }: { record: ApiInterface }) => {
+      if (!record.tag) return '-'
+      const tagInfo = TAGS.find(t => t.value === record.tag)
+      return h('a-tag', {
+        color: record.tag === 'TEST' ? 'blue' : 'green'
+      }, tagInfo?.label || record.tag)
+    }
   },
   {
     title: '状态',
     dataIndex: 'status',
     key: 'status',
-    width: 100,
+    width: 80,
     customRender: ({ record }: { record: ApiInterface }) => {
       return h('a-tag', {
         color: record.status === 1 ? 'green' : 'red'
@@ -223,12 +272,12 @@ const columns = [
     title: '创建时间',
     dataIndex: 'createTime',
     key: 'createTime',
-    width: 180
+    width: 150
   },
   {
     title: '操作',
     key: 'action',
-    width: 250,
+    width: 200,
     fixed: 'right'
   }
 ]
@@ -240,7 +289,8 @@ const loadData = async () => {
     const response = await interfaceApi.getList({
       name: searchForm.name || undefined,
       method: searchForm.method || undefined,
-      status: searchForm.status
+      status: searchForm.status,
+      tag: searchForm.tag || undefined
     })
     dataSource.value = response.data || []
     pagination.total = response.data?.length || 0
@@ -260,6 +310,7 @@ const handleReset = () => {
   searchForm.name = ''
   searchForm.method = undefined
   searchForm.status = undefined
+  searchForm.tag = undefined
   handleSearch()
 }
 
@@ -276,6 +327,16 @@ const handleCreate = () => {
 
 const handleEdit = (record: ApiInterface) => {
   router.push(`/tools/interface/${record.id}/edit`)
+}
+
+const handleCopy = async (record: ApiInterface) => {
+  try {
+    await interfaceApi.copy(record.id!)
+    message.success('接口复制成功')
+    loadData()
+  } catch (error) {
+    message.error('接口复制失败')
+  }
 }
 
 const handleDelete = async (record: ApiInterface) => {
@@ -457,6 +518,15 @@ onMounted(() => {
 
 .edit-btn:hover {
   background-color: #1890ff;
+  color: white;
+}
+
+.copy-btn {
+  color: #52c41a;
+}
+
+.copy-btn:hover {
+  background-color: #52c41a;
   color: white;
 }
 

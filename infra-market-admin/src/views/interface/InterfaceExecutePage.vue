@@ -45,6 +45,9 @@
               <a-descriptions-item v-if="interfaceData.postType" label="POST类型">
                 <a-tag color="blue" class="post-type-tag">{{ getPostTypeLabel(interfaceData.postType) }}</a-tag>
               </a-descriptions-item>
+              <a-descriptions-item v-if="interfaceData.tag" label="接口标签">
+                <a-tag :color="getTagColor(interfaceData.tag)" class="tag-tag">{{ getTagLabel(interfaceData.tag) }}</a-tag>
+              </a-descriptions-item>
               <a-descriptions-item label="状态">
                 <a-tag :color="interfaceData.status === 1 ? 'green' : 'red'" class="status-tag">
                   {{ interfaceData.status === 1 ? '启用' : '禁用' }}
@@ -362,7 +365,7 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import { PlayCircleOutlined, CloseOutlined, QuestionCircleOutlined } from '@ant-design/icons-vue'
-import { interfaceApi, POST_TYPES, type ApiInterface, type ApiParam, type ApiExecuteRequest, type ApiExecuteResponse } from '@/api/interface'
+import { interfaceApi, POST_TYPES, TAGS, type ApiInterface, type ApiParam, type ApiExecuteRequest, type ApiExecuteResponse } from '@/api/interface'
 import ThemeButton from '@/components/ThemeButton.vue'
 import CodeEditor from '@/components/CodeEditor.vue'
 import CodeEditorModal from '@/components/CodeEditorModal.vue'
@@ -764,6 +767,17 @@ const getMethodColor = (method: string) => {
 const getPostTypeLabel = (postType: string) => {
   const type = POST_TYPES.find(t => t.value === postType)
   return type ? type.label : postType
+}
+
+// 获取标签标签
+const getTagLabel = (tag: string) => {
+  const tagInfo = TAGS.find(t => t.value === tag)
+  return tagInfo ? tagInfo.label : tag
+}
+
+// 获取标签颜色
+const getTagColor = (tag: string) => {
+  return tag === 'TEST' ? 'blue' : 'green'
 }
 
 // 格式化日期时间
