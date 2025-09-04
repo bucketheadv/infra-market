@@ -11,7 +11,7 @@ enum class PermissionTypeEnum(val code: String, val desc: String) {
     
     companion object {
         fun fromCode(code: String): PermissionTypeEnum? {
-            return values().find { it.code == code }
+            return entries.find { it.code == code }
         }
     }
 }

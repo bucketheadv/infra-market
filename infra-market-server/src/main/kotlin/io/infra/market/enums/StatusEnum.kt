@@ -12,7 +12,7 @@ enum class StatusEnum(val code: String, val desc: String) {
     
     companion object {
         fun fromCode(code: String): StatusEnum? {
-            return values().find { it.code == code }
+            return entries.find { it.code == code }
         }
     }
 }
