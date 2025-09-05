@@ -3,9 +3,9 @@ package io.infra.market.controller
 import io.infra.market.dto.*
 import io.infra.market.service.ApiInterfaceService
 import io.infra.market.annotation.RequiresPermission
+import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.*
-import org.springframework.http.ResponseEntity
 
 /**
  * 接口管理控制器
@@ -48,7 +48,7 @@ class ApiInterfaceController(
     fun getList(@RequestParam(required = false) name: String?,
                 @RequestParam(required = false) method: String?,
                 @RequestParam(required = false) status: Int?,
-                @RequestParam(required = false) tag: String?): ResponseEntity<ApiResponse<List<ApiInterfaceDto>>> {
+                @RequestParam(required = false) tag: String?): ApiResponse<List<ApiInterfaceDto>> {
         val query = ApiInterfaceQueryDto(
             name = name,
             method = io.infra.market.enums.HttpMethodEnum.fromCode(method ?: ""),
@@ -56,7 +56,7 @@ class ApiInterfaceController(
             environment = io.infra.market.enums.EnvironmentEnum.fromCode(tag ?: "")
         )
         val interfaces = apiInterfaceService.findAll(query)
-        return ResponseEntity.ok(ApiResponse.success(interfaces))
+        return ApiResponse.success(interfaces)
     }
 
     /**
@@ -69,12 +69,12 @@ class ApiInterfaceController(
      */
     @GetMapping("/{id}")
     @RequiresPermission("interface:view")
-    fun getById(@PathVariable id: Long): ResponseEntity<ApiResponse<ApiInterfaceDto>> {
+    fun getById(@PathVariable id: Long): ApiResponse<ApiInterfaceDto> {
         val apiInterface = apiInterfaceService.findById(id)
         return if (apiInterface != null) {
-            ResponseEntity.ok(ApiResponse.success(apiInterface))
+            ApiResponse.success(apiInterface)
         } else {
-            ResponseEntity.ok(ApiResponse.error("接口不存在"))
+            ApiResponse.error("接口不存在")
         }
     }
 
@@ -89,9 +89,9 @@ class ApiInterfaceController(
      */
     @PostMapping
     @RequiresPermission("interface:create")
-    fun create(@Valid @RequestBody form: ApiInterfaceFormDto): ResponseEntity<ApiResponse<ApiInterfaceDto>> {
+    fun create(@Valid @RequestBody form: ApiInterfaceFormDto): ApiResponse<ApiInterfaceDto> {
         val apiInterface = apiInterfaceService.save(form)
-        return ResponseEntity.ok(ApiResponse.success(apiInterface))
+        return ApiResponse.success(apiInterface)
     }
 
     /**
@@ -106,9 +106,9 @@ class ApiInterfaceController(
      */
     @PutMapping("/{id}")
     @RequiresPermission("interface:update")
-    fun update(@PathVariable id: Long, @Valid @RequestBody form: ApiInterfaceFormDto): ResponseEntity<ApiResponse<ApiInterfaceDto>> {
+    fun update(@PathVariable id: Long, @Valid @RequestBody form: ApiInterfaceFormDto): ApiResponse<ApiInterfaceDto> {
         val apiInterface = apiInterfaceService.update(id, form)
-        return ResponseEntity.ok(ApiResponse.success(apiInterface))
+        return ApiResponse.success(apiInterface)
     }
 
     /**
@@ -122,9 +122,9 @@ class ApiInterfaceController(
      */
     @DeleteMapping("/{id}")
     @RequiresPermission("interface:delete")
-    fun delete(@PathVariable id: Long): ResponseEntity<ApiResponse<Boolean>> {
+    fun delete(@PathVariable id: Long): ApiResponse<Boolean> {
         val result = apiInterfaceService.delete(id)
-        return ResponseEntity.ok(ApiResponse.success(result))
+        return ApiResponse.success(result)
     }
 
     /**
@@ -138,9 +138,9 @@ class ApiInterfaceController(
      */
     @PutMapping("/{id}/status")
     @RequiresPermission("interface:update")
-    fun updateStatus(@PathVariable id: Long, @RequestParam status: Int): ResponseEntity<ApiResponse<ApiInterfaceDto>> {
+    fun updateStatus(@PathVariable id: Long, @RequestParam status: Int): ApiResponse<ApiInterfaceDto> {
         val apiInterface = apiInterfaceService.updateStatus(id, status)
-        return ResponseEntity.ok(ApiResponse.success(apiInterface))
+        return ApiResponse.success(apiInterface)
     }
 
     /**
@@ -154,9 +154,9 @@ class ApiInterfaceController(
      */
     @PostMapping("/{id}/copy")
     @RequiresPermission("interface:create")
-    fun copy(@PathVariable id: Long): ResponseEntity<ApiResponse<ApiInterfaceDto>> {
+    fun copy(@PathVariable id: Long): ApiResponse<ApiInterfaceDto> {
         val apiInterface = apiInterfaceService.copy(id)
-        return ResponseEntity.ok(ApiResponse.success(apiInterface))
+        return ApiResponse.success(apiInterface)
     }
 
     /**
@@ -177,8 +177,11 @@ class ApiInterfaceController(
      */
     @PostMapping("/execute")
     @RequiresPermission("interface:execute")
-    fun execute(@Valid @RequestBody request: ApiExecuteRequestDto): ResponseEntity<ApiResponse<ApiExecuteResponseDto>> {
-        val response = apiInterfaceService.execute(request)
-        return ResponseEntity.ok(ApiResponse.success(response))
+    fun execute(
+        @Valid @RequestBody request: ApiExecuteRequestDto,
+        httpRequest: HttpServletRequest
+    ): ApiResponse<ApiExecuteResponseDto> {
+        val response = apiInterfaceService.execute(request, httpRequest)
+        return ApiResponse.success(response)
     }
 }

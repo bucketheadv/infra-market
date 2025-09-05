@@ -213,3 +213,33 @@ SELECT 4, id FROM `permission_info` WHERE status = 'active' AND code IN (
     'tool:manage', 'interface:manage', 'interface:list', 'interface:view'
 );
 
+-- 接口执行记录表
+CREATE TABLE IF NOT EXISTS `api_interface_execution_record` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    `interface_id` BIGINT NOT NULL COMMENT '接口ID',
+    `executor_id` BIGINT NOT NULL COMMENT '执行人ID',
+    `executor_name` VARCHAR(50) NOT NULL COMMENT '执行人姓名',
+    `request_params` LONGTEXT NULL COMMENT '请求参数JSON',
+    `request_headers` LONGTEXT NULL COMMENT '请求头JSON',
+    `request_body` LONGTEXT NULL COMMENT '请求体JSON',
+    `response_status` INT NULL COMMENT '响应状态码',
+    `response_headers` LONGTEXT NULL COMMENT '响应头JSON',
+    `response_body` LONGTEXT NULL COMMENT '响应体JSON',
+    `execution_time` BIGINT NULL COMMENT '执行时间（毫秒）',
+    `success` TINYINT(1) NOT NULL DEFAULT 0 COMMENT '是否成功：1-成功，0-失败',
+    `error_message` TEXT NULL COMMENT '错误信息',
+    `client_ip` VARCHAR(50) NULL COMMENT '客户端IP',
+    `user_agent` VARCHAR(500) NULL COMMENT '用户代理',
+    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`),
+    KEY `idx_interface_id` (`interface_id`),
+    KEY `idx_executor_id` (`executor_id`),
+    KEY `idx_executor_name` (`executor_name`),
+    KEY `idx_success` (`success`),
+    KEY `idx_create_time` (`create_time`),
+    KEY `idx_execution_time` (`execution_time`),
+    CONSTRAINT `fk_execution_record_interface` FOREIGN KEY (`interface_id`) REFERENCES `api_interface` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_execution_record_executor` FOREIGN KEY (`executor_id`) REFERENCES `user_info` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='接口执行记录表';
+

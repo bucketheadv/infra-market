@@ -64,6 +64,7 @@ export interface ApiExecuteResponse {
   error?: string
 }
 
+
 // 接口管理API
 export const interfaceApi = {
   // 获取接口列表
@@ -111,6 +112,7 @@ export const interfaceApi = {
     return request.post<ApiExecuteResponse>('/api/interface/execute', data)
   }
 }
+
 
 // 枚举值
 export const HTTP_METHODS = [

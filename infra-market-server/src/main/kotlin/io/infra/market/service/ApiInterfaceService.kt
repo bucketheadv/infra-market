@@ -2,12 +2,17 @@ package io.infra.market.service
 
 import io.infra.market.dto.*
 import io.infra.market.repository.dao.ApiInterfaceDao
+import io.infra.market.repository.dao.ApiInterfaceExecutionRecordDao
+import io.infra.market.repository.dao.UserDao
 import io.infra.market.repository.entity.ApiInterface
+import io.infra.market.repository.entity.ApiInterfaceExecutionRecord
 import io.infra.market.enums.HttpMethodEnum
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import io.infra.market.enums.PostTypeEnum
 import io.infra.market.enums.EnvironmentEnum
+import io.infra.market.util.AuthThreadLocal
+import jakarta.servlet.http.HttpServletRequest
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.client.RestTemplate
@@ -23,6 +28,8 @@ import java.util.Date
 @Service
 class ApiInterfaceService(
     private val apiInterfaceDao: ApiInterfaceDao,
+    private val apiInterfaceExecutionRecordDao: ApiInterfaceExecutionRecordDao,
+    private val userDao: UserDao,
     private val restTemplate: RestTemplate
 ) {
     
@@ -103,8 +110,21 @@ class ApiInterfaceService(
         return convertToDto(newInterface)
     }
 
-    fun execute(request: ApiExecuteRequestDto): ApiExecuteResponseDto {
+    fun execute(request: ApiExecuteRequestDto, httpRequest: HttpServletRequest? = null): ApiExecuteResponseDto {
         val startTime = System.currentTimeMillis()
+        
+        // 获取当前用户信息
+        val executorId = AuthThreadLocal.getCurrentUserId()
+        val executorName = if (executorId != null) {
+            val user = userDao.findByUid(executorId)
+            user?.username ?: "用户${executorId}"
+        } else {
+            "未知用户"
+        }
+        
+        // 获取客户端信息
+        val clientIp = httpRequest?.remoteAddr ?: "未知IP"
+        val userAgent = httpRequest?.getHeader("User-Agent") ?: "未知User-Agent"
         
         try {
             // 从数据库获取接口信息
@@ -185,18 +205,31 @@ class ApiInterfaceService(
             val endTime = System.currentTimeMillis()
             val responseTime = endTime - startTime
 
-            return ApiExecuteResponseDto(
+            val responseDto = ApiExecuteResponseDto(
                 status = response.statusCode.value(),
                 headers = response.headers.toSingleValueMap(),
                 body = response.body,
                 responseTime = responseTime,
                 success = true
             )
+
+            // 记录执行记录
+            saveExecutionRecord(
+                interfaceId = interfaceId,
+                executorId = executorId,
+                executorName = executorName,
+                request = request,
+                response = responseDto,
+                clientIp = clientIp,
+                userAgent = userAgent
+            )
+
+            return responseDto
         } catch (e: Exception) {
             val endTime = System.currentTimeMillis()
             val responseTime = endTime - startTime
 
-            return ApiExecuteResponseDto(
+            val responseDto = ApiExecuteResponseDto(
                 status = 500,
                 headers = emptyMap(),
                 body = null,
@@ -204,6 +237,24 @@ class ApiInterfaceService(
                 success = false,
                 error = e.message
             )
+
+            // 记录执行记录（失败情况）
+            try {
+                saveExecutionRecord(
+                    interfaceId = request.interfaceId,
+                    executorId = executorId,
+                    executorName = executorName,
+                    request = request,
+                    response = responseDto,
+                    clientIp = clientIp,
+                    userAgent = userAgent
+                )
+            } catch (recordException: Exception) {
+                // 记录执行记录失败不影响主流程
+                println("保存执行记录失败: ${recordException.message}")
+            }
+
+            return responseDto
         }
     }
 
@@ -345,6 +396,51 @@ class ApiInterfaceService(
                     throw RuntimeException("$paramTypeName $displayName 为必填项，不能为空")
                 }
             }
+        }
+    }
+
+    /**
+     * 保存接口执行记录
+     * 
+     * @param interfaceId 接口ID
+     * @param executorId 执行人ID
+     * @param executorName 执行人姓名
+     * @param request 执行请求
+     * @param response 执行响应
+     * @param clientIp 客户端IP
+     * @param userAgent 用户代理
+     */
+    private fun saveExecutionRecord(
+        interfaceId: Long?,
+        executorId: Long?,
+        executorName: String,
+        request: ApiExecuteRequestDto,
+        response: ApiExecuteResponseDto,
+        clientIp: String,
+        userAgent: String
+    ) {
+        try {
+            val executionRecord = ApiInterfaceExecutionRecord(
+                interfaceId = interfaceId,
+                executorId = executorId,
+                executorName = executorName,
+                requestParams = objectMapper.writeValueAsString(request.urlParams),
+                requestHeaders = objectMapper.writeValueAsString(request.headers),
+                requestBody = objectMapper.writeValueAsString(request.bodyParams),
+                responseStatus = response.status,
+                responseHeaders = objectMapper.writeValueAsString(response.headers),
+                responseBody = response.body,
+                executionTime = response.responseTime,
+                success = response.success,
+                errorMessage = response.error,
+                clientIp = clientIp,
+                userAgent = userAgent
+            )
+
+            apiInterfaceExecutionRecordDao.save(executionRecord)
+        } catch (e: Exception) {
+            // 记录执行记录失败不影响主流程，只打印日志
+            println("保存接口执行记录失败: ${e.message}")
         }
     }
 }
