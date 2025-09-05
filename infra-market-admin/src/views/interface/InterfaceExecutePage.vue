@@ -45,8 +45,8 @@
               <a-descriptions-item v-if="interfaceData.postType" label="POST类型">
                 <a-tag color="blue" class="post-type-tag">{{ getPostTypeLabel(interfaceData.postType) }}</a-tag>
               </a-descriptions-item>
-              <a-descriptions-item v-if="interfaceData.tag" label="接口标签">
-                <a-tag :color="getTagColor(interfaceData.tag)" class="tag-tag">{{ getTagLabel(interfaceData.tag) }}</a-tag>
+              <a-descriptions-item v-if="interfaceData.environment" label="接口环境">
+                <a-tag :color="getTagColor(interfaceData.environment)" class="tag-tag">{{ getTagLabel(interfaceData.environment) }}</a-tag>
               </a-descriptions-item>
               <a-descriptions-item label="状态">
                 <a-tag :color="interfaceData.status === 1 ? 'green' : 'red'" class="status-tag">
@@ -324,8 +324,8 @@
         <!-- 操作按钮区域 -->
         <div class="form-actions">
           <a-space size="small">
-            <a-tag v-if="interfaceData?.tag" :color="getTagColor(interfaceData.tag)" class="interface-tag">
-              {{ getTagLabel(interfaceData.tag) }}
+            <a-tag v-if="interfaceData?.environment" :color="getTagColor(interfaceData.environment)" class="interface-tag">
+              {{ getTagLabel(interfaceData.environment) }}
             </a-tag>
             <ThemeButton 
               variant="primary" 
@@ -364,9 +364,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, h } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { message } from 'ant-design-vue'
+import { message, Modal } from 'ant-design-vue'
 import { PlayCircleOutlined, CloseOutlined, QuestionCircleOutlined } from '@ant-design/icons-vue'
 import { interfaceApi, POST_TYPES, TAGS, type ApiInterface, type ApiParam, type ApiExecuteRequest, type ApiExecuteResponse } from '@/api/interface'
 import ThemeButton from '@/components/ThemeButton.vue'
@@ -477,6 +477,51 @@ const handleBack = () => {
   router.back()
 }
 
+// 显示生产环境确认弹窗
+const showProductionConfirm = (): Promise<boolean> => {
+  return new Promise((resolve) => {
+    Modal.confirm({
+      title: '⚠️ 生产环境接口执行确认',
+      content: h('div', { style: 'line-height: 1.6;' }, [
+        h('div', { 
+          style: 'background: #fff2f0; border: 1px solid #ffccc7; border-radius: 6px; padding: 12px; margin-bottom: 16px;' 
+        }, [
+          h('p', { 
+            style: 'margin: 0 0 8px 0; color: #ff4d4f; font-weight: 600; font-size: 14px;' 
+          }, '⚠️ 您即将执行生产环境的接口！'),
+          h('p', { 
+            style: 'margin: 0; color: #d4380d; font-size: 13px;' 
+          }, '此操作可能对生产环境造成影响，请谨慎操作。')
+        ]),
+        h('div', { style: 'margin-bottom: 12px;' }, [
+          h('p', { 
+            style: 'margin: 0 0 8px 0; font-weight: 500; color: #262626;' 
+          }, '接口信息：'),
+          h('div', { style: 'background: #fafafa; padding: 8px 12px; border-radius: 4px; font-size: 13px;' }, [
+            h('div', { style: 'margin-bottom: 4px;' }, `接口名称：${interfaceData.value?.name || '未知'}`),
+            h('div', { style: 'margin-bottom: 4px;' }, `请求方法：${interfaceData.value?.method || '未知'}`),
+            h('div', { style: 'word-break: break-all;' }, `请求URL：${interfaceData.value?.url || '未知'}`)
+          ])
+        ]),
+        h('p', { 
+          style: 'margin: 0; color: #ff4d4f; font-weight: 500; text-align: center;' 
+        }, '请确认您了解执行此接口可能对生产环境造成的影响！')
+      ]),
+      okText: '确认执行',
+      cancelText: '取消',
+      okType: 'danger',
+      centered: true,
+      width: 520,
+      onOk() {
+        resolve(true)
+      },
+      onCancel() {
+        resolve(false)
+      }
+    })
+  })
+}
+
 // 执行接口
 const handleExecute = async () => {
   if (!interfaceData.value) return
@@ -485,6 +530,14 @@ const handleExecute = async () => {
   if (interfaceData.value.status !== 1) {
     message.error('接口已禁用，无法执行')
     return
+  }
+  
+  // 检查是否为生产环境接口，如果是则显示确认弹窗
+  if (interfaceData.value.environment === 'PRODUCTION') {
+    const confirmed = await showProductionConfirm()
+    if (!confirmed) {
+      return
+    }
   }
   
   try {
@@ -499,13 +552,33 @@ const handleExecute = async () => {
     }
     
     const response = await interfaceApi.execute(request)
-    executeResult.value = response.data
-    activeTab.value = 'response'
     
-    message.success('接口执行成功')
+    // 检查响应是否成功
+    if (response.data.success === false) {
+      // 接口执行失败，显示错误信息
+      executeResult.value = response.data
+      activeTab.value = 'error'
+      message.error(response.data.error || '接口执行失败')
+    } else {
+      // 接口执行成功
+      executeResult.value = response.data
+      activeTab.value = 'response'
+      message.success('接口执行成功')
+    }
   } catch (error: any) {
     console.error('接口执行失败:', error)
-    message.error(error.response?.data?.message || '接口执行失败')
+    
+    // 处理HTTP错误响应
+    if (error.response?.data?.message) {
+      message.error(error.response.data.message)
+    } else if (error.response?.data?.data) {
+      message.error(error.response.data.data)
+    } else if (error.message) {
+      // 处理响应拦截器转换的错误
+      message.error(error.message)
+    } else {
+      message.error('接口执行失败')
+    }
   } finally {
     executing.value = false
   }

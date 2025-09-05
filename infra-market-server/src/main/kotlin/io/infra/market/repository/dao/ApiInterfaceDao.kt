@@ -32,8 +32,8 @@ class ApiInterfaceDao : ServiceImpl<ApiInterfaceMapper, ApiInterface>() {
             queryWrapper.where(ApiInterface::status.eq(it))
         }
 
-        query.tag?.let {
-            queryWrapper.where(ApiInterface::tag.eq(it.code))
+        query.environment?.let {
+            queryWrapper.where(ApiInterface::environment.eq(it.code))
         }
 
         queryWrapper.orderBy("create_time DESC")

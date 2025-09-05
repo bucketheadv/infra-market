@@ -99,18 +99,25 @@
               </a-input>
             </a-form-item>
 
-            <a-form-item label="接口标签" name="tag">
+            <a-form-item label="接口环境" name="environment">
               <a-select
-                v-model:value="form.tag"
-                placeholder="请选择接口标签"
+                v-model:value="form.environment"
+                placeholder="请选择接口环境"
                 size="middle"
                 class="form-input"
+                allow-clear
               >
+                <template #suffixIcon>
+                  <EnvironmentOutlined />
+                </template>
                 <a-select-option
                   v-for="tag in TAGS"
                   :key="tag.value"
                   :value="tag.value"
                 >
+                  <span style="margin-right: 6px;">
+                    {{ tag.value === 'PRODUCTION' ? '🚨' : '🧪' }}
+                  </span>
                   {{ tag.label }}
                 </a-select-option>
               </a-select>
@@ -329,7 +336,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
-import { PlusOutlined, ApiOutlined, IdcardOutlined, LinkOutlined, SettingOutlined, CheckOutlined, CloseOutlined, DeleteOutlined } from '@ant-design/icons-vue'
+import { PlusOutlined, ApiOutlined, IdcardOutlined, LinkOutlined, SettingOutlined, CheckOutlined, CloseOutlined, DeleteOutlined, EnvironmentOutlined } from '@ant-design/icons-vue'
 import { interfaceApi, HTTP_METHODS, POST_TYPES, TAGS, type ApiInterface, type ApiParam } from '@/api/interface'
 import ThemeButton from '@/components/ThemeButton.vue'
 import ParamForm from './ParamForm.vue'
@@ -350,7 +357,7 @@ const form = reactive({
   url: '',
   description: '',
   postType: '',
-  tag: '',
+  environment: '',
   urlParams: [] as ApiParam[],
   headerParams: [] as ApiParam[],
   bodyParams: [] as ApiParam[]
@@ -385,7 +392,7 @@ const initializeForm = () => {
     url: '',
     description: '',
     postType: '',
-    tag: '',
+    environment: '',
     urlParams: [],
     headerParams: [],
     bodyParams: []
@@ -451,11 +458,23 @@ const handleSave = async () => {
       return
     }
     
+    // 准备提交数据，将空字符串转换为undefined
+    const submitData = {
+      ...form,
+      environment: form.environment && form.environment.trim() !== '' ? form.environment : undefined,
+      postType: form.postType && form.postType.trim() !== '' ? form.postType : undefined,
+      description: form.description && form.description.trim() !== '' ? form.description : undefined
+    }
+    
+    // 调试日志
+    console.log('提交数据:', submitData)
+    console.log('环境字段值:', submitData.environment)
+    
     if (isEdit.value && interfaceData.value?.id) {
-      await interfaceApi.update(interfaceData.value.id, form)
+      await interfaceApi.update(interfaceData.value.id, submitData)
       message.success('接口更新成功')
     } else {
-      await interfaceApi.create(form)
+      await interfaceApi.create(submitData)
       message.success('接口创建成功')
     }
     

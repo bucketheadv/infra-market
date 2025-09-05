@@ -163,12 +163,14 @@ CREATE TABLE IF NOT EXISTS `api_interface` (
     `post_type` VARCHAR(50) NULL COMMENT 'POST类型：application/json、application/x-www-form-urlencoded',
     `params` TEXT NULL COMMENT '参数配置JSON',
     `status` INT NOT NULL DEFAULT 1 COMMENT '状态：1-启用，0-禁用',
+    `environment` VARCHAR(50) NULL COMMENT '接口环境，用于标识接口所属的环境，如测试环境、正式环境',
     `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     PRIMARY KEY (`id`),
     KEY `idx_name` (`name`),
     KEY `idx_method` (`method`),
     KEY `idx_status` (`status`),
+    KEY `idx_environment` (`environment`),
     KEY `idx_create_time` (`create_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='接口管理表';
 

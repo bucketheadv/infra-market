@@ -11,7 +11,7 @@ export interface ApiInterface {
   createTime?: string
   updateTime?: string
   postType?: string
-  tag?: string
+  environment?: string
   urlParams?: ApiParam[]
   headerParams?: ApiParam[]
   bodyParams?: ApiParam[]
@@ -71,7 +71,7 @@ export const interfaceApi = {
     name?: string
     method?: string
     status?: number
-    tag?: string
+    environment?: string
   }) => {
     return request.get<ApiInterface[]>('/api/interface/list', { params })
   },

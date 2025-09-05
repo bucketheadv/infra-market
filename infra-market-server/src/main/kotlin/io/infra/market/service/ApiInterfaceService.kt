@@ -7,7 +7,7 @@ import io.infra.market.enums.HttpMethodEnum
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import io.infra.market.enums.PostTypeEnum
-import io.infra.market.enums.TagEnum
+import io.infra.market.enums.EnvironmentEnum
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.client.RestTemplate
@@ -66,7 +66,7 @@ class ApiInterfaceService(
         apiInterface.updateTime = Date()
         apiInterface.status = existingInterface.status
 
-        apiInterfaceDao.updateById(apiInterface)
+        apiInterfaceDao.updateById(apiInterface, false)
         return convertToDto(apiInterface)
     }
 
@@ -121,6 +121,9 @@ class ApiInterfaceService(
                     responseTime = System.currentTimeMillis() - startTime
                 )
             }
+            
+            // 验证必填参数
+            validateRequiredParams(interfaceInfo, request)
             
             // 从数据库读取接口基本信息
             val url = interfaceInfo.url ?: throw RuntimeException("接口URL不能为空")
@@ -234,7 +237,7 @@ class ApiInterfaceService(
             createTime = entity.createTime,
             updateTime = entity.updateTime,
             postType = entity.postType?.let { PostTypeEnum.fromCode(it) },
-            tag = entity.tag?.let { TagEnum.fromCode(it) },
+            environment = entity.environment?.let { EnvironmentEnum.fromCode(it) },
             urlParams = urlParams,
             headerParams = headerParams,
             bodyParams = bodyParams
@@ -264,7 +267,7 @@ class ApiInterfaceService(
             url = form.url,
             description = form.description,
             postType = form.postType?.code,
-            tag = form.tag?.code,
+            environment = form.environment?.code,
             params = paramsJson
         )
     }
@@ -277,6 +280,70 @@ class ApiInterfaceService(
         if (form.method in listOf(HttpMethodEnum.POST, HttpMethodEnum.PUT, HttpMethodEnum.PATCH)) {
             if (form.postType == null) {
                 throw RuntimeException("POST类型为必填项")
+            }
+        }
+    }
+    
+    /**
+     * 验证必填参数
+     */
+    private fun validateRequiredParams(interfaceInfo: ApiInterface, request: ApiExecuteRequestDto) {
+        // 解析接口参数配置
+        val allParams = try {
+            if (interfaceInfo.params.isNullOrBlank()) {
+                emptyList()
+            } else {
+                objectMapper.readValue(interfaceInfo.params, Array<ApiParamDto>::class.java).toList()
+            }
+        } catch (e: Exception) {
+            emptyList()
+        }
+        
+        // 分离不同类型的参数
+        val urlParams = allParams.filter { it.paramType?.code == "URL_PARAM" }
+        val headerParams = allParams.filter { it.paramType?.code == "HEADER_PARAM" }
+        val bodyParams = allParams.filter { it.paramType?.code == "BODY_PARAM" }
+        
+        // 验证URL参数
+        validateParams(urlParams, request.urlParams, "URL参数")
+        
+        // 验证Header参数
+        validateParams(headerParams, request.headers, "Header参数")
+        
+        // 验证Body参数
+        validateParams(bodyParams, request.bodyParams, "Body参数")
+    }
+    
+    /**
+     * 验证参数列表
+     */
+    private fun validateParams(
+        paramConfigs: List<ApiParamDto>, 
+        requestParams: Map<String, Any>?, 
+        paramTypeName: String
+    ) {
+        paramConfigs.forEach { param ->
+            // 只验证必填参数
+            if (param.required == true) {
+                val paramName = param.name ?: return@forEach
+                val paramValue = requestParams?.get(paramName)
+                
+                // 检查参数值是否为空或空字符串
+                val isEmpty = when (paramValue) {
+                    null -> true
+                    is String -> paramValue.trim().isEmpty()
+                    is Collection<*> -> paramValue.isEmpty()
+                    else -> false
+                }
+                
+                if (isEmpty) {
+                    val displayName = if (param.chineseName.isNullOrBlank()) {
+                        paramName
+                    } else {
+                        "${param.chineseName}（${paramName}）"
+                    }
+                    throw RuntimeException("$paramTypeName $displayName 为必填项，不能为空")
+                }
             }
         }
     }

@@ -50,17 +50,23 @@
             </a-form-item>
           </a-col>
           <a-col :xs="24" :sm="12" :md="8" :lg="6">
-            <a-form-item label="标签">
+            <a-form-item label="环境">
               <a-select
-                v-model:value="searchForm.tag"
-                placeholder="请选择标签"
+                v-model:value="searchForm.environment"
+                placeholder="请选择环境"
                 allow-clear
               >
+                <template #suffixIcon>
+                  <EnvironmentOutlined />
+                </template>
                 <a-select-option
                   v-for="tag in TAGS"
                   :key="tag.value"
                   :value="tag.value"
                 >
+                  <span style="margin-right: 6px;">
+                    {{ tag.value === 'PRODUCTION' ? '🚨' : '🧪' }}
+                  </span>
                   {{ tag.label }}
                 </a-select-option>
               </a-select>
@@ -97,6 +103,23 @@
           <template v-if="column.key === 'method'">
             <a-tag :color="getMethodColor(record.method)">
               {{ record.method }}
+            </a-tag>
+          </template>
+          <template v-else-if="column.key === 'environment'">
+            <a-tag 
+              :color="record.environment === 'PRODUCTION' ? 'red' : 'blue'"
+              :style="{
+                fontWeight: '600',
+                fontSize: '12px',
+                padding: '2px 8px',
+                borderRadius: '4px',
+                border: record.environment === 'PRODUCTION' ? '1px solid #ff4d4f' : '1px solid #1890ff'
+              }"
+            >
+              <span style="margin-right: 4px;">
+                {{ record.environment === 'PRODUCTION' ? '🚨' : '🧪' }}
+              </span>
+              {{ getTagLabel(record.environment) }}
             </a-tag>
           </template>
           <template v-else-if="column.key === 'status'">
@@ -180,7 +203,7 @@
 import { ref, reactive, onMounted, h } from 'vue'
 import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
-import { PlusOutlined, SearchOutlined, ReloadOutlined, EditOutlined, PlayCircleOutlined, DeleteOutlined, CheckCircleOutlined, StopOutlined, CopyOutlined } from '@ant-design/icons-vue'
+import { PlusOutlined, SearchOutlined, ReloadOutlined, EditOutlined, PlayCircleOutlined, DeleteOutlined, CheckCircleOutlined, StopOutlined, CopyOutlined, EnvironmentOutlined } from '@ant-design/icons-vue'
 import { interfaceApi, HTTP_METHODS, TAGS, type ApiInterface } from '@/api/interface'
 import ThemeButton from '@/components/ThemeButton.vue'
 
@@ -195,7 +218,7 @@ const searchForm = reactive({
   name: '',
   method: undefined,
   status: undefined,
-  tag: undefined
+  environment: undefined
 })
 
 // 分页配置
@@ -245,16 +268,27 @@ const columns = [
     ellipsis: true
   },
   {
-    title: '标签',
-    dataIndex: 'tag',
-    key: 'tag',
+    title: '环境',
+    dataIndex: 'environment',
+    key: 'environment',
     width: 100,
     customRender: ({ record }: { record: ApiInterface }) => {
-      if (!record.tag) return '-'
-      const tagInfo = TAGS.find(t => t.value === record.tag)
+      if (!record.environment) return h('span', { style: 'color: #999;' }, '未设置')
+      const tagInfo = TAGS.find(t => t.value === record.environment)
+      const isProduction = record.environment === 'PRODUCTION'
       return h('a-tag', {
-        color: record.tag === 'TEST' ? 'blue' : 'green'
-      }, tagInfo?.label || record.tag)
+        color: isProduction ? 'red' : 'blue',
+        style: {
+          fontWeight: '600',
+          fontSize: '12px',
+          padding: '2px 8px',
+          borderRadius: '4px',
+          border: isProduction ? '1px solid #ff4d4f' : '1px solid #1890ff'
+        }
+      }, [
+        h('span', { style: 'margin-right: 4px;' }, isProduction ? '🚨' : '🧪'),
+        tagInfo?.label || record.environment
+      ])
     }
   },
   {
@@ -290,7 +324,7 @@ const loadData = async () => {
       name: searchForm.name || undefined,
       method: searchForm.method || undefined,
       status: searchForm.status,
-      tag: searchForm.tag || undefined
+      environment: searchForm.environment || undefined
     })
     dataSource.value = response.data || []
     pagination.total = response.data?.length || 0
@@ -310,7 +344,7 @@ const handleReset = () => {
   searchForm.name = ''
   searchForm.method = undefined
   searchForm.status = undefined
-  searchForm.tag = undefined
+  searchForm.environment = undefined
   handleSearch()
 }
 
@@ -379,13 +413,24 @@ const getMethodColor = (method: string) => {
 }
 
 // 获取表格行样式类名
-const getRowClassName = (_record: ApiInterface, index: number) => {
-  return index % 2 === 0 ? 'table-row-even' : 'table-row-odd'
+const getRowClassName = (record: ApiInterface, index: number) => {
+  let className = index % 2 === 0 ? 'table-row-even' : 'table-row-odd'
+  if (record.environment === 'PRODUCTION') {
+    className += ' production-row'
+  }
+  return className
 }
 
 const formatDateTime = (dateTime: string) => {
   if (!dateTime) return ''
   return new Date(dateTime).toLocaleString('zh-CN')
+}
+
+// 获取标签显示名称
+const getTagLabel = (tag: string) => {
+  if (!tag) return '未设置'
+  const tagInfo = TAGS.find(t => t.value === tag)
+  return tagInfo?.label || tag
 }
 
 // 生命周期
@@ -468,6 +513,45 @@ onMounted(() => {
 
 .interface-table :deep(.ant-table-tbody > tr > td .action-buttons) {
   text-align: center;
+}
+
+/* 生产环境行特殊样式 */
+.interface-table :deep(.ant-table-tbody > tr.production-row) {
+  background: linear-gradient(90deg, #fff2f0 0%, #ffffff 100%);
+  border-left: 3px solid #ff4d4f;
+}
+
+.interface-table :deep(.ant-table-tbody > tr.production-row:hover) {
+  background: linear-gradient(90deg, #ffebe6 0%, #f6f8fa 100%) !important;
+}
+
+.interface-table :deep(.ant-table-tbody > tr.production-row > td) {
+  border-bottom: 1px solid #ffccc7;
+}
+
+/* 环境标签特殊样式 */
+.interface-table :deep(.ant-table-tbody > tr .ant-tag) {
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 12px;
+  padding: 2px 8px;
+  border-width: 1px;
+  border-style: solid;
+}
+
+/* 测试环境标签样式 */
+.interface-table :deep(.ant-table-tbody > tr .ant-tag[color="blue"]) {
+  background: #e6f7ff;
+  border-color: #91d5ff;
+  color: #0050b3;
+}
+
+/* 生产环境标签样式 */
+.interface-table :deep(.ant-table-tbody > tr .ant-tag[color="red"]) {
+  background: #fff2f0;
+  border-color: #ffccc7;
+  color: #cf1322;
+  box-shadow: 0 1px 3px rgba(255, 77, 79, 0.2);
 }
 
 .interface-table :deep(.ant-table-tbody > tr:hover > td) {
