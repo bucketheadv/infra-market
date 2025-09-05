@@ -321,6 +321,95 @@
         </a-col>
         </a-row>
 
+        <!-- 执行记录查询板块 -->
+        <div class="form-section">
+          <div class="section-header">
+            <div class="section-icon">
+              <span>📋</span>
+            </div>
+            <div class="section-title">执行记录</div>
+            <div class="section-actions">
+              <ThemeButton 
+                variant="secondary" 
+                size="small"
+                :icon="ReloadOutlined"
+                @click="loadExecutionRecords"
+                :loading="recordsLoading"
+              >
+                刷新
+              </ThemeButton>
+            </div>
+          </div>
+          
+          <div class="execution-records-container">
+            <div v-if="recordsLoading" class="loading-container">
+              <a-spin size="large" />
+            </div>
+            <div v-else-if="executionRecords.length === 0" class="no-records">
+              <a-empty description="暂无执行记录" />
+            </div>
+            <div v-else>
+              <a-table
+                :columns="recordColumns"
+                :data-source="executionRecords"
+                :pagination="recordPagination"
+                :loading="recordsLoading"
+                size="small"
+                :scroll="{ x: 800 }"
+                @change="handleRecordTableChange"
+                class="execution-records-table"
+                :locale="{
+                  emptyText: '暂无数据',
+                  filterConfirm: '确定',
+                  filterReset: '重置',
+                  filterEmptyText: '无筛选项',
+                  selectAll: '全选',
+                  selectInvert: '反选',
+                  sortTitle: '排序',
+                  expand: '展开行',
+                  collapse: '收起行'
+                }"
+              >
+                <template #bodyCell="{ column, record }">
+                  <template v-if="column.key === 'success'">
+                    <a-tag :color="record.success ? 'green' : 'red'">
+                      {{ record.success ? '成功' : '失败' }}
+                    </a-tag>
+                  </template>
+                  <template v-else-if="column.key === 'executionTime'">
+                    <span v-if="record.executionTime">{{ record.executionTime }}ms</span>
+                    <span v-else class="text-muted">-</span>
+                  </template>
+                  <template v-else-if="column.key === 'responseStatus'">
+                    <a-tag v-if="record.responseStatus" :color="getStatusColor(record.responseStatus)">
+                      {{ record.responseStatus }}
+                    </a-tag>
+                    <span v-else class="text-muted">-</span>
+                  </template>
+                  <template v-else-if="column.key === 'createTime'">
+                    {{ formatDateTime(record.createTime) }}
+                  </template>
+                  <template v-else-if="column.key === 'action'">
+                    <a-space size="small">
+                      <ThemeButton 
+                        variant="secondary"
+                        size="small"
+                        @click="viewRecordDetail(record)"
+                        class="detail-btn"
+                      >
+                        <template #icon>
+                          <EyeOutlined />
+                        </template>
+                        查看详情
+                      </ThemeButton>
+                    </a-space>
+                  </template>
+                </template>
+              </a-table>
+            </div>
+          </div>
+        </div>
+
         <!-- 操作按钮区域 -->
         <div class="form-actions">
           <a-space size="small">
@@ -360,6 +449,137 @@
       @confirm="handleCodeConfirm"
       @cancel="handleCodeCancel"
     />
+
+    <!-- 执行记录详情弹窗 -->
+    <a-modal
+      v-model:open="recordDetailVisible"
+      title="执行记录详情"
+      width="80%"
+      :footer="null"
+      class="record-detail-modal"
+    >
+      <div v-if="selectedRecord" class="record-detail-content">
+        <a-descriptions :column="2" :bordered="true" size="small">
+          <a-descriptions-item label="执行ID">
+            {{ selectedRecord.id }}
+          </a-descriptions-item>
+          <a-descriptions-item label="执行人">
+            {{ selectedRecord.executorName }}
+          </a-descriptions-item>
+          <a-descriptions-item label="执行状态">
+            <a-tag :color="selectedRecord.success ? 'green' : 'red'">
+              {{ selectedRecord.success ? '成功' : '失败' }}
+            </a-tag>
+          </a-descriptions-item>
+          <a-descriptions-item label="响应状态码">
+            <a-tag v-if="selectedRecord.responseStatus" :color="getStatusColor(selectedRecord.responseStatus)">
+              {{ selectedRecord.responseStatus }}
+            </a-tag>
+            <span v-else class="text-muted">-</span>
+          </a-descriptions-item>
+          <a-descriptions-item label="执行时间">
+            <span v-if="selectedRecord.executionTime">{{ selectedRecord.executionTime }}ms</span>
+            <span v-else class="text-muted">-</span>
+          </a-descriptions-item>
+          <a-descriptions-item label="客户端IP">
+            {{ selectedRecord.clientIp || '-' }}
+          </a-descriptions-item>
+          <a-descriptions-item label="执行时间" :span="2">
+            {{ formatDateTime(selectedRecord.createTime) }}
+          </a-descriptions-item>
+          <a-descriptions-item v-if="selectedRecord.errorMessage" label="错误信息" :span="2">
+            <div class="error-message">{{ selectedRecord.errorMessage }}</div>
+          </a-descriptions-item>
+        </a-descriptions>
+
+        <a-tabs v-model:activeKey="detailActiveTab" class="detail-tabs">
+          <a-tab-pane key="request" tab="请求参数">
+            <div class="detail-content">
+              <div v-if="selectedRecord.requestParams" class="param-section">
+                <h4>URL参数</h4>
+                <CodeEditor
+                  :model-value="formatJson(selectedRecord.requestParams)"
+                  :readonly="true"
+                  :height="200"
+                  language="json"
+                  :options="{
+                    fontSize: 12,
+                    fontFamily: 'Monaco, Menlo, Ubuntu Mono, monospace',
+                    lineHeight: 18
+                  }"
+                />
+              </div>
+              <div v-if="selectedRecord.requestHeaders" class="param-section">
+                <h4>请求头</h4>
+                <CodeEditor
+                  :model-value="formatJson(selectedRecord.requestHeaders)"
+                  :readonly="true"
+                  :height="200"
+                  language="json"
+                  :options="{
+                    fontSize: 12,
+                    fontFamily: 'Monaco, Menlo, Ubuntu Mono, monospace',
+                    lineHeight: 18
+                  }"
+                />
+              </div>
+              <div v-if="selectedRecord.requestBody" class="param-section">
+                <h4>请求体</h4>
+                <CodeEditor
+                  :model-value="formatJson(selectedRecord.requestBody)"
+                  :readonly="true"
+                  :height="200"
+                  language="json"
+                  :options="{
+                    fontSize: 12,
+                    fontFamily: 'Monaco, Menlo, Ubuntu Mono, monospace',
+                    lineHeight: 18
+                  }"
+                />
+              </div>
+              <div v-if="!selectedRecord.requestParams && !selectedRecord.requestHeaders && !selectedRecord.requestBody" class="no-content">
+                <a-empty description="无请求参数" />
+              </div>
+            </div>
+          </a-tab-pane>
+          <a-tab-pane key="response" tab="响应内容">
+            <div class="detail-content">
+              <div v-if="selectedRecord.responseHeaders" class="param-section">
+                <h4>响应头</h4>
+                <CodeEditor
+                  :model-value="formatJson(selectedRecord.responseHeaders)"
+                  :readonly="true"
+                  :height="200"
+                  language="json"
+                  :options="{
+                    fontSize: 12,
+                    fontFamily: 'Monaco, Menlo, Ubuntu Mono, monospace',
+                    lineHeight: 18
+                  }"
+                />
+              </div>
+              <div v-if="selectedRecord.responseBody" class="param-section">
+                <h4>响应体</h4>
+                <CodeEditor
+                  :model-value="formatJson(selectedRecord.responseBody)"
+                  :readonly="true"
+                  :height="300"
+                  :language="detectResponseLanguage(selectedRecord.responseBody)"
+                  :options="{
+                    fontSize: 12,
+                    fontFamily: 'Monaco, Menlo, Ubuntu Mono, monospace',
+                    lineHeight: 18
+                  }"
+                />
+              </div>
+              <div v-if="!selectedRecord.responseHeaders && !selectedRecord.responseBody" class="no-content">
+                <a-empty description="无响应内容" />
+              </div>
+            </div>
+          </a-tab-pane>
+        </a-tabs>
+      </div>
+    </a-modal>
   </div>
 </template>
 
@@ -367,8 +587,8 @@
 import { ref, reactive, computed, onMounted, h } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { message, Modal } from 'ant-design-vue'
-import { PlayCircleOutlined, CloseOutlined, QuestionCircleOutlined } from '@ant-design/icons-vue'
-import { interfaceApi, POST_TYPES, TAGS, type ApiInterface, type ApiParam, type ApiExecuteRequest, type ApiExecuteResponse } from '@/api/interface'
+import { PlayCircleOutlined, CloseOutlined, QuestionCircleOutlined, ReloadOutlined, EyeOutlined } from '@ant-design/icons-vue'
+import { interfaceApi, executionRecordApi, POST_TYPES, TAGS, type ApiInterface, type ApiParam, type ApiExecuteRequest, type ApiExecuteResponse, type ApiInterfaceExecutionRecord, type ApiInterfaceExecutionRecordQuery } from '@/api/interface'
 import ThemeButton from '@/components/ThemeButton.vue'
 import CodeEditor from '@/components/CodeEditor.vue'
 import CodeEditorModal from '@/components/CodeEditorModal.vue'
@@ -384,6 +604,13 @@ const interfaceData = ref<ApiInterface | null>(null)
 const executeResult = ref<ApiExecuteResponse | null>(null)
 const activeTab = ref('response')
 
+// 执行记录相关
+const recordsLoading = ref(false)
+const executionRecords = ref<ApiInterfaceExecutionRecord[]>([])
+const recordDetailVisible = ref(false)
+const selectedRecord = ref<ApiInterfaceExecutionRecord | null>(null)
+const detailActiveTab = ref('request')
+
 // 代码编辑器弹窗相关
 const codeEditorVisible = ref(false)
 const tempCodeValue = ref('')
@@ -393,6 +620,80 @@ const executeForm = reactive({
   params: {} as Record<string, any>,
   headers: {} as Record<string, any>,
   bodyParams: {} as Record<string, any>
+})
+
+// 执行记录表格配置
+const recordColumns = [
+  {
+    title: 'ID',
+    dataIndex: 'id',
+    key: 'id',
+    width: 80,
+    sorter: true
+  },
+  {
+    title: '执行人',
+    dataIndex: 'executorName',
+    key: 'executorName',
+    width: 120
+  },
+  {
+    title: '状态',
+    dataIndex: 'success',
+    key: 'success',
+    width: 80
+  },
+  {
+    title: '响应状态',
+    dataIndex: 'responseStatus',
+    key: 'responseStatus',
+    width: 100
+  },
+  {
+    title: '执行耗时',
+    dataIndex: 'executionTime',
+    key: 'executionTime',
+    width: 100,
+    sorter: true
+  },
+  {
+    title: '执行时间',
+    dataIndex: 'createTime',
+    key: 'createTime',
+    width: 160,
+    sorter: true
+  },
+  {
+    title: '操作',
+    key: 'action',
+    width: 100,
+    fixed: 'right'
+  }
+]
+
+// 分页配置
+const recordPagination = reactive({
+  current: 1,
+  pageSize: 10,
+  total: 0,
+  showSizeChanger: true,
+  showQuickJumper: true,
+  showTotal: (total: number, range: [number, number]) => `第 ${range[0]}-${range[1]} 条，共 ${total} 条`,
+  pageSizeOptions: ['10', '20', '50', '100'],
+  showSizeChange: true,
+  size: 'small',
+  locale: {
+    items_per_page: '条/页',
+    jump_to: '跳至',
+    jump_to_confirm: '确定',
+    page: '页',
+    prev_page: '上一页',
+    next_page: '下一页',
+    prev_5: '向前 5 页',
+    next_5: '向后 5 页',
+    prev_3: '向前 3 页',
+    next_3: '向后 3 页',
+  }
 })
 
 // 获取接口ID
@@ -407,6 +708,7 @@ const bodyParams = computed(() => interfaceData.value?.bodyParams || [])
 onMounted(async () => {
   if (interfaceId) {
     await loadInterfaceData()
+    await loadExecutionRecords()
   } else {
     message.error('接口ID不存在')
     router.back()
@@ -870,6 +1172,67 @@ const formatDateTime = (dateTime: string | Date | undefined): string => {
     second: '2-digit'
   })
 }
+
+// 执行记录相关方法
+const loadExecutionRecords = async () => {
+  if (!interfaceId) return
+  
+  try {
+    recordsLoading.value = true
+    const query: ApiInterfaceExecutionRecordQuery = {
+      interfaceId: Number(interfaceId),
+      page: recordPagination.current,
+      size: recordPagination.pageSize
+    }
+    
+    const response = await executionRecordApi.getList(query)
+    executionRecords.value = response.data || []
+    
+    // 注意：这里需要根据实际API返回的分页信息更新total
+    // 由于当前API没有返回总数，我们暂时使用当前页数据长度
+    recordPagination.total = executionRecords.value.length
+  } catch (error) {
+    console.error('加载执行记录失败:', error)
+    message.error('加载执行记录失败')
+  } finally {
+    recordsLoading.value = false
+  }
+}
+
+// 表格变化处理
+const handleRecordTableChange = (pagination: any) => {
+  recordPagination.current = pagination.current
+  recordPagination.pageSize = pagination.pageSize
+  loadExecutionRecords()
+}
+
+// 查看执行记录详情
+const viewRecordDetail = (record: ApiInterfaceExecutionRecord) => {
+  selectedRecord.value = record
+  recordDetailVisible.value = true
+  detailActiveTab.value = 'request'
+}
+
+// 格式化JSON
+const formatJson = (jsonString: string | undefined): string => {
+  if (!jsonString) return ''
+  
+  try {
+    const parsed = JSON.parse(jsonString)
+    return JSON.stringify(parsed, null, 2)
+  } catch {
+    return jsonString
+  }
+}
+
+// 获取状态码颜色
+const getStatusColor = (status: number): string => {
+  if (status >= 200 && status < 300) return 'green'
+  if (status >= 300 && status < 400) return 'blue'
+  if (status >= 400 && status < 500) return 'orange'
+  if (status >= 500) return 'red'
+  return 'default'
+}
 </script>
 
 <style scoped>
@@ -1227,5 +1590,104 @@ const formatDateTime = (dateTime: string | Date | undefined): string => {
 :deep(.ant-descriptions-item) {
   margin-bottom: 8px;
   padding: 4px 0;
+}
+
+/* 执行记录相关样式 */
+.section-actions {
+  margin-left: auto;
+}
+
+.execution-records-container {
+  margin-top: 16px;
+}
+
+.execution-records-table {
+  margin-top: 16px;
+}
+
+.execution-records-table :deep(.ant-table-thead > tr > th) {
+  background: #fafafa;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.execution-records-table :deep(.ant-table-tbody > tr > td) {
+  font-size: 12px;
+  padding: 8px 12px;
+}
+
+.text-muted {
+  color: #999;
+}
+
+.no-records {
+  text-align: center;
+  padding: 40px 0;
+}
+
+/* 执行记录详情弹窗样式 */
+.record-detail-modal :deep(.ant-modal-header) {
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.record-detail-content {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.detail-tabs {
+  margin-top: 16px;
+}
+
+.detail-content {
+  padding: 16px 0;
+}
+
+.param-section {
+  margin-bottom: 16px;
+}
+
+.param-section h4 {
+  margin-bottom: 8px;
+  color: #1890ff;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.no-content {
+  text-align: center;
+  padding: 40px 0;
+}
+
+.error-message {
+  background: #fff2f0;
+  border: 1px solid #ffccc7;
+  border-radius: 6px;
+  padding: 12px;
+  color: #ff4d4f;
+  font-size: 13px;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+/* 查看详情按钮样式 */
+.detail-btn {
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  font-size: 12px;
+  padding: 4px 8px;
+  height: auto;
+  min-width: 80px;
+}
+
+.detail-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.detail-btn :deep(.anticon) {
+  font-size: 12px;
+  margin-right: 4px;
 }
 </style>

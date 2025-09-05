@@ -98,6 +98,17 @@
         :row-class-name="getRowClassName"
         :scroll="{ x: 1000 }"
         @change="handleTableChange"
+        :locale="{
+          emptyText: '暂无数据',
+          filterConfirm: '确定',
+          filterReset: '重置',
+          filterEmptyText: '无筛选项',
+          selectAll: '全选',
+          selectInvert: '反选',
+          sortTitle: '排序',
+          expand: '展开行',
+          collapse: '收起行'
+        }"
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'method'">
@@ -228,7 +239,22 @@ const pagination = reactive({
   total: 0,
   showSizeChanger: true,
   showQuickJumper: true,
-  showTotal: (total: number) => `共 ${total} 条记录`
+  showTotal: (total: number, range: [number, number]) => `第 ${range[0]}-${range[1]} 条，共 ${total} 条`,
+  pageSizeOptions: ['10', '20', '50', '100'],
+  showSizeChange: true,
+  size: 'small',
+  locale: {
+    items_per_page: '条/页',
+    jump_to: '跳至',
+    jump_to_confirm: '确定',
+    page: '页',
+    prev_page: '上一页',
+    next_page: '下一页',
+    prev_5: '向前 5 页',
+    next_5: '向后 5 页',
+    prev_3: '向前 3 页',
+    next_3: '向后 3 页',
+  }
 })
 
 // 表格列配置

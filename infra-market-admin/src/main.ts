@@ -2,6 +2,7 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import Antd from 'ant-design-vue'
 import 'ant-design-vue/dist/reset.css'
+import zhCN from 'ant-design-vue/es/locale/zh_CN'
 import App from './App.vue'
 import router from './router'
 import './styles/index.css'
@@ -13,6 +14,11 @@ const pinia = createPinia()
 app.use(pinia)
 app.use(router)
 app.use(Antd)
+
+// 配置Ant Design为中文
+app.config.globalProperties.$antd = {
+  locale: zhCN
+}
 
 // 初始化主题
 const piniaInstance = pinia

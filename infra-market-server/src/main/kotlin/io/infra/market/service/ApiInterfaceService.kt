@@ -8,7 +8,6 @@ import io.infra.market.repository.entity.ApiInterface
 import io.infra.market.repository.entity.ApiInterfaceExecutionRecord
 import io.infra.market.enums.HttpMethodEnum
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.KotlinModule
 import io.infra.market.enums.PostTypeEnum
 import io.infra.market.enums.EnvironmentEnum
 import io.infra.market.util.AuthThreadLocal
@@ -30,10 +29,9 @@ class ApiInterfaceService(
     private val apiInterfaceDao: ApiInterfaceDao,
     private val apiInterfaceExecutionRecordDao: ApiInterfaceExecutionRecordDao,
     private val userDao: UserDao,
-    private val restTemplate: RestTemplate
+    private val restTemplate: RestTemplate,
+    private val objectMapper: ObjectMapper
 ) {
-    
-    private val objectMapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
 
     fun findAll(query: ApiInterfaceQueryDto): List<ApiInterfaceDto> {
         val interfaces = apiInterfaceDao.findByCondition(query)

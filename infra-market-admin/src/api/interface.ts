@@ -166,3 +166,73 @@ export const TAGS = [
   { value: 'TEST', label: '测试环境' },
   { value: 'PRODUCTION', label: '正式环境' }
 ]
+
+// 执行记录相关类型定义
+export interface ApiInterfaceExecutionRecord {
+  id: number
+  interfaceId: number
+  executorId: number
+  executorName: string
+  requestParams?: string
+  requestHeaders?: string
+  requestBody?: string
+  responseStatus?: number
+  responseHeaders?: string
+  responseBody?: string
+  executionTime?: number
+  success: boolean
+  errorMessage?: string
+  clientIp?: string
+  userAgent?: string
+  createTime: string
+  updateTime: string
+}
+
+export interface ApiInterfaceExecutionRecordQuery {
+  interfaceId?: number
+  executorId?: number
+  success?: boolean
+  minExecutionTime?: number
+  maxExecutionTime?: number
+  startTime?: number
+  endTime?: number
+  page?: number
+  size?: number
+}
+
+export interface ApiInterfaceExecutionRecordStats {
+  totalExecutions: number
+  successCount: number
+  failureCount: number
+  successRate: number
+  averageExecutionTime: number
+  minExecutionTime: number
+  maxExecutionTime: number
+}
+
+// 执行记录API
+export const executionRecordApi = {
+  // 分页查询执行记录
+  getList: (query: ApiInterfaceExecutionRecordQuery) => 
+    request.post<ApiInterfaceExecutionRecord[]>('/api/interface/execution/record/list', query),
+  
+  // 根据ID查询执行记录详情
+  getById: (id: number) => 
+    request.get<ApiInterfaceExecutionRecord>(`/api/interface/execution/record/${id}`),
+  
+  // 根据接口ID查询执行记录
+  getByInterfaceId: (interfaceId: number, limit: number = 10) => 
+    request.get<ApiInterfaceExecutionRecord[]>(`/api/interface/execution/record/interface/${interfaceId}?limit=${limit}`),
+  
+  // 根据执行人ID查询执行记录
+  getByExecutorId: (executorId: number, limit: number = 10) => 
+    request.get<ApiInterfaceExecutionRecord[]>(`/api/interface/execution/record/executor/${executorId}?limit=${limit}`),
+  
+  // 获取执行统计信息
+  getExecutionStats: (interfaceId: number) => 
+    request.get<ApiInterfaceExecutionRecordStats>(`/api/interface/execution/record/stats/${interfaceId}`),
+  
+  // 获取执行记录数量统计
+  getExecutionCount: (startTime: number, endTime: number) => 
+    request.get<number>(`/api/interface/execution/record/count?startTime=${startTime}&endTime=${endTime}`)
+}
