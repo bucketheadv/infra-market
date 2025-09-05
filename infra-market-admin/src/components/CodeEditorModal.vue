@@ -16,17 +16,17 @@
             style="width: 140px"
             @change="handleLanguageChange"
           >
+            <a-select-option value="text">Text</a-select-option>
             <a-select-option value="json">JSON</a-select-option>
-            <a-select-option value="java">Java</a-select-option>
-            <a-select-option value="javascript">JavaScript</a-select-option>
-            <a-select-option value="typescript">TypeScript</a-select-option>
-            <a-select-option value="kotlin">Kotlin</a-select-option>
+            <a-select-option value="xml">XML</a-select-option>
             <a-select-option value="html">HTML</a-select-option>
             <a-select-option value="css">CSS</a-select-option>
-            <a-select-option value="xml">XML</a-select-option>
+            <a-select-option value="javascript">JavaScript</a-select-option>
+            <a-select-option value="typescript">TypeScript</a-select-option>
+            <a-select-option value="java">Java</a-select-option>
+            <a-select-option value="kotlin">Kotlin</a-select-option>
             <a-select-option value="sql">SQL</a-select-option>
             <a-select-option value="yaml">YAML</a-select-option>
-            <a-select-option value="text">Text</a-select-option>
           </a-select>
           
           <a-button-group style="margin-left: 12px">
@@ -122,6 +122,7 @@ const emit = defineEmits<{
   'update:value': [value: string]
   'confirm': [value: string]
   'cancel': []
+  'language-change': [language: string]
 }>()
 
 // 响应式数据
@@ -140,7 +141,7 @@ const characterCount = computed(() => {
 })
 
 const canFormat = computed(() => {
-  return ['json', 'java', 'javascript', 'typescript', 'kotlin', 'html', 'css'].includes(selectedLanguage.value)
+  return ['json', 'java', 'javascript', 'typescript', 'kotlin', 'html', 'css', 'xml', 'yaml'].includes(selectedLanguage.value)
 })
 
 // 代码类型检测函数
@@ -223,9 +224,13 @@ watch(() => props.visible, (newVal) => {
   visible.value = newVal
   if (newVal) {
     editorValue.value = props.value
-    // 自动检测代码类型
-    const detectedLanguage = detectCodeType(props.value)
-    selectedLanguage.value = detectedLanguage
+    // 优先使用传入的语言，如果没有则自动检测代码类型
+    if (props.language) {
+      selectedLanguage.value = props.language
+    } else {
+      const detectedLanguage = detectCodeType(props.value)
+      selectedLanguage.value = detectedLanguage
+    }
   }
 })
 
@@ -258,7 +263,8 @@ const getLanguageLabel = (lang: string): string => {
 }
 
 const handleLanguageChange = () => {
-  // 语言改变时，可以在这里添加额外的逻辑
+  // 语言改变时，触发语言变化事件
+  emit('language-change', selectedLanguage.value)
 }
 
 const formatCode = () => {
@@ -285,6 +291,29 @@ const formatCode = () => {
       case 'css':
         // 这里可以集成 HTML/CSS 格式化工具
         formatted = editorValue.value
+        break
+      case 'xml':
+        // 简单的XML格式化
+        formatted = editorValue.value
+          .replace(/></g, '>\n<')
+          .split('\n')
+          .map(line => line.trim())
+          .join('\n')
+        break
+      case 'yaml':
+        // 简单的YAML格式化
+        formatted = editorValue.value
+          .split('\n')
+          .map(line => line.trim())
+          .join('\n')
+        break
+      case 'java':
+      case 'kotlin':
+        // 简单的代码格式化
+        formatted = editorValue.value
+          .split('\n')
+          .map(line => line.trim())
+          .join('\n')
         break
     }
     

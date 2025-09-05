@@ -238,6 +238,7 @@
       :placeholder="getDefaultValuePlaceholder()"
       @confirm="handleCodeConfirm"
       @cancel="handleCodeCancel"
+      @language-change="handleCodeLanguageChange"
     />
   </div>
 </template>
@@ -245,7 +246,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { DeleteOutlined } from '@ant-design/icons-vue'
-import { INPUT_TYPES, DATA_TYPES, type ApiParam } from '@/api/interface'
+import { INPUT_TYPES, DATA_TYPES, CODE_EDITOR_LANGUAGES, type ApiParam } from '@/api/interface'
 import ThemeButton from '@/components/ThemeButton.vue'
 import CodeEditorModal from '@/components/CodeEditorModal.vue'
 
@@ -288,7 +289,7 @@ const handleInputTypeChange = () => {
   } else if (inputType === 'TEXTAREA') {
     newDataType = 'STRING'
   } else if (inputType === 'CODE') {
-    newDataType = 'JSON' // 代码编辑器默认为JSON类型
+    newDataType = 'JSON' // 代码编辑器默认为JSON语言类型
   } else if (inputType === 'PASSWORD') {
     newDataType = 'STRING'
   } else if (inputType === 'EMAIL') {
@@ -337,7 +338,8 @@ const getAvailableDataTypes = () => {
     case 'TEXTAREA':
       return DATA_TYPES.filter(type => ['STRING', 'JSON'].includes(type.value))
     case 'CODE':
-      return DATA_TYPES.filter(type => ['STRING', 'JSON'].includes(type.value))
+      // 代码编辑器显示编程语言类型
+      return CODE_EDITOR_LANGUAGES
     case 'PASSWORD':
     case 'EMAIL':
     case 'URL':
@@ -574,34 +576,104 @@ const getSelectOptions = () => {
 }
 
 // 代码编辑器相关方法
-const getCodePreview = (value: string | undefined): string => {
-  if (!value || value.trim() === '') {
+const getCodePreview = (value: string | any[] | undefined): string => {
+  if (!value) {
+    return ''
+  }
+  
+  // 如果是数组，转换为JSON字符串
+  let stringValue: string
+  if (Array.isArray(value)) {
+    stringValue = JSON.stringify(value)
+  } else {
+    stringValue = String(value)
+  }
+  
+  if (stringValue.trim() === '') {
     return ''
   }
   
   // 如果内容太长，显示前50个字符
-  if (value.length > 50) {
-    return value.substring(0, 50) + '...'
+  if (stringValue.length > 50) {
+    return stringValue.substring(0, 50) + '...'
   }
   
-  return value
+  return stringValue
 }
 
 const getCodeLanguage = (): string => {
-  if (props.param.dataType === 'JSON') {
-    return 'json'
+  // 根据数据类型（编程语言类型）返回对应的代码编辑器语言
+  switch (props.param.dataType) {
+    case 'TEXT':
+      return 'text'
+    case 'JSON':
+      return 'json'
+    case 'XML':
+      return 'xml'
+    case 'HTML':
+      return 'html'
+    case 'CSS':
+      return 'css'
+    case 'JAVASCRIPT':
+      return 'javascript'
+    case 'TYPESCRIPT':
+      return 'typescript'
+    case 'JAVA':
+      return 'java'
+    case 'KOTLIN':
+      return 'kotlin'
+    case 'SQL':
+      return 'sql'
+    case 'YAML':
+      return 'yaml'
+    default:
+      return 'json' // 默认使用JSON
   }
-  return 'json' // 默认使用JSON
+}
+
+// 语言类型到数据类型的反向映射
+const getLanguageToDataTypeMapping = (): Record<string, string> => {
+  return {
+    'text': 'TEXT',
+    'json': 'JSON',
+    'xml': 'XML',
+    'html': 'HTML',
+    'css': 'CSS',
+    'javascript': 'JAVASCRIPT',
+    'typescript': 'TYPESCRIPT',
+    'java': 'JAVA',
+    'kotlin': 'KOTLIN',
+    'sql': 'SQL',
+    'yaml': 'YAML'
+  }
 }
 
 const openCodeEditor = () => {
-  tempCodeValue.value = props.param.defaultValue || ''
+  // 处理不同类型的默认值
+  let defaultValue = props.param.defaultValue || ''
+  if (Array.isArray(defaultValue)) {
+    defaultValue = JSON.stringify(defaultValue, null, 2)
+  } else {
+    defaultValue = String(defaultValue)
+  }
+  
+  tempCodeValue.value = defaultValue
   codeEditorVisible.value = true
 }
 
 const handleCodeConfirm = (value: string) => {
   emit('default-value-change', props.paramType, props.index, value)
   codeEditorVisible.value = false
+}
+
+const handleCodeLanguageChange = (language: string) => {
+  // 当代码编辑器中的语言变化时，同步更新数据类型
+  const languageMapping = getLanguageToDataTypeMapping()
+  const newDataType = languageMapping[language]
+  
+  if (newDataType && newDataType !== props.param.dataType) {
+    emit('data-type-change', props.paramType, props.index, newDataType)
+  }
 }
 
 const handleCodeCancel = () => {

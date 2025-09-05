@@ -157,6 +157,21 @@ export const DATA_TYPES = [
   { value: 'ARRAY', label: '数组' }
 ]
 
+// 代码编辑器支持的编程语言类型
+export const CODE_EDITOR_LANGUAGES = [
+  { value: 'TEXT', label: 'Text' },
+  { value: 'JSON', label: 'JSON' },
+  { value: 'XML', label: 'XML' },
+  { value: 'HTML', label: 'HTML' },
+  { value: 'CSS', label: 'CSS' },
+  { value: 'JAVASCRIPT', label: 'JavaScript' },
+  { value: 'TYPESCRIPT', label: 'TypeScript' },
+  { value: 'JAVA', label: 'Java' },
+  { value: 'KOTLIN', label: 'Kotlin' },
+  { value: 'SQL', label: 'SQL' },
+  { value: 'YAML', label: 'YAML' }
+]
+
 export const POST_TYPES = [
   { value: 'application/json', label: 'application/json' },
   { value: 'application/x-www-form-urlencoded', label: 'application/x-www-form-urlencoded' }

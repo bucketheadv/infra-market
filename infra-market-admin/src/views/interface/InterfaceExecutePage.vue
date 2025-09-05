@@ -1094,11 +1094,43 @@ const getSelectOptions = (param: ApiParam) => {
   return []
 }
 
-const getCodeLanguage = (): string => {
-  if (currentCodeParam.value?.param.dataType === 'JSON') {
-    return 'json'
+// 数据类型到代码编辑器语言的映射
+const getDataTypeToLanguageMapping = (): Record<string, string> => {
+  return {
+    // 传统数据类型
+    'STRING': 'text',
+    'INTEGER': 'text',
+    'LONG': 'text', 
+    'DOUBLE': 'text',
+    'BOOLEAN': 'text',
+    'DATE': 'text',
+    'DATETIME': 'text',
+    'JSON': 'json',
+    'ARRAY': 'json',
+    // 编程语言类型
+    'TEXT': 'text',
+    'XML': 'xml',
+    'HTML': 'html',
+    'CSS': 'css',
+    'JAVASCRIPT': 'javascript',
+    'TYPESCRIPT': 'typescript',
+    'JAVA': 'java',
+    'KOTLIN': 'kotlin',
+    'SQL': 'sql',
+    'YAML': 'yaml'
   }
-  return 'json' // 默认使用JSON
+}
+
+const getCodeLanguage = (): string => {
+  if (!currentCodeParam.value?.param.dataType) {
+    return 'json' // 默认使用JSON
+  }
+  
+  const dataType = currentCodeParam.value.param.dataType
+  const languageMapping = getDataTypeToLanguageMapping()
+  const language = languageMapping[dataType] || 'json'
+  
+  return language
 }
 
 const getCodePlaceholder = (): string => {
