@@ -1020,10 +1020,12 @@ const validateParamNames = (): boolean => {
 }
 
 .add-param-btn {
-  font-size: 9px !important;
-  padding: 2px 6px !important;
-  height: 18px !important;
-  min-width: 35px !important;
+  font-size: 12px !important;
+  padding: 6px 12px !important;
+  height: 32px !important;
+  min-width: 120px !important;
+  border-radius: 6px !important;
+  font-weight: 500 !important;
 }
 
 .compact-params-list {
@@ -1056,29 +1058,31 @@ const validateParamNames = (): boolean => {
 
 .compact-delete-btn {
   flex-shrink: 0;
-  width: 20px !important;
-  height: 20px !important;
+  width: 32px !important;
+  height: 32px !important;
   padding: 0 !important;
-  min-width: 20px !important;
-  border-radius: 3px !important;
-  background: #ff4757 !important;
-  border: 1px solid #ff3742 !important;
+  min-width: 32px !important;
+  border-radius: 6px !important;
+  background: linear-gradient(135deg, #ff6b6b 0%, #ff5252 100%) !important;
+  border: none !important;
   color: white !important;
-  font-size: 8px !important;
+  font-size: 12px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
+  box-shadow: 0 2px 4px rgba(255, 82, 82, 0.3) !important;
+  transition: all 0.3s ease !important;
 }
 
 .compact-delete-btn:hover {
-  background: #ff3742 !important;
-  border-color: #ff2f3a !important;
-  transform: scale(1.05) !important;
+  background: linear-gradient(135deg, #ff5252 0%, #f44336 100%) !important;
+  transform: translateY(-2px) scale(1.05) !important;
+  box-shadow: 0 4px 8px rgba(255, 82, 82, 0.4) !important;
 }
 
 .compact-delete-btn .theme-button__icon {
   color: white !important;
-  font-size: 8px !important;
+  font-size: 14px !important;
 }
 
 .compact-delete-btn .theme-button__icon * {
@@ -1104,10 +1108,12 @@ const validateParamNames = (): boolean => {
 }
 
 .compact-params-footer .add-param-btn {
-  font-size: 9px !important;
-  padding: 3px 8px !important;
-  height: 20px !important;
-  min-width: 80px !important;
+  font-size: 12px !important;
+  padding: 6px 12px !important;
+  height: 32px !important;
+  min-width: 120px !important;
+  border-radius: 6px !important;
+  font-weight: 500 !important;
 }
 
 /* 操作按钮样式 */

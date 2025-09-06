@@ -195,6 +195,7 @@
             v-if="!disabled"
             class="option-remove-btn"
             @click="handleRemoveOption(optionIndex)"
+            title="删除选项"
           >
             <DeleteOutlined />
           </button>
@@ -1186,11 +1187,11 @@ const handleCodeCancel = () => {
   flex-shrink: 0;
   border-radius: 8px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   padding: 0;
-  min-width: 36px;
-  font-size: 14px;
+  min-width: 40px;
+  font-size: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1220,7 +1221,7 @@ const handleCodeCancel = () => {
 .option-remove-btn:hover {
   transform: translateY(-2px) scale(1.05);
   background: linear-gradient(135deg, #ff5252 0%, #f44336 100%);
-  box-shadow: 0 6px 12px rgba(255, 82, 82, 0.4), 0 2px 6px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 5px 10px rgba(255, 82, 82, 0.4), 0 2px 5px rgba(0, 0, 0, 0.15);
 }
 
 .option-remove-btn:hover::before {
@@ -1242,22 +1243,24 @@ const handleCodeCancel = () => {
 
 .add-option-btn {
   width: 100%;
-  border-radius: 3px;
+  border-radius: 6px;
   border: 1px dashed #d0d7de;
   background: transparent;
   color: #656d76;
   transition: all 0.2s ease;
-  margin-top: 2px;
-  font-size: 9px !important;
-  padding: 2px 6px !important;
-  height: 18px !important;
+  margin-top: 8px;
+  font-size: 12px !important;
+  padding: 8px 12px !important;
+  height: 36px !important;
+  font-weight: 500 !important;
 }
 
 .add-option-btn:hover {
   border-color: #0969da;
   color: #0969da;
-  background: rgba(9, 105, 218, 0.05);
-  transform: translateY(-1px);
+  background: rgba(9, 105, 218, 0.08);
+  transform: translateY(-2px);
+  box-shadow: 0 2px 4px rgba(9, 105, 218, 0.1);
 }
 
 /* 响应式设计 */
