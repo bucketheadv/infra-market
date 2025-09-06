@@ -2,6 +2,7 @@ package io.infra.market.repository.dao
 
 import com.mybatisflex.kotlin.extensions.kproperty.eq
 import com.mybatisflex.kotlin.extensions.kproperty.like
+import com.mybatisflex.kotlin.extensions.kproperty.le
 import com.mybatisflex.kotlin.extensions.wrapper.whereWith
 import com.mybatisflex.core.paginate.Page
 import com.mybatisflex.kotlin.extensions.condition.and
@@ -12,6 +13,7 @@ import io.infra.market.dto.RoleQueryDto
 import io.infra.market.enums.StatusEnum
 import io.infra.market.repository.entity.Role
 import io.infra.market.repository.mapper.RoleMapper
+import org.joda.time.DateTime
 import org.springframework.stereotype.Repository
 
 /**
@@ -88,6 +90,16 @@ class RoleDao : ServiceImpl<RoleMapper, Role>() {
     override fun count(): Long {
         val query = query().whereWith {
             Role::status.ne(StatusEnum.DELETED.code)
+        }
+        return mapper.selectCountByQuery(query)
+    }
+    
+    /**
+     * 获取指定时间之前的角色总数（排除已删除的角色）
+     */
+    fun countBeforeDate(dateTime: DateTime): Long {
+        val query = query().whereWith {
+            Role::status.ne(StatusEnum.DELETED.code) and Role::createTime.le(dateTime.toDate())
         }
         return mapper.selectCountByQuery(query)
     }

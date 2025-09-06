@@ -3,6 +3,7 @@ package io.infra.market.repository.dao
 import com.mybatisflex.kotlin.extensions.kproperty.eq
 import com.mybatisflex.kotlin.extensions.kproperty.inList
 import com.mybatisflex.kotlin.extensions.kproperty.like
+import com.mybatisflex.kotlin.extensions.kproperty.le
 import com.mybatisflex.kotlin.extensions.wrapper.whereWith
 import com.mybatisflex.core.paginate.Page
 import com.mybatisflex.kotlin.extensions.condition.and
@@ -13,6 +14,7 @@ import io.infra.market.enums.PermissionTypeEnum
 import io.infra.market.enums.StatusEnum
 import io.infra.market.repository.entity.Permission
 import io.infra.market.repository.mapper.PermissionMapper
+import org.joda.time.DateTime
 import org.springframework.stereotype.Repository
 
 /**
@@ -106,6 +108,16 @@ class PermissionDao : ServiceImpl<PermissionMapper, Permission>() {
     override fun count(): Long {
         val query = query().whereWith {
             Permission::status.ne(StatusEnum.DELETED.code)
+        }
+        return mapper.selectCountByQuery(query)
+    }
+    
+    /**
+     * 获取指定时间之前的权限总数（排除已删除的权限）
+     */
+    fun countBeforeDate(dateTime: DateTime): Long {
+        val query = query().whereWith {
+            Permission::status.ne(StatusEnum.DELETED.code) and Permission::createTime.le(dateTime.toDate())
         }
         return mapper.selectCountByQuery(query)
     }

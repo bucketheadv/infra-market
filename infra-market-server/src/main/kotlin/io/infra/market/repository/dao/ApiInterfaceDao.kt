@@ -6,7 +6,9 @@ import io.infra.market.dto.ApiInterfaceQueryDto
 import com.mybatisflex.core.query.QueryWrapper
 import com.mybatisflex.kotlin.extensions.kproperty.eq
 import com.mybatisflex.kotlin.extensions.kproperty.like
+import com.mybatisflex.kotlin.extensions.kproperty.le
 import com.mybatisflex.spring.service.impl.ServiceImpl
+import org.joda.time.DateTime
 import org.springframework.stereotype.Repository
 
 /**
@@ -39,5 +41,17 @@ class ApiInterfaceDao : ServiceImpl<ApiInterfaceMapper, ApiInterface>() {
         queryWrapper.orderBy("create_time DESC")
 
         return mapper.selectListByQuery(queryWrapper)
+    }
+    
+    /**
+     * 获取指定时间之前的接口总数
+     */
+    fun countBeforeDate(dateTime: DateTime): Long {
+        val queryWrapper = QueryWrapper.create()
+            .select()
+            .from(ApiInterface::class.java)
+            .where(ApiInterface::createTime.le(dateTime.toDate()))
+        
+        return mapper.selectCountByQuery(queryWrapper)
     }
 }

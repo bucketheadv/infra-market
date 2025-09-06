@@ -24,7 +24,9 @@
           <div class="stat-label">用户总数</div>
           <div class="stat-trend">
             <span class="trend-text">较昨日</span>
-            <span class="trend-value positive">+12%</span>
+            <span class="trend-value" :class="getTrendClass(dashboardData.statistics.userCountChangePercent)">
+              {{ formatChangePercent(dashboardData.statistics.userCountChangePercent) }}
+            </span>
           </div>
         </div>
       </div>
@@ -38,7 +40,9 @@
           <div class="stat-label">角色总数</div>
           <div class="stat-trend">
             <span class="trend-text">较昨日</span>
-            <span class="trend-value positive">+5%</span>
+            <span class="trend-value" :class="getTrendClass(dashboardData.statistics.roleCountChangePercent)">
+              {{ formatChangePercent(dashboardData.statistics.roleCountChangePercent) }}
+            </span>
           </div>
         </div>
       </div>
@@ -52,21 +56,25 @@
           <div class="stat-label">权限总数</div>
           <div class="stat-trend">
             <span class="trend-text">较昨日</span>
-            <span class="trend-value neutral">0%</span>
+            <span class="trend-value" :class="getTrendClass(dashboardData.statistics.permissionCountChangePercent)">
+              {{ formatChangePercent(dashboardData.statistics.permissionCountChangePercent) }}
+            </span>
           </div>
         </div>
       </div>
       
       <div class="stat-card stat-card-online">
         <div class="stat-icon">
-          <GlobalOutlined />
+          <ApiOutlined />
         </div>
         <div class="stat-content">
-          <div class="stat-value">{{ dashboardData.statistics.onlineCount }}</div>
-          <div class="stat-label">在线用户</div>
+          <div class="stat-value">{{ dashboardData.statistics.interfaceCount }}</div>
+          <div class="stat-label">接口总数</div>
           <div class="stat-trend">
-            <span class="trend-text">实时</span>
-            <span class="trend-indicator online"></span>
+            <span class="trend-text">较昨日</span>
+            <span class="trend-value" :class="getTrendClass(dashboardData.statistics.interfaceCountChangePercent)">
+              {{ formatChangePercent(dashboardData.statistics.interfaceCountChangePercent) }}
+            </span>
           </div>
         </div>
       </div>
@@ -189,7 +197,7 @@ import {
   UserOutlined,
   TeamOutlined,
   SafetyOutlined,
-  GlobalOutlined,
+  ApiOutlined,
   ClockCircleOutlined,
   InfoCircleOutlined,
   UserAddOutlined,
@@ -204,7 +212,11 @@ const dashboardData = ref<DashboardData>({
     userCount: 0,
     roleCount: 0,
     permissionCount: 0,
-    onlineCount: 0,
+    interfaceCount: 0,
+    userCountChangePercent: 0,
+    roleCountChangePercent: 0,
+    permissionCountChangePercent: 0,
+    interfaceCountChangePercent: 0,
   },
   recentUsers: [],
   systemInfo: {
@@ -245,6 +257,28 @@ const handleQuickAction = (action: string) => {
       break
     default:
       message.info('功能开发中...')
+  }
+}
+
+// 格式化变化百分比
+const formatChangePercent = (percent: number): string => {
+  if (percent > 0) {
+    return `+${percent.toFixed(1)}%`
+  } else if (percent < 0) {
+    return `${percent.toFixed(1)}%`
+  } else {
+    return '0%'
+  }
+}
+
+// 获取趋势样式类名
+const getTrendClass = (percent: number): string => {
+  if (percent > 0) {
+    return 'positive'
+  } else if (percent < 0) {
+    return 'negative'
+  } else {
+    return 'neutral'
   }
 }
 

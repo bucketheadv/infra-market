@@ -5,7 +5,11 @@ export interface DashboardStatistics {
   userCount: number
   roleCount: number
   permissionCount: number
-  onlineCount: number
+  interfaceCount: number // 接口总数
+  userCountChangePercent: number // 用户总数较昨日变化百分比
+  roleCountChangePercent: number // 角色总数较昨日变化百分比
+  permissionCountChangePercent: number // 权限总数较昨日变化百分比
+  interfaceCountChangePercent: number // 接口总数较昨日变化百分比
 }
 
 export interface RecentUser {

@@ -4,7 +4,7 @@ package io.infra.market.dto
  * 仪表盘统计数据DTO
  * 
  * 用于展示系统各项统计数据的DTO。
- * 包含用户、角色、权限和在线用户的数量统计。
+ * 包含用户、角色、权限和接口的数量统计，以及较昨日的变化情况。
  * 
  * @author liuqinglin
  * @since 1.0.0
@@ -29,10 +29,34 @@ data class DashboardStatisticsDto(
     val permissionCount: Long,
     
     /**
-     * 在线用户数
-     * 当前在线用户的数量
+     * 接口总数
+     * 系统中定义的接口总数量
      */
-    val onlineCount: Long
+    val interfaceCount: Long,
+    
+    /**
+     * 用户总数较昨日变化百分比
+     * 正数表示增长，负数表示减少，0表示无变化
+     */
+    val userCountChangePercent: Double,
+    
+    /**
+     * 角色总数较昨日变化百分比
+     * 正数表示增长，负数表示减少，0表示无变化
+     */
+    val roleCountChangePercent: Double,
+    
+    /**
+     * 权限总数较昨日变化百分比
+     * 正数表示增长，负数表示减少，0表示无变化
+     */
+    val permissionCountChangePercent: Double,
+    
+    /**
+     * 接口总数较昨日变化百分比
+     * 正数表示增长，负数表示减少，0表示无变化
+     */
+    val interfaceCountChangePercent: Double
 )
 
 /**
