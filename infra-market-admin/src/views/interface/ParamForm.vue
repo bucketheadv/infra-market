@@ -191,15 +191,13 @@
               class="option-label-input"
             />
           </div>
-          <ThemeButton
+          <button
             v-if="!disabled"
-            variant="danger"
-            size="small"
-            :icon="DeleteOutlined"
             class="option-remove-btn"
             @click="handleRemoveOption(optionIndex)"
           >
-          </ThemeButton>
+            <DeleteOutlined />
+          </button>
         </div>
         <ThemeButton
           v-if="!disabled"
@@ -437,7 +435,37 @@ const getDefaultValuePlaceholder = () => {
 }
 
 const getDefaultValueClass = () => {
-  return 'modern-input'
+  const inputType = props.param.inputType
+  const dataType = props.param.dataType
+  
+  // 根据输入类型选择样式类
+  switch (inputType) {
+    case 'SELECT':
+    case 'MULTI_SELECT':
+      return 'modern-select'
+    case 'TEXTAREA':
+      return 'modern-textarea'
+    case 'NUMBER':
+      return 'modern-input-number'
+    case 'DATE':
+    case 'DATETIME':
+      return 'modern-date-picker'
+    default:
+      // 根据数据类型选择样式类
+      switch (dataType) {
+        case 'INTEGER':
+        case 'LONG':
+        case 'DOUBLE':
+          return 'modern-input-number'
+        case 'BOOLEAN':
+          return 'modern-select'
+        case 'DATE':
+        case 'DATETIME':
+          return 'modern-date-picker'
+        default:
+          return 'modern-input'
+      }
+  }
 }
 
 const getDefaultValueBindings = () => {
@@ -756,11 +784,12 @@ const handleCodeCancel = () => {
 
 .form-item-modern :deep(.ant-select-selector) {
   font-size: 12px;
-  border-radius: 6px;
+  border-radius: 4px;
   border: 1px solid #d9d9d9;
-  transition: all 0.2s ease;
-  padding: 4px 11px;
+  transition: border-color 0.2s ease;
+  padding: 4px 8px;
   height: 32px;
+  background-color: #fafafa;
 }
 
 .form-item-modern :deep(.ant-select-selector:hover) {
@@ -768,8 +797,9 @@ const handleCodeCancel = () => {
 }
 
 .form-item-modern :deep(.ant-select-focused .ant-select-selector) {
-  border-color: #1890ff;
-  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+  border-color: #40a9ff;
+  box-shadow: none;
+  outline: none;
 }
 
 .form-item-modern :deep(.ant-select-selection-item) {
@@ -809,31 +839,104 @@ const handleCodeCancel = () => {
 .modern-input,
 .modern-select,
 .modern-textarea {
-  border-radius: 8px;
-  border: 1px solid #d0d7de;
-  transition: all 0.2s ease;
+  border-radius: 4px;
+  border: 1px solid #d9d9d9;
+  transition: border-color 0.2s ease;
+  background-color: #fafafa;
+  font-size: 12px;
 }
 
 .modern-input:focus,
 .modern-select:focus,
 .modern-textarea:focus {
-  border-color: #0969da;
-  box-shadow: 0 0 0 3px rgba(9, 105, 218, 0.1);
+  border-color: #40a9ff;
+  box-shadow: none;
+  outline: none;
+}
+
+.modern-input:hover,
+.modern-select:hover,
+.modern-textarea:hover {
+  border-color: #40a9ff;
+}
+
+/* 普通输入框样式 */
+.modern-input {
+  height: 32px;
+  padding: 4px 8px;
+}
+
+.modern-input :deep(.ant-input) {
+  height: 32px;
+  background-color: #fafafa;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  color: #666;
+}
+
+.modern-input :deep(.ant-input):hover {
+  border-color: #40a9ff;
+}
+
+.modern-input :deep(.ant-input):focus {
+  border-color: #40a9ff;
+  box-shadow: none;
+  outline: none;
+}
+
+/* 专门针对下拉框的样式 */
+.modern-select :deep(.ant-select-selector) {
+  height: 32px !important;
+  background-color: #fafafa;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+}
+
+.modern-select :deep(.ant-select-selector:hover) {
+  border-color: #40a9ff;
+}
+
+.modern-select :deep(.ant-select-focused .ant-select-selector) {
+  border-color: #40a9ff;
+  box-shadow: none;
+  outline: none;
+}
+
+.modern-select :deep(.ant-select-selection-item) {
+  font-size: 12px;
+  line-height: 24px;
+  display: flex;
+  align-items: center;
+  height: 100%;
 }
 
 /* 数字输入框样式 - 与主题保持一致 */
 .modern-input-number {
   width: 100%;
-  border-radius: 8px;
-  border: 1px solid #d0d7de;
-  transition: all 0.2s ease;
+  border-radius: 4px;
+  border: 1px solid #d9d9d9;
+  transition: border-color 0.2s ease;
   font-size: 12px;
   height: 32px;
+  background-color: #fafafa;
+  display: flex;
+  align-items: center;
+}
+
+.modern-input-number:hover {
+  border-color: #40a9ff;
 }
 
 .modern-input-number:focus {
-  border-color: #0969da;
-  box-shadow: 0 0 0 3px rgba(9, 105, 218, 0.1);
+  border-color: #40a9ff;
+  box-shadow: none;
+  outline: none;
 }
 
 /* 数字输入框内部样式 */
@@ -843,22 +946,26 @@ const handleCodeCancel = () => {
   background: transparent;
   box-shadow: none;
   height: 32px;
+  display: flex;
+  align-items: center;
 }
 
 .form-item-modern :deep(.modern-input-number .ant-input-number .ant-input-number-input) {
-  height: 32px;
+  height: 32px !important;
   font-size: 12px;
-  text-align: center;
   border: none;
   background: transparent;
-  padding: 6px 11px;
-  color: #24292f;
-  line-height: 20px;
+  padding: 0 8px !important;
+  color: #666;
+  line-height: 32px !important;
   box-sizing: border-box;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
 }
 
 .form-item-modern :deep(.modern-input-number .ant-input-number .ant-input-number-input::placeholder) {
-  color: #656d76;
+  color: #999;
 }
 
 .form-item-modern :deep(.modern-input-number .ant-input-number:hover) {
@@ -872,14 +979,79 @@ const handleCodeCancel = () => {
 }
 
 .form-item-modern :deep(.modern-input-number .ant-input-number-disabled) {
-  background-color: #f6f8fa;
-  border-color: #d0d7de;
-  color: #656d76;
+  background-color: #f5f5f5;
+  border-color: #d9d9d9;
+  color: #999;
 }
 
 .form-item-modern :deep(.modern-input-number .ant-input-number-disabled .ant-input-number-input) {
-  color: #656d76;
+  color: #999;
   background: transparent;
+}
+
+/* 强制数字输入框文字居中 */
+.modern-input-number :deep(.ant-input-number-input-wrap) {
+  height: 32px !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.modern-input-number :deep(.ant-input-number-input) {
+  height: 32px !important;
+  line-height: 32px !important;
+  padding: 0 8px !important;
+  display: flex !important;
+  align-items: center !important;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* 日期选择器样式 */
+.modern-date-picker {
+  width: 100%;
+  border-radius: 4px;
+  border: 1px solid #d9d9d9;
+  transition: border-color 0.2s ease;
+  font-size: 12px;
+  height: 32px;
+  background-color: #fafafa;
+}
+
+.modern-date-picker:hover {
+  border-color: #40a9ff;
+}
+
+.modern-date-picker:focus {
+  border-color: #40a9ff;
+  box-shadow: none;
+  outline: none;
+}
+
+.modern-date-picker :deep(.ant-picker) {
+  width: 100%;
+  height: 32px;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  padding: 4px 8px;
+}
+
+.modern-date-picker :deep(.ant-picker-input) {
+  height: 24px;
+  font-size: 12px;
+}
+
+.modern-date-picker :deep(.ant-picker-input input) {
+  font-size: 12px;
+  color: #666;
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+.modern-date-picker :deep(.ant-picker-input input::placeholder) {
+  color: #999;
 }
 
 .checkbox-group {
@@ -1012,17 +1184,60 @@ const handleCodeCancel = () => {
 
 .option-remove-btn {
   flex-shrink: 0;
-  border-radius: 3px;
-  transition: all 0.2s ease;
-  width: 18px !important;
-  height: 18px !important;
-  padding: 0 !important;
-  min-width: 18px !important;
-  font-size: 7px !important;
+  border-radius: 8px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  min-width: 36px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #ff6b6b 0%, #ff5252 100%);
+  border: none;
+  color: white;
+  box-shadow: 0 3px 6px rgba(255, 82, 82, 0.3), 0 1px 3px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.option-remove-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.1) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 1;
+  border-radius: 8px;
 }
 
 .option-remove-btn:hover {
-  transform: scale(1.05);
+  transform: translateY(-2px) scale(1.05);
+  background: linear-gradient(135deg, #ff5252 0%, #f44336 100%);
+  box-shadow: 0 6px 12px rgba(255, 82, 82, 0.4), 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.option-remove-btn:hover::before {
+  opacity: 1;
+}
+
+.option-remove-btn:active {
+  transform: translateY(-1px) scale(1.02);
+  box-shadow: 0 3px 6px rgba(255, 82, 82, 0.3), 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.option-remove-btn :deep(.anticon) {
+  font-size: 16px;
+  font-weight: bold;
+  color: white;
+  z-index: 2;
+  position: relative;
 }
 
 .add-option-btn {
@@ -1103,23 +1318,37 @@ const handleCodeCancel = () => {
 }
 
 .code-preview-input :deep(.ant-input) {
-  background-color: #f8f9fa;
-  border: 1px solid #d0d7de;
-  color: #656d76;
-  font-family: Monaco, Menlo, "Ubuntu Mono", monospace;
+  background-color: #fafafa;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  color: #666;
+  font-family: Monaco, Consolas, monospace;
   font-size: 12px;
   cursor: pointer;
+  transition: border-color 0.2s ease;
+  height: 32px;
+  padding: 4px 8px;
 }
 
 .code-preview-input :deep(.ant-input):hover {
-  border-color: #0969da;
-  background-color: #ffffff;
-  box-shadow: 0 0 0 2px rgba(9, 105, 218, 0.1);
+  border-color: #40a9ff;
 }
 
 .code-preview-input :deep(.ant-input):focus {
-  border-color: #0969da;
-  background-color: #ffffff;
-  box-shadow: 0 0 0 2px rgba(9, 105, 218, 0.2);
+  border-color: #40a9ff;
+  box-shadow: none;
+  outline: none;
+}
+
+.code-preview-input :deep(.ant-input-suffix) {
+  padding-right: 4px;
+}
+
+.code-preview-input :deep(.ant-input-suffix .ant-btn) {
+  border-radius: 3px;
+  font-size: 11px;
+  height: 24px;
+  padding: 0 8px;
+  line-height: 22px;
 }
 </style>

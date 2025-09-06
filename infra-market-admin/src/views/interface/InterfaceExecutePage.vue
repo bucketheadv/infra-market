@@ -1521,24 +1521,38 @@ const getStatusColor = (status: number): string => {
 }
 
 .code-preview-input :deep(.ant-input) {
-  background-color: #f8f9fa;
-  border: 1px solid #d0d7de;
-  color: #656d76;
-  font-family: Monaco, Menlo, "Ubuntu Mono", monospace;
+  background-color: #fafafa;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  color: #666;
+  font-family: Monaco, Consolas, monospace;
   font-size: 12px;
   cursor: pointer;
+  transition: border-color 0.2s ease;
+  height: 32px;
+  padding: 4px 8px;
 }
 
 .code-preview-input :deep(.ant-input):hover {
   border-color: #40a9ff;
-  background-color: #ffffff;
-  box-shadow: 0 0 0 2px rgba(9, 105, 218, 0.1);
 }
 
 .code-preview-input :deep(.ant-input):focus {
-  border-color: #0969da;
-  background-color: #ffffff;
-  box-shadow: 0 0 0 2px rgba(9, 105, 218, 0.2);
+  border-color: #40a9ff;
+  box-shadow: none;
+  outline: none;
+}
+
+.code-preview-input :deep(.ant-input-suffix) {
+  padding-right: 4px;
+}
+
+.code-preview-input :deep(.ant-input-suffix .ant-btn) {
+  border-radius: 3px;
+  font-size: 11px;
+  height: 24px;
+  padding: 0 8px;
+  line-height: 22px;
 }
 
 /* 基本信息样式 */
