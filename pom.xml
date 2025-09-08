@@ -5,7 +5,7 @@
     <parent>
         <groupId>com.github.bucketheadv</groupId>
         <artifactId>infra-pom</artifactId>
-        <version>0.3.4-RELEASE</version>
+        <version>0.4.0-RELEASE</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>io.infra</groupId>
@@ -14,7 +14,7 @@
 
     <modules>
         <module>infra-market-server</module>
-        <module>infra-market-admin</module>
+<!--        <module>infra-market-admin</module>-->
     </modules>
 
     <properties>
@@ -67,7 +67,6 @@
         <dependency>
             <groupId>org.fusesource.jansi</groupId>
             <artifactId>jansi</artifactId>
-            <version>2.4.2</version>
         </dependency>
 
         <dependency>
@@ -103,18 +102,15 @@
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
-            <version>0.11.5</version>
         </dependency>
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-impl</artifactId>
-            <version>0.11.5</version>
             <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-jackson</artifactId>
-            <version>0.11.5</version>
             <scope>runtime</scope>
         </dependency>
         

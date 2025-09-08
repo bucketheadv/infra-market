@@ -64,6 +64,7 @@ data class ApiResponse<T>(
          * @param code 错误状态码，默认为500
          * @return 错误响应对象
          */
+        @Suppress("UNCHECKED_CAST")
         fun <T> error(message: String, detail: String, code: Int = 500) = ApiResponse(code = code, message = message, data = detail as T?)
     }
 }

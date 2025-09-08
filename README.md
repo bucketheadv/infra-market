@@ -182,7 +182,7 @@ npm run dev
 ```bash
 cd infra-market-server
 mvn clean package
-java -jar target/infra-market-server-0.3.4-RELEASE.jar
+java -jar target/infra-market-server-0.4.0-RELEASE.jar
 ```
 
 ### 前端部署
