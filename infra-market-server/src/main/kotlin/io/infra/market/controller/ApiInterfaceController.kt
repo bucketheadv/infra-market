@@ -3,6 +3,8 @@ package io.infra.market.controller
 import io.infra.market.dto.*
 import io.infra.market.service.ApiInterfaceService
 import io.infra.market.annotation.RequiresPermission
+import io.infra.market.enums.EnvironmentEnum
+import io.infra.market.enums.HttpMethodEnum
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.*
@@ -51,9 +53,9 @@ class ApiInterfaceController(
                 @RequestParam(required = false) tag: String?): ApiResponse<List<ApiInterfaceDto>> {
         val query = ApiInterfaceQueryDto(
             name = name,
-            method = io.infra.market.enums.HttpMethodEnum.fromCode(method ?: ""),
+            method = HttpMethodEnum.fromCode(method ?: ""),
             status = status,
-            environment = io.infra.market.enums.EnvironmentEnum.fromCode(tag ?: "")
+            environment = EnvironmentEnum.fromCode(tag ?: "")
         )
         val interfaces = apiInterfaceService.findAll(query)
         return ApiResponse.success(interfaces)

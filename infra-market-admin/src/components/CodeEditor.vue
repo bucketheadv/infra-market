@@ -265,6 +265,15 @@ watch(() => props.height, () => {
   }
 })
 
+// 监听窗口大小变化
+const handleResize = () => {
+  if (editor) {
+    nextTick(() => {
+      editor?.layout()
+    })
+  }
+}
+
 // 系统主题变化监听
 let mediaQuery: MediaQueryList | null = null
 
@@ -280,6 +289,9 @@ onMounted(async () => {
       updateEditorTheme('auto')
     })
   }
+  
+  // 监听窗口大小变化
+  window.addEventListener('resize', handleResize)
 })
 
 onUnmounted(() => {
@@ -295,6 +307,9 @@ onUnmounted(() => {
     })
     mediaQuery = null
   }
+  
+  // 清理窗口大小变化监听器
+  window.removeEventListener('resize', handleResize)
 })
 
 // 暴露方法给父组件
@@ -316,6 +331,9 @@ defineExpose({
   transition: all 0.3s ease;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   min-height: 200px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .code-editor-container:hover {
@@ -331,6 +349,7 @@ defineExpose({
 .monaco-editor {
   width: 100%;
   height: 100%;
+  flex: 1;
 }
 
 /* 暗色主题样式 */

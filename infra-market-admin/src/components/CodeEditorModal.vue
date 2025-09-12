@@ -57,7 +57,7 @@
           ref="editorRef"
           v-model="editorValue"
           :language="selectedLanguage"
-          :height="400"
+          :height="'100%'"
           :options="{
             minimap: { enabled: true },
             scrollBeyondLastLine: false,
@@ -231,6 +231,16 @@ watch(() => props.visible, (newVal) => {
       const detectedLanguage = detectCodeType(props.value)
       selectedLanguage.value = detectedLanguage
     }
+    
+    // 弹窗打开后，延迟更新编辑器布局
+    nextTick(() => {
+      setTimeout(() => {
+        const editor = editorRef.value?.getEditor()
+        if (editor) {
+          editor.layout()
+        }
+      }, 100)
+    })
   }
 })
 
@@ -384,6 +394,9 @@ defineExpose({
   padding: 20px 24px;
   background: #ffffff;
   border-radius: 0 0 8px 8px;
+  min-height: 0; /* 确保flex子元素可以收缩 */
+  display: flex;
+  flex-direction: column;
 }
 
 .status-bar {
