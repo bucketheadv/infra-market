@@ -59,22 +59,25 @@ class RoleDao : ServiceImpl<RoleMapper, Role>() {
     fun page(query: RoleQueryDto): Page<Role> {
         val queryBuilder = query()
         
-        // 默认排除已删除的角色
+        // 构建查询条件
         queryBuilder.whereWith {
-            Role::status.ne(StatusEnum.DELETED.code)
-        }
-        
-        // 添加查询条件
-        if (!query.name.isNullOrBlank()) {
-            queryBuilder.and { Role::name.like("%${query.name}%") }
-        }
-        
-        if (!query.code.isNullOrBlank()) {
-            queryBuilder.and { Role::code.like("%${query.code}%") }
-        }
-        
-        if (!query.status.isNullOrBlank()) {
-            queryBuilder.and { Role::status.eq(query.status) }
+            // 默认排除已删除的角色
+            var condition = Role::status.ne(StatusEnum.DELETED.code)
+            
+            // 添加查询条件
+            if (!query.name.isNullOrBlank()) {
+                condition = condition and Role::name.like("%${query.name}%")
+            }
+            
+            if (!query.code.isNullOrBlank()) {
+                condition = condition and Role::code.like("%${query.code}%")
+            }
+            
+            if (!query.status.isNullOrBlank()) {
+                condition = condition and Role::status.eq(query.status)
+            }
+            
+            condition
         }
         
         // 按id排序

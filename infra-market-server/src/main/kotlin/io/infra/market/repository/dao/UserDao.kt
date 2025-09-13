@@ -62,18 +62,21 @@ class UserDao : ServiceImpl<UserMapper, User>() {
     fun page(query: UserQueryDto): Page<User> {
         val queryBuilder = query()
         
-        // 默认排除已删除的用户
+        // 构建查询条件
         queryBuilder.whereWith {
-            User::status.ne(StatusEnum.DELETED.code)
-        }
-        
-        // 添加查询条件
-        if (!query.username.isNullOrBlank()) {
-            queryBuilder.and { User::username.like("%${query.username}%") }
-        }
-        
-        if (!query.status.isNullOrBlank()) {
-            queryBuilder.and { User::status.eq(query.status) }
+            // 默认排除已删除的用户
+            var condition = User::status.ne(StatusEnum.DELETED.code)
+            
+            // 添加查询条件
+            if (!query.username.isNullOrBlank()) {
+                condition = condition and User::username.like("%${query.username}%")
+            }
+            
+            if (!query.status.isNullOrBlank()) {
+                condition = condition and User::status.eq(query.status)
+            }
+            
+            condition
         }
         
         // 按id排序

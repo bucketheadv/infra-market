@@ -22,24 +22,26 @@ class ApiInterfaceDao : ServiceImpl<ApiInterfaceMapper, ApiInterface>() {
             .select()
             .from(ApiInterface::class.java)
 
-        query.name?.let {
-            queryWrapper.where(ApiInterface::name.like("%$it%"))
+        // 构建查询条件
+        if (!query.name.isNullOrBlank()) {
+            queryWrapper.where(ApiInterface::name.like("%${query.name}%"))
         }
 
-        query.method?.let {
-            queryWrapper.where(ApiInterface::method.eq(it.code))
+        val method = query.method
+        if (method != null) {
+            queryWrapper.where(ApiInterface::method.eq(method.code))
         }
 
-        query.status?.let {
-            queryWrapper.where(ApiInterface::status.eq(it))
+        if (query.status != null) {
+            queryWrapper.where(ApiInterface::status.eq(query.status))
         }
 
-        query.environment?.let {
-            queryWrapper.where(ApiInterface::environment.eq(it.code))
+        val environment = query.environment
+        if (environment != null) {
+            queryWrapper.where(ApiInterface::environment.eq(environment.code))
         }
 
         queryWrapper.orderBy("create_time DESC")
-
         return mapper.selectListByQuery(queryWrapper)
     }
     

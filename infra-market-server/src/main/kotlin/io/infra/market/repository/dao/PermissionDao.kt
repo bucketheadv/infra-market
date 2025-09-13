@@ -73,26 +73,29 @@ class PermissionDao : ServiceImpl<PermissionMapper, Permission>() {
     fun page(query: PermissionQueryDto): Page<Permission> {
         val queryBuilder = query()
         
-        // 默认排除已删除的权限
+        // 构建查询条件
         queryBuilder.whereWith {
-            Permission::status.ne(StatusEnum.DELETED.code)
-        }
-        
-        // 添加查询条件
-        if (!query.name.isNullOrBlank()) {
-            queryBuilder.and { Permission::name.like("%${query.name}%") }
-        }
-        
-        if (!query.code.isNullOrBlank()) {
-            queryBuilder.and { Permission::code.like("%${query.code}%") }
-        }
-        
-        if (!query.type.isNullOrBlank()) {
-            queryBuilder.and { Permission::type.eq(query.type) }
-        }
-        
-        if (!query.status.isNullOrBlank()) {
-            queryBuilder.and { Permission::status.eq(query.status) }
+            // 默认排除已删除的权限
+            var condition = Permission::status.ne(StatusEnum.DELETED.code)
+            
+            // 添加查询条件
+            if (!query.name.isNullOrBlank()) {
+                condition = condition and Permission::name.like("%${query.name}%")
+            }
+            
+            if (!query.code.isNullOrBlank()) {
+                condition = condition and Permission::code.like("%${query.code}%")
+            }
+            
+            if (!query.type.isNullOrBlank()) {
+                condition = condition and Permission::type.eq(query.type)
+            }
+            
+            if (!query.status.isNullOrBlank()) {
+                condition = condition and Permission::status.eq(query.status)
+            }
+            
+            condition
         }
         
         // 按id排序

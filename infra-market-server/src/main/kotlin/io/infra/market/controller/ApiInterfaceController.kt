@@ -50,12 +50,12 @@ class ApiInterfaceController(
     fun getList(@RequestParam(required = false) name: String?,
                 @RequestParam(required = false) method: String?,
                 @RequestParam(required = false) status: Int?,
-                @RequestParam(required = false) tag: String?): ApiResponse<List<ApiInterfaceDto>> {
+                @RequestParam(required = false) environment: String?): ApiResponse<List<ApiInterfaceDto>> {
         val query = ApiInterfaceQueryDto(
             name = name,
             method = HttpMethodEnum.fromCode(method ?: ""),
             status = status,
-            environment = EnvironmentEnum.fromCode(tag ?: "")
+            environment = EnvironmentEnum.fromCode(environment ?: "")
         )
         val interfaces = apiInterfaceService.findAll(query)
         return ApiResponse.success(interfaces)
