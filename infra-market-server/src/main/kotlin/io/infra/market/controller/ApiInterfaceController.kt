@@ -42,7 +42,7 @@ class ApiInterfaceController(
      * @param name 接口名称，支持模糊查询
      * @param method HTTP请求方法，如GET、POST等
      * @param status 接口状态，1-启用，0-禁用
-     * @param tag 接口标签，如测试环境、正式环境
+     * @param environment 接口标签，如测试环境、正式环境
      * @return 接口列表，包含接口的基本信息和参数配置
      */
     @GetMapping("/list")

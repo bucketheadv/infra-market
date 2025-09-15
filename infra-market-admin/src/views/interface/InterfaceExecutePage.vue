@@ -9,6 +9,17 @@
           <div class="header-title">接口执行</div>
           <div class="header-subtitle">{{ interfaceData?.name || '接口测试' }}</div>
         </div>
+        <div class="header-actions">
+          <ThemeButton 
+            variant="secondary"
+            size="small"
+            :icon="EditOutlined"
+            @click="handleEdit"
+            class="edit-btn"
+          >
+            编辑接口
+          </ThemeButton>
+        </div>
       </div>
     </div>
 
@@ -63,352 +74,376 @@
           </div>
         </div>
 
-        <a-row :gutter="24" class="content-row">
-        <!-- 左侧：参数配置 -->
-        <a-col :span="14">
-          <div class="form-section">
-            <div class="section-header">
-              <div class="section-icon">
-                <span>⚙️</span>
-              </div>
-              <div class="section-title">参数配置</div>
-            </div>
-            <div v-if="loading" class="loading-container">
-              <a-spin size="large" />
-            </div>
-            <div v-else>
-              <a-form ref="formRef" :model="executeForm" layout="vertical">
-                <!-- URL参数 -->
-                <div v-if="urlParams.length > 0" class="param-group">
-                  <h4>URL参数</h4>
-                  <a-row v-for="param in urlParams" :key="param.name" class="param-row" :gutter="[6, 0]">
-                    <a-col :span="6">
-                      <label class="param-label">
-                        {{ getParamDisplayName(param) }}
-                        <span v-if="param.required" class="required">*</span>
-                        <a-tooltip v-if="param.description" :title="param.description" placement="top">
-                          <QuestionCircleOutlined class="help-icon" />
-                        </a-tooltip>
-                      </label>
-                    </a-col>
-                    <a-col :span="18">
-                      <a-form-item
-                        :name="['params', param.name]"
-                        :rules="param.required ? [{ required: true, message: `请输入${getParamDisplayName(param)}` }] : []"
-                      >
-                        <!-- 代码编辑器弹窗按钮 -->
-                        <div v-if="param.inputType === 'CODE'" class="code-editor-input">
-                          <a-input
-                            :value="getCodePreview(executeForm.params[param.name])"
-                            :placeholder="`请输入${getParamDisplayName(param)}`"
-                            :disabled="!param.changeable"
-                            readonly
-                            class="code-preview-input"
-                            @click="!param.changeable || openCodeEditor(param, 'params')"
-                          >
-                            <template #suffix>
-                              <ThemeButton
-                                v-if="param.changeable"
-                                variant="secondary"
-                                size="small"
-                                @click.stop="openCodeEditor(param, 'params')"
-                              >
-                                <template #icon>
-                                  <span>📝</span>
-                                </template>
-                                编辑
-                              </ThemeButton>
-                            </template>
-                          </a-input>
-                        </div>
-                        <!-- 其他输入组件 -->
-                        <component
-                          v-else
-                          :is="getInputComponent(param)"
-                          v-bind="getInputBindings(param, 'params')"
-                          :placeholder="`请输入${getParamDisplayName(param)}`"
-                          :options="getSelectOptions(param)"
-                          :disabled="!param.changeable"
-                          :required="param.required"
-                        />
-                      </a-form-item>
-                    </a-col>
-                  </a-row>
-                </div>
-
-                <!-- Header参数 -->
-                <div v-if="headerParams.length > 0" class="param-group">
-                  <h4>Header参数</h4>
-                  <a-row v-for="param in headerParams" :key="param.name" class="param-row" :gutter="[6, 0]">
-                    <a-col :span="6">
-                      <label class="param-label">
-                        {{ getParamDisplayName(param) }}
-                        <span v-if="param.required" class="required">*</span>
-                        <a-tooltip v-if="param.description" :title="param.description" placement="top">
-                          <QuestionCircleOutlined class="help-icon" />
-                        </a-tooltip>
-                      </label>
-                    </a-col>
-                    <a-col :span="18">
-                      <a-form-item
-                        :name="['headers', param.name]"
-                        :rules="param.required ? [{ required: true, message: `请输入${getParamDisplayName(param)}` }] : []"
-                      >
-                        <!-- 代码编辑器弹窗按钮 -->
-                        <div v-if="param.inputType === 'CODE'" class="code-editor-input">
-                          <a-input
-                            :value="getCodePreview(executeForm.headers[param.name])"
-                            :placeholder="`请输入${getParamDisplayName(param)}`"
-                            :disabled="!param.changeable"
-                            readonly
-                            class="code-preview-input"
-                            @click="!param.changeable || openCodeEditor(param, 'headers')"
-                          >
-                            <template #suffix>
-                              <ThemeButton
-                                v-if="param.changeable"
-                                variant="secondary"
-                                size="small"
-                                @click.stop="openCodeEditor(param, 'headers')"
-                              >
-                                <template #icon>
-                                  <span>📝</span>
-                                </template>
-                                编辑
-                              </ThemeButton>
-                            </template>
-                          </a-input>
-                        </div>
-                        <!-- 其他输入组件 -->
-                        <component
-                          v-else
-                          :is="getInputComponent(param)"
-                          v-bind="getInputBindings(param, 'headers')"
-                          :placeholder="`请输入${getParamDisplayName(param)}`"
-                          :options="getSelectOptions(param)"
-                          :disabled="!param.changeable"
-                          :required="param.required"
-                        />
-                      </a-form-item>
-                    </a-col>
-                  </a-row>
-                </div>
-
-                <!-- Body参数 -->
-                <div v-if="bodyParams.length > 0 && interfaceData?.method !== 'GET'" class="param-group">
-                  <h4>Body参数</h4>
-                  <a-row v-for="param in bodyParams" :key="param.name" class="param-row" :gutter="[6, 0]">
-                    <a-col :span="6">
-                      <label class="param-label">
-                        {{ getParamDisplayName(param) }}
-                        <span v-if="param.required" class="required">*</span>
-                        <a-tooltip v-if="param.description" :title="param.description" placement="top">
-                          <QuestionCircleOutlined class="help-icon" />
-                        </a-tooltip>
-                      </label>
-                    </a-col>
-                    <a-col :span="18">
-                      <a-form-item
-                        :name="['bodyParams', param.name]"
-                        :rules="param.required ? [{ required: true, message: `请输入${getParamDisplayName(param)}` }] : []"
-                      >
-                        <!-- 代码编辑器弹窗按钮 -->
-                        <div v-if="param.inputType === 'CODE'" class="code-editor-input">
-                          <a-input
-                            :value="getCodePreview(executeForm.bodyParams[param.name])"
-                            :placeholder="`请输入${getParamDisplayName(param)}`"
-                            :disabled="!param.changeable"
-                            readonly
-                            class="code-preview-input"
-                            @click="!param.changeable || openCodeEditor(param, 'bodyParams')"
-                          >
-                            <template #suffix>
-                              <ThemeButton
-                                v-if="param.changeable"
-                                variant="secondary"
-                                size="small"
-                                @click.stop="openCodeEditor(param, 'bodyParams')"
-                              >
-                                <template #icon>
-                                  <span>📝</span>
-                                </template>
-                                编辑
-                              </ThemeButton>
-                            </template>
-                          </a-input>
-                        </div>
-                        <!-- 其他输入组件 -->
-                        <component
-                          v-else
-                          :is="getInputComponent(param)"
-                          v-bind="getInputBindings(param, 'bodyParams')"
-                          :placeholder="`请输入${getParamDisplayName(param)}`"
-                          :options="getSelectOptions(param)"
-                          :disabled="!param.changeable"
-                          :required="param.required"
-                        />
-                      </a-form-item>
-                    </a-col>
-                  </a-row>
-                </div>
-
-                <div v-if="urlParams.length === 0 && headerParams.length === 0 && bodyParams.length === 0" class="no-params">
-                  <a-empty description="该接口无需配置参数" />
-                </div>
-              </a-form>
-            </div>
-          </div>
-        </a-col>
-
-        <!-- 右侧：执行结果 -->
-        <a-col :span="10">
-          <div class="form-section">
-            <div class="section-header">
-              <div class="section-icon">
-                <span>📊</span>
-              </div>
-              <div class="section-title">执行结果</div>
-            </div>
-            <div v-if="!executeResult" class="no-result">
-              <a-empty description="点击执行按钮开始测试接口" />
-            </div>
-            <div v-else>
-              <a-tabs v-model:activeKey="activeTab">
-                <a-tab-pane key="response" tab="响应内容">
-                  <div class="response-container">
-                    <div class="response-header">
-                      <a-tag :color="executeResult.success ? 'green' : 'red'">
-                        {{ executeResult.status }}
-                      </a-tag>
-                      <span class="response-time">
-                        响应时间: {{ executeResult.responseTime }}ms
-                      </span>
+        <!-- 主要内容区域 -->
+        <a-tabs v-model:activeKey="mainActiveTab" class="main-tabs">
+          <!-- 接口执行标签页 -->
+          <a-tab-pane key="execute">
+            <template #tab>
+              <span class="tab-content">
+                <span class="tab-icon">🚀</span>
+                <span>接口执行</span>
+              </span>
+            </template>
+            <a-row :gutter="24" class="content-row">
+              <!-- 左侧：参数配置 -->
+              <a-col :span="14">
+                <div class="form-section">
+                  <div class="section-header">
+                    <div class="section-icon">
+                      <span>⚙️</span>
                     </div>
-                    <div class="response-body">
-                      <CodeEditor
-                        :model-value="formatResponseBody(executeResult.body)"
-                        :readonly="true"
-                        :height="400"
-                        :language="detectResponseLanguage(executeResult.body)"
-                        :options="{
-                          minimap: { enabled: true },
-                          scrollBeyondLastLine: false,
-                          wordWrap: 'on',
-                          lineNumbers: 'on',
-                          folding: true,
-                          fontSize: 10,
-                          fontFamily: 'Monaco, Menlo, Ubuntu Mono, monospace',
-                          lineHeight: 16,
-                          readOnly: true
-                        }"
-                      />
-                    </div>
+                    <div class="section-title">参数配置</div>
                   </div>
-                </a-tab-pane>
-                <a-tab-pane key="headers" tab="响应头">
-                  <div class="headers-container">
-                    <pre>{{ formatHeaders(executeResult.headers) }}</pre>
+                  <div v-if="loading" class="loading-container">
+                    <a-spin size="large" />
                   </div>
-                </a-tab-pane>
-                <a-tab-pane v-if="executeResult.error" key="error" tab="错误信息">
-                  <div class="error-container">
-                    <pre>{{ executeResult.error }}</pre>
-                  </div>
-                </a-tab-pane>
-              </a-tabs>
-            </div>
-          </div>
-        </a-col>
-        </a-row>
+                  <div v-else>
+                    <a-form ref="formRef" :model="executeForm" layout="vertical">
+                      <!-- URL参数 -->
+                      <div v-if="urlParams.length > 0" class="param-group">
+                        <h4>URL参数</h4>
+                        <a-row v-for="param in urlParams" :key="param.name" class="param-row" :gutter="[6, 0]">
+                          <a-col :span="6">
+                            <label class="param-label">
+                              {{ getParamDisplayName(param) }}
+                              <span v-if="param.required" class="required">*</span>
+                              <a-tooltip v-if="param.description" :title="param.description" placement="top">
+                                <QuestionCircleOutlined class="help-icon" />
+                              </a-tooltip>
+                            </label>
+                          </a-col>
+                          <a-col :span="18">
+                            <a-form-item
+                              :name="['params', param.name]"
+                              :rules="param.required ? [{ required: true, message: `请输入${getParamDisplayName(param)}` }] : []"
+                            >
+                              <!-- 代码编辑器弹窗按钮 -->
+                              <div v-if="param.inputType === 'CODE'" class="code-editor-input">
+                                <a-input
+                                  :value="getCodePreview(executeForm.params[param.name])"
+                                  :placeholder="`请输入${getParamDisplayName(param)}`"
+                                  :disabled="!param.changeable"
+                                  readonly
+                                  class="code-preview-input"
+                                  @click="!param.changeable || openCodeEditor(param, 'params')"
+                                >
+                                  <template #suffix>
+                                    <ThemeButton
+                                      v-if="param.changeable"
+                                      variant="secondary"
+                                      size="small"
+                                      @click.stop="openCodeEditor(param, 'params')"
+                                    >
+                                      <template #icon>
+                                        <span>📝</span>
+                                      </template>
+                                      编辑
+                                    </ThemeButton>
+                                  </template>
+                                </a-input>
+                              </div>
+                              <!-- 其他输入组件 -->
+                              <component
+                                v-else
+                                :is="getInputComponent(param)"
+                                v-bind="getInputBindings(param, 'params')"
+                                :placeholder="`请输入${getParamDisplayName(param)}`"
+                                :options="getSelectOptions(param)"
+                                :disabled="!param.changeable"
+                                :required="param.required"
+                              />
+                            </a-form-item>
+                          </a-col>
+                        </a-row>
+                      </div>
 
-        <!-- 执行记录查询板块 -->
-        <div class="form-section">
-          <div class="section-header">
-            <div class="section-icon">
-              <span>📋</span>
+                      <!-- Header参数 -->
+                      <div v-if="headerParams.length > 0" class="param-group">
+                        <h4>Header参数</h4>
+                        <a-row v-for="param in headerParams" :key="param.name" class="param-row" :gutter="[6, 0]">
+                          <a-col :span="6">
+                            <label class="param-label">
+                              {{ getParamDisplayName(param) }}
+                              <span v-if="param.required" class="required">*</span>
+                              <a-tooltip v-if="param.description" :title="param.description" placement="top">
+                                <QuestionCircleOutlined class="help-icon" />
+                              </a-tooltip>
+                            </label>
+                          </a-col>
+                          <a-col :span="18">
+                            <a-form-item
+                              :name="['headers', param.name]"
+                              :rules="param.required ? [{ required: true, message: `请输入${getParamDisplayName(param)}` }] : []"
+                            >
+                              <!-- 代码编辑器弹窗按钮 -->
+                              <div v-if="param.inputType === 'CODE'" class="code-editor-input">
+                                <a-input
+                                  :value="getCodePreview(executeForm.headers[param.name])"
+                                  :placeholder="`请输入${getParamDisplayName(param)}`"
+                                  :disabled="!param.changeable"
+                                  readonly
+                                  class="code-preview-input"
+                                  @click="!param.changeable || openCodeEditor(param, 'headers')"
+                                >
+                                  <template #suffix>
+                                    <ThemeButton
+                                      v-if="param.changeable"
+                                      variant="secondary"
+                                      size="small"
+                                      @click.stop="openCodeEditor(param, 'headers')"
+                                    >
+                                      <template #icon>
+                                        <span>📝</span>
+                                      </template>
+                                      编辑
+                                    </ThemeButton>
+                                  </template>
+                                </a-input>
+                              </div>
+                              <!-- 其他输入组件 -->
+                              <component
+                                v-else
+                                :is="getInputComponent(param)"
+                                v-bind="getInputBindings(param, 'headers')"
+                                :placeholder="`请输入${getParamDisplayName(param)}`"
+                                :options="getSelectOptions(param)"
+                                :disabled="!param.changeable"
+                                :required="param.required"
+                              />
+                            </a-form-item>
+                          </a-col>
+                        </a-row>
+                      </div>
+
+                      <!-- Body参数 -->
+                      <div v-if="bodyParams.length > 0 && interfaceData?.method !== 'GET'" class="param-group">
+                        <h4>Body参数</h4>
+                        <a-row v-for="param in bodyParams" :key="param.name" class="param-row" :gutter="[6, 0]">
+                          <a-col :span="6">
+                            <label class="param-label">
+                              {{ getParamDisplayName(param) }}
+                              <span v-if="param.required" class="required">*</span>
+                              <a-tooltip v-if="param.description" :title="param.description" placement="top">
+                                <QuestionCircleOutlined class="help-icon" />
+                              </a-tooltip>
+                            </label>
+                          </a-col>
+                          <a-col :span="18">
+                            <a-form-item
+                              :name="['bodyParams', param.name]"
+                              :rules="param.required ? [{ required: true, message: `请输入${getParamDisplayName(param)}` }] : []"
+                            >
+                              <!-- 代码编辑器弹窗按钮 -->
+                              <div v-if="param.inputType === 'CODE'" class="code-editor-input">
+                                <a-input
+                                  :value="getCodePreview(executeForm.bodyParams[param.name])"
+                                  :placeholder="`请输入${getParamDisplayName(param)}`"
+                                  :disabled="!param.changeable"
+                                  readonly
+                                  class="code-preview-input"
+                                  @click="!param.changeable || openCodeEditor(param, 'bodyParams')"
+                                >
+                                  <template #suffix>
+                                    <ThemeButton
+                                      v-if="param.changeable"
+                                      variant="secondary"
+                                      size="small"
+                                      @click.stop="openCodeEditor(param, 'bodyParams')"
+                                    >
+                                      <template #icon>
+                                        <span>📝</span>
+                                      </template>
+                                      编辑
+                                    </ThemeButton>
+                                  </template>
+                                </a-input>
+                              </div>
+                              <!-- 其他输入组件 -->
+                              <component
+                                v-else
+                                :is="getInputComponent(param)"
+                                v-bind="getInputBindings(param, 'bodyParams')"
+                                :placeholder="`请输入${getParamDisplayName(param)}`"
+                                :options="getSelectOptions(param)"
+                                :disabled="!param.changeable"
+                                :required="param.required"
+                              />
+                            </a-form-item>
+                          </a-col>
+                        </a-row>
+                      </div>
+
+                      <div v-if="urlParams.length === 0 && headerParams.length === 0 && bodyParams.length === 0" class="no-params">
+                        <a-empty description="该接口无需配置参数" />
+                      </div>
+                    </a-form>
+                  </div>
+                </div>
+              </a-col>
+
+              <!-- 右侧：执行结果 -->
+              <a-col :span="10">
+                <div class="form-section">
+                  <div class="section-header">
+                    <div class="section-icon">
+                      <span>📊</span>
+                    </div>
+                    <div class="section-title">执行结果</div>
+                  </div>
+                  <div v-if="executing" class="executing-container">
+                    <a-spin size="large" />
+                    <div class="executing-text">正在执行接口...</div>
+                  </div>
+                  <div v-else-if="!executeResult" class="no-result">
+                    <a-empty description="点击执行按钮开始测试接口" />
+                  </div>
+                  <div v-else>
+                    <a-tabs v-model:activeKey="activeTab">
+                      <a-tab-pane key="response" tab="响应内容">
+                        <div class="response-container">
+                          <div class="response-header">
+                            <a-tag :color="executeResult.success ? 'green' : 'red'">
+                              {{ executeResult.status }}
+                            </a-tag>
+                            <span class="response-time">
+                              响应时间: {{ executeResult.responseTime }}ms
+                            </span>
+                          </div>
+                          <div class="response-body">
+                            <CodeEditor
+                              :model-value="formatResponseBody(executeResult.body)"
+                              :readonly="true"
+                              :height="400"
+                              :language="detectResponseLanguage(executeResult.body)"
+                              :options="{
+                                minimap: { enabled: true },
+                                scrollBeyondLastLine: false,
+                                wordWrap: 'on',
+                                lineNumbers: 'on',
+                                folding: true,
+                                fontSize: 10,
+                                fontFamily: 'Monaco, Menlo, Ubuntu Mono, monospace',
+                                lineHeight: 16,
+                                readOnly: true
+                              }"
+                            />
+                          </div>
+                        </div>
+                      </a-tab-pane>
+                      <a-tab-pane key="headers" tab="响应头">
+                        <div class="headers-container">
+                          <pre>{{ formatHeaders(executeResult.headers) }}</pre>
+                        </div>
+                      </a-tab-pane>
+                      <a-tab-pane v-if="executeResult.error" key="error" tab="错误信息">
+                        <div class="error-container">
+                          <pre>{{ executeResult.error }}</pre>
+                        </div>
+                      </a-tab-pane>
+                    </a-tabs>
+                  </div>
+                </div>
+              </a-col>
+            </a-row>
+          </a-tab-pane>
+
+          <!-- 执行记录标签页 -->
+          <a-tab-pane key="records">
+            <template #tab>
+              <span class="tab-content">
+                <span class="tab-icon">📋</span>
+                <span>执行记录</span>
+              </span>
+            </template>
+            <div class="form-section">
+              <div class="section-header">
+                <div class="section-icon">
+                  <span>📋</span>
+                </div>
+                <div class="section-title">执行记录</div>
+                <div class="section-actions">
+                  <ThemeButton 
+                    variant="secondary" 
+                    size="small"
+                    :icon="ReloadOutlined"
+                    @click="loadExecutionRecords"
+                    :loading="recordsLoading"
+                  >
+                    刷新
+                  </ThemeButton>
+                </div>
+              </div>
+              
+              <div class="execution-records-container">
+                <div v-if="recordsLoading" class="loading-container">
+                  <a-spin size="large" />
+                </div>
+                <div v-else-if="executionRecords.length === 0" class="no-records">
+                  <a-empty description="暂无执行记录" />
+                </div>
+                <div v-else>
+                  <a-table
+                    :columns="recordColumns"
+                    :data-source="executionRecords"
+                    :pagination="recordPagination"
+                    :loading="recordsLoading"
+                    size="small"
+                    :scroll="{ x: 800 }"
+                    @change="handleRecordTableChange"
+                    class="execution-records-table"
+                    :locale="{
+                      emptyText: '暂无数据',
+                      filterConfirm: '确定',
+                      filterReset: '重置',
+                      filterEmptyText: '无筛选项',
+                      selectAll: '全选',
+                      selectInvert: '反选',
+                      sortTitle: '排序',
+                      expand: '展开行',
+                      collapse: '收起行'
+                    }"
+                  >
+                    <template #bodyCell="{ column, record }">
+                      <template v-if="column.key === 'success'">
+                        <a-tag :color="record.success ? 'green' : 'red'">
+                          {{ record.success ? '成功' : '失败' }}
+                        </a-tag>
+                      </template>
+                      <template v-else-if="column.key === 'executionTime'">
+                        <span v-if="record.executionTime">{{ record.executionTime }}ms</span>
+                        <span v-else class="text-muted">-</span>
+                      </template>
+                      <template v-else-if="column.key === 'responseStatus'">
+                        <a-tag v-if="record.responseStatus" :color="getStatusColor(record.responseStatus)">
+                          {{ record.responseStatus }}
+                        </a-tag>
+                        <span v-else class="text-muted">-</span>
+                      </template>
+                      <template v-else-if="column.key === 'createTime'">
+                        {{ formatDateTime(record.createTime) }}
+                      </template>
+                      <template v-else-if="column.key === 'action'">
+                        <a-space size="small">
+                          <ThemeButton 
+                            variant="secondary"
+                            size="small"
+                            @click="viewRecordDetail(record)"
+                            class="detail-btn"
+                          >
+                            <template #icon>
+                              <EyeOutlined />
+                            </template>
+                            查看详情
+                          </ThemeButton>
+                        </a-space>
+                      </template>
+                    </template>
+                  </a-table>
+                </div>
+              </div>
             </div>
-            <div class="section-title">执行记录</div>
-            <div class="section-actions">
-              <ThemeButton 
-                variant="secondary" 
-                size="small"
-                :icon="ReloadOutlined"
-                @click="loadExecutionRecords"
-                :loading="recordsLoading"
-              >
-                刷新
-              </ThemeButton>
-            </div>
-          </div>
-          
-          <div class="execution-records-container">
-            <div v-if="recordsLoading" class="loading-container">
-              <a-spin size="large" />
-            </div>
-            <div v-else-if="executionRecords.length === 0" class="no-records">
-              <a-empty description="暂无执行记录" />
-            </div>
-            <div v-else>
-              <a-table
-                :columns="recordColumns"
-                :data-source="executionRecords"
-                :pagination="recordPagination"
-                :loading="recordsLoading"
-                size="small"
-                :scroll="{ x: 800 }"
-                @change="handleRecordTableChange"
-                class="execution-records-table"
-                :locale="{
-                  emptyText: '暂无数据',
-                  filterConfirm: '确定',
-                  filterReset: '重置',
-                  filterEmptyText: '无筛选项',
-                  selectAll: '全选',
-                  selectInvert: '反选',
-                  sortTitle: '排序',
-                  expand: '展开行',
-                  collapse: '收起行'
-                }"
-              >
-                <template #bodyCell="{ column, record }">
-                  <template v-if="column.key === 'success'">
-                    <a-tag :color="record.success ? 'green' : 'red'">
-                      {{ record.success ? '成功' : '失败' }}
-                    </a-tag>
-                  </template>
-                  <template v-else-if="column.key === 'executionTime'">
-                    <span v-if="record.executionTime">{{ record.executionTime }}ms</span>
-                    <span v-else class="text-muted">-</span>
-                  </template>
-                  <template v-else-if="column.key === 'responseStatus'">
-                    <a-tag v-if="record.responseStatus" :color="getStatusColor(record.responseStatus)">
-                      {{ record.responseStatus }}
-                    </a-tag>
-                    <span v-else class="text-muted">-</span>
-                  </template>
-                  <template v-else-if="column.key === 'createTime'">
-                    {{ formatDateTime(record.createTime) }}
-                  </template>
-                  <template v-else-if="column.key === 'action'">
-                    <a-space size="small">
-                      <ThemeButton 
-                        variant="secondary"
-                        size="small"
-                        @click="viewRecordDetail(record)"
-                        class="detail-btn"
-                      >
-                        <template #icon>
-                          <EyeOutlined />
-                        </template>
-                        查看详情
-                      </ThemeButton>
-                    </a-space>
-                  </template>
-                </template>
-              </a-table>
-            </div>
-          </div>
-        </div>
+          </a-tab-pane>
+        </a-tabs>
 
         <!-- 操作按钮区域 -->
         <div class="form-actions">
@@ -420,11 +455,12 @@
               variant="primary" 
               size="small"
               :icon="PlayCircleOutlined"
+              :loading="executing"
               :disabled="executing || interfaceData?.status !== 1"
               @click="handleExecute"
               class="submit-btn"
             >
-              {{ interfaceData?.status !== 1 ? '接口已禁用' : '执行接口' }}
+              {{ executing ? '执行中...' : (interfaceData?.status !== 1 ? '接口已禁用' : '执行接口') }}
             </ThemeButton>
             <ThemeButton 
               variant="secondary"
@@ -587,7 +623,7 @@
 import { ref, reactive, computed, onMounted, h } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { message, Modal } from 'ant-design-vue'
-import { PlayCircleOutlined, CloseOutlined, QuestionCircleOutlined, ReloadOutlined, EyeOutlined } from '@ant-design/icons-vue'
+import { PlayCircleOutlined, CloseOutlined, QuestionCircleOutlined, ReloadOutlined, EyeOutlined, EditOutlined } from '@ant-design/icons-vue'
 import { interfaceApi, executionRecordApi, POST_TYPES, TAGS, type ApiInterface, type ApiParam, type ApiExecuteRequest, type ApiExecuteResponse, type ApiInterfaceExecutionRecord, type ApiInterfaceExecutionRecordQuery } from '@/api/interface'
 import ThemeButton from '@/components/ThemeButton.vue'
 import CodeEditor from '@/components/CodeEditor.vue'
@@ -603,6 +639,7 @@ const executing = ref(false)
 const interfaceData = ref<ApiInterface | null>(null)
 const executeResult = ref<ApiExecuteResponse | null>(null)
 const activeTab = ref('response')
+const mainActiveTab = ref('execute')
 
 // 执行记录相关
 const recordsLoading = ref(false)
@@ -777,6 +814,15 @@ const initializeFormData = () => {
 // 返回上一页
 const handleBack = () => {
   router.back()
+}
+
+// 跳转到编辑页
+const handleEdit = () => {
+  if (interfaceId) {
+    router.push(`/tools/interface/${interfaceId}/edit`)
+  } else {
+    message.error('接口ID不存在')
+  }
 }
 
 // 显示生产环境确认弹窗
@@ -1311,6 +1357,12 @@ const getStatusColor = (status: number): string => {
   flex: 1;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .header-title {
   margin: 0 0 2px 0;
   font-size: 15px;
@@ -1424,6 +1476,26 @@ const getStatusColor = (status: number): string => {
   justify-content: center;
   align-items: center;
   height: 200px;
+}
+
+.executing-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border: 1px solid #bae6fd;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.executing-text {
+  margin-top: 16px;
+  font-size: 14px;
+  color: #0369a1;
+  font-weight: 500;
+  text-align: center;
 }
 
 .param-group {
@@ -1566,6 +1638,77 @@ const getStatusColor = (status: number): string => {
 
 .content-row {
   margin: 0;
+}
+
+/* 主标签页样式 */
+.main-tabs {
+  margin-top: 16px;
+}
+
+.main-tabs :deep(.ant-tabs-nav) {
+  margin-bottom: 16px;
+  background: #fff;
+  border-radius: 6px;
+  padding: 0 16px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  border: 1px solid #f0f0f0;
+}
+
+.main-tabs :deep(.ant-tabs-nav::before) {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.main-tabs :deep(.ant-tabs-tab) {
+  padding: 12px 20px;
+  font-weight: 500;
+  font-size: 14px;
+  color: #666;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  margin-right: 4px;
+  transition: all 0.2s ease;
+}
+
+.main-tabs :deep(.ant-tabs-tab:hover) {
+  color: var(--primary-color, #1890ff);
+  background: rgba(24, 144, 255, 0.06);
+}
+
+.main-tabs :deep(.ant-tabs-tab-active) {
+  color: var(--primary-color, #1890ff);
+  background: rgba(24, 144, 255, 0.1);
+  font-weight: 600;
+}
+
+.main-tabs :deep(.ant-tabs-ink-bar) {
+  background: var(--primary-color, #1890ff);
+  height: 2px;
+}
+
+.main-tabs :deep(.ant-tabs-content-holder) {
+  padding: 0;
+}
+
+.main-tabs :deep(.ant-tabs-tabpane) {
+  padding: 0;
+}
+
+/* 标签页内容样式 */
+.tab-content {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.tab-icon {
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+.main-tabs :deep(.ant-tabs-tab-active .tab-icon) {
+  opacity: 1;
 }
 
 .card-title {
@@ -1735,5 +1878,44 @@ const getStatusColor = (status: number): string => {
 .detail-btn :deep(.anticon) {
   font-size: 12px;
   margin-right: 4px;
+}
+
+/* 编辑按钮样式 */
+.edit-btn.theme-button.theme-button--secondary {
+  border-radius: 4px !important;
+  transition: all 0.2s ease !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  padding: 4px 12px !important;
+  height: 28px !important;
+  min-width: 90px !important;
+  background: #f0f9ff !important;
+  border: 1px solid #bae6fd !important;
+  color: #0369a1 !important;
+  backdrop-filter: none !important;
+}
+
+.edit-btn.theme-button.theme-button--secondary:hover:not(.theme-button--disabled) {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 8px rgba(3, 105, 161, 0.15) !important;
+  background: #e0f2fe !important;
+  border-color: #7dd3fc !important;
+  color: #0c4a6e !important;
+}
+
+.edit-btn.theme-button.theme-button--secondary:active,
+.edit-btn.theme-button.theme-button--secondary:focus,
+.edit-btn.theme-button.theme-button--secondary:focus-visible {
+  transform: translateY(0) !important;
+  box-shadow: 0 0 0 2px rgba(3, 105, 161, 0.2) !important;
+  background: #e0f2fe !important;
+  border-color: #0369a1 !important;
+  color: #0c4a6e !important;
+  outline: none !important;
+}
+
+.edit-btn :deep(.theme-button__icon) {
+  font-size: 12px !important;
+  margin-right: 4px !important;
 }
 </style>

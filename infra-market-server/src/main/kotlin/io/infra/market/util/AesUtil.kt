@@ -13,7 +13,7 @@ object AesUtil {
     
     // 默认密钥，实际项目中应该从配置文件或环境变量中读取
     private const val DEFAULT_KEY = "InfraMarketSecretKey2024"
-    
+
     /**
      * 生成AES密钥
      */
@@ -54,7 +54,7 @@ object AesUtil {
         return try {
             val decryptedPassword = decrypt(encodedPassword, key)
             rawPassword == decryptedPassword
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             false
         }
     }

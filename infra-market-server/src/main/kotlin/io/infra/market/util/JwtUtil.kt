@@ -36,7 +36,7 @@ object JwtUtil {
         return try {
             val claims = getClaimsFromToken(token)
             claims.subject.toLong()
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
     }
@@ -48,7 +48,7 @@ object JwtUtil {
         return try {
             val claims = getClaimsFromToken(token)
             claims["username"] as String?
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
     }
@@ -60,7 +60,7 @@ object JwtUtil {
         return try {
             val claims = getClaimsFromToken(token)
             !claims.expiration.before(Date())
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             false
         }
     }
