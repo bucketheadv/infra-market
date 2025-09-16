@@ -101,7 +101,15 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from 'vue'
+import { message } from 'ant-design-vue'
 import CodeEditor from './CodeEditor.vue'
+import * as prettier from 'prettier/standalone'
+import * as prettierParserBabel from 'prettier/parser-babel'
+import * as prettierParserHtml from 'prettier/parser-html'
+import * as prettierParserCss from 'prettier/parser-postcss'
+import * as jsBeautify from 'js-beautify'
+import * as sqlFormatter from 'sql-formatter'
+import xmlFormatter from 'xml-formatter'
 
 // Props
 interface Props {
@@ -141,7 +149,7 @@ const characterCount = computed(() => {
 })
 
 const canFormat = computed(() => {
-  return ['json', 'java', 'javascript', 'typescript', 'kotlin', 'html', 'css', 'xml', 'yaml'].includes(selectedLanguage.value)
+  return ['json', 'java', 'javascript', 'typescript', 'kotlin', 'html', 'css', 'xml', 'yaml', 'sql'].includes(selectedLanguage.value)
 })
 
 // 代码类型检测函数
@@ -277,7 +285,7 @@ const handleLanguageChange = () => {
   emit('language-change', selectedLanguage.value)
 }
 
-const formatCode = () => {
+const formatCode = async () => {
   if (!canFormat.value) return
   
   try {
@@ -285,57 +293,200 @@ const formatCode = () => {
     
     switch (selectedLanguage.value) {
       case 'json':
-        const parsed = JSON.parse(editorValue.value)
-        formatted = JSON.stringify(parsed, null, 2)
+        try {
+          const parsed = JSON.parse(editorValue.value)
+          formatted = JSON.stringify(parsed, null, 2)
+        } catch (parseError) {
+          message.error('JSON格式错误，无法格式化')
+          return
+        }
         break
+        
       case 'javascript':
       case 'typescript':
-        // 这里可以集成 Prettier 或其他格式化工具
-        // 暂时使用简单的缩进格式化
-        formatted = editorValue.value
-          .split('\n')
-          .map(line => line.trim())
-          .join('\n')
+        try {
+          formatted = await prettier.format(editorValue.value, {
+            parser: 'babel',
+            plugins: [prettierParserBabel],
+            semi: true,
+            singleQuote: true,
+            tabWidth: 4,
+            trailingComma: 'es5'
+          })
+        } catch (error) {
+          // 如果Prettier失败，使用js-beautify作为备用
+          formatted = jsBeautify.js(editorValue.value, {
+            indent_size: 4,
+            indent_char: ' ',
+            max_preserve_newlines: 2,
+            preserve_newlines: true,
+            keep_array_indentation: false,
+            break_chained_methods: false,
+            indent_scripts: 'normal',
+            brace_style: 'collapse',
+            space_before_conditional: true,
+            unescape_strings: false,
+            jslint_happy: false,
+            end_with_newline: true,
+            wrap_line_length: 0,
+            indent_inner_html: false,
+            comma_first: false,
+            e4x: false,
+            indent_empty_lines: false
+          })
+        }
         break
+        
       case 'html':
+        try {
+          formatted = await prettier.format(editorValue.value, {
+            parser: 'html',
+            plugins: [prettierParserHtml],
+            tabWidth: 4,
+            printWidth: 80,
+            htmlWhitespaceSensitivity: 'css'
+          })
+        } catch (error) {
+          // 如果Prettier失败，使用js-beautify作为备用
+          formatted = jsBeautify.html(editorValue.value, {
+            indent_size: 4,
+            indent_char: ' ',
+            max_preserve_newlines: 2,
+            preserve_newlines: true,
+            keep_array_indentation: false,
+            break_chained_methods: false,
+            indent_scripts: 'normal',
+            brace_style: 'collapse',
+            space_before_conditional: true,
+            unescape_strings: false,
+            jslint_happy: false,
+            end_with_newline: true,
+            wrap_line_length: 0,
+            indent_inner_html: false,
+            comma_first: false,
+            e4x: false,
+            indent_empty_lines: false
+          })
+        }
+        break
+        
       case 'css':
-        // 这里可以集成 HTML/CSS 格式化工具
-        formatted = editorValue.value
+        try {
+          formatted = await prettier.format(editorValue.value, {
+            parser: 'css',
+            plugins: [prettierParserCss],
+            tabWidth: 4,
+            printWidth: 80
+          })
+        } catch (error) {
+          // 如果Prettier失败，使用js-beautify作为备用
+          formatted = jsBeautify.css(editorValue.value, {
+            indent_size: 4,
+            indent_char: ' ',
+            max_preserve_newlines: 2,
+            preserve_newlines: true,
+            keep_array_indentation: false,
+            break_chained_methods: false,
+            indent_scripts: 'normal',
+            brace_style: 'collapse',
+            space_before_conditional: true,
+            unescape_strings: false,
+            jslint_happy: false,
+            end_with_newline: true,
+            wrap_line_length: 0,
+            indent_inner_html: false,
+            comma_first: false,
+            e4x: false,
+            indent_empty_lines: false
+          })
+        }
         break
+        
       case 'xml':
-        // 简单的XML格式化
-        formatted = editorValue.value
-          .replace(/></g, '>\n<')
-          .split('\n')
-          .map(line => line.trim())
-          .join('\n')
+        try {
+          formatted = xmlFormatter(editorValue.value, {
+            indentation: '    ',
+            filter: (node: any) => node.type !== 'Comment',
+            collapseContent: true,
+            lineSeparator: '\n'
+          })
+        } catch (error) {
+          message.error('XML格式错误，无法格式化')
+          return
+        }
         break
+        
       case 'yaml':
-        // 简单的YAML格式化
-        formatted = editorValue.value
-          .split('\n')
-          .map(line => line.trim())
-          .join('\n')
+        try {
+          formatted = await prettier.format(editorValue.value, {
+            parser: 'yaml',
+            tabWidth: 4,
+            printWidth: 80
+          })
+        } catch (error) {
+          message.error('YAML格式错误，无法格式化')
+          return
+        }
         break
+        
       case 'java':
       case 'kotlin':
-        // 简单的代码格式化
-        formatted = editorValue.value
-          .split('\n')
-          .map(line => line.trim())
-          .join('\n')
+        // Java和Kotlin使用js-beautify的JavaScript格式化器作为近似
+        formatted = jsBeautify.js(editorValue.value, {
+          indent_size: 4,
+          indent_char: ' ',
+          max_preserve_newlines: 2,
+          preserve_newlines: true,
+          keep_array_indentation: false,
+          break_chained_methods: false,
+          indent_scripts: 'normal',
+          brace_style: 'collapse',
+          space_before_conditional: true,
+          unescape_strings: false,
+          jslint_happy: false,
+          end_with_newline: true,
+          wrap_line_length: 0,
+          indent_inner_html: false,
+          comma_first: false,
+          e4x: false,
+          indent_empty_lines: false
+        })
         break
+        
+      case 'sql':
+        try {
+          formatted = sqlFormatter.format(editorValue.value, {
+            language: 'sql',
+            tabWidth: 4,
+            useTabs: false,
+            keywordCase: 'upper',
+            functionCase: 'upper',
+            dataTypeCase: 'upper',
+            linesBetweenQueries: 2
+          })
+        } catch (error) {
+          message.error('SQL格式错误，无法格式化')
+          return
+        }
+        break
+        
+      default:
+        message.info('当前语言暂不支持格式化')
+        return
     }
     
     editorValue.value = formatted
+    message.success('格式化完成')
   } catch (error) {
     console.error('格式化失败:', error)
+    message.error('格式化失败，请检查代码语法')
   }
 }
 
 const clearCode = () => {
   editorValue.value = ''
 }
+
 
 const handleConfirm = () => {
   emit('update:value', editorValue.value)
