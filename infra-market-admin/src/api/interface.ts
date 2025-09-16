@@ -12,6 +12,7 @@ export interface ApiInterface {
   updateTime?: string
   postType?: string
   environment?: string
+  timeout?: number
   urlParams?: ApiParam[]
   headerParams?: ApiParam[]
   bodyParams?: ApiParam[]
@@ -43,6 +44,7 @@ export interface ApiInterfaceForm {
   url: string
   description?: string
   postType?: string
+  timeout?: number
   urlParams?: ApiParam[]
   headerParams?: ApiParam[]
   bodyParams?: ApiParam[]
@@ -53,6 +55,7 @@ export interface ApiExecuteRequest {
   headers?: Record<string, string>
   urlParams?: Record<string, any>
   bodyParams?: Record<string, any>
+  timeout?: number
 }
 
 export interface ApiExecuteResponse {
@@ -200,7 +203,9 @@ export interface ApiInterfaceExecutionRecord {
   clientIp?: string
   userAgent?: string
   createTime: string
+  createTimeStr?: string
   updateTime: string
+  updateTimeStr?: string
 }
 
 export interface ApiInterfaceExecutionRecordQuery {

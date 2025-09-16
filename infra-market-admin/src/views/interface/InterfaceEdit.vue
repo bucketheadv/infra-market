@@ -123,6 +123,27 @@
               </a-select>
             </a-form-item>
 
+            <a-form-item label="超时时间" name="timeout">
+              <a-input-number
+                v-model:value="form.timeout"
+                :min="1"
+                :max="300"
+                :step="1"
+                placeholder="请输入超时时间"
+                size="middle"
+                class="form-input"
+                addon-after="秒"
+                style="width: 100%"
+              >
+                <template #prefix>
+                  <ClockCircleOutlined class="input-icon" />
+                </template>
+              </a-input-number>
+              <div class="form-help-text">
+                接口执行超时时间，范围：1秒 - 5分钟，默认60秒
+              </div>
+            </a-form-item>
+
             <a-form-item label="接口描述" name="description">
               <a-textarea
                 v-model:value="form.description"
@@ -336,7 +357,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
-import { PlusOutlined, ApiOutlined, IdcardOutlined, LinkOutlined, SettingOutlined, CheckOutlined, CloseOutlined, DeleteOutlined, EnvironmentOutlined } from '@ant-design/icons-vue'
+import { PlusOutlined, ApiOutlined, IdcardOutlined, LinkOutlined, SettingOutlined, CheckOutlined, CloseOutlined, DeleteOutlined, EnvironmentOutlined, ClockCircleOutlined } from '@ant-design/icons-vue'
 import { interfaceApi, HTTP_METHODS, POST_TYPES, TAGS, type ApiInterface, type ApiParam } from '@/api/interface'
 import ThemeButton from '@/components/ThemeButton.vue'
 import ParamForm from './ParamForm.vue'
@@ -358,6 +379,7 @@ const form = reactive({
   description: '',
   postType: '',
   environment: '',
+  timeout: 60,
   urlParams: [] as ApiParam[],
   headerParams: [] as ApiParam[],
   bodyParams: [] as ApiParam[]
@@ -393,6 +415,7 @@ const initializeForm = () => {
     description: '',
     postType: '',
     environment: '',
+    timeout: 60,
     urlParams: [],
     headerParams: [],
     bodyParams: []
@@ -408,6 +431,7 @@ const loadInterfaceData = async () => {
     // 填充表单数据
     Object.assign(form, {
       ...response.data,
+      timeout: response.data.timeout || 60,
       urlParams: response.data.urlParams ? [...response.data.urlParams] : [],
       headerParams: response.data.headerParams ? [...response.data.headerParams] : [],
       bodyParams: response.data.bodyParams ? [...response.data.bodyParams] : []
@@ -1226,5 +1250,13 @@ const validateParamNames = (): boolean => {
   .form-section {
     margin-bottom: 16px;
   }
+}
+
+/* 表单帮助文本样式 */
+.form-help-text {
+  font-size: 12px;
+  color: #999;
+  margin-top: 4px;
+  line-height: 1.4;
 }
 </style>

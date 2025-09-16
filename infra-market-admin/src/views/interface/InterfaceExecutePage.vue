@@ -64,6 +64,9 @@
                   {{ interfaceData.status === 1 ? '启用' : '禁用' }}
                 </a-tag>
               </a-descriptions-item>
+              <a-descriptions-item v-if="interfaceData.timeout" label="超时时间">
+                <span class="timeout-text">{{ formatTimeout(interfaceData.timeout) }}</span>
+              </a-descriptions-item>
               <a-descriptions-item label="创建时间">
                 <span class="time-text">{{ formatDateTime(interfaceData.createTime) }}</span>
               </a-descriptions-item>
@@ -273,6 +276,7 @@
                         </a-row>
                       </div>
 
+
                       <div v-if="urlParams.length === 0 && headerParams.length === 0 && bodyParams.length === 0" class="no-params">
                         <a-empty description="该接口无需配置参数" />
                       </div>
@@ -420,7 +424,7 @@
                         <span v-else class="text-muted">-</span>
                       </template>
                       <template v-else-if="column.key === 'createTime'">
-                        {{ formatDateTime(record.createTime) }}
+                        {{ record.createTimeStr || '-' }}
                       </template>
                       <template v-else-if="column.key === 'action'">
                         <a-space size="small">
@@ -521,7 +525,7 @@
             {{ selectedRecord.clientIp || '-' }}
           </a-descriptions-item>
           <a-descriptions-item label="执行时间" :span="2">
-            {{ formatDateTime(selectedRecord.createTime) }}
+            {{ selectedRecord.createTimeStr || '暂无' }}
           </a-descriptions-item>
           <a-descriptions-item v-if="selectedRecord.errorMessage" label="错误信息" :span="2">
             <div class="error-message">{{ selectedRecord.errorMessage }}</div>
@@ -809,6 +813,7 @@ const initializeFormData = () => {
       }
     }
   })
+  
 }
 
 // 返回上一页
@@ -1250,6 +1255,33 @@ const formatDateTime = (dateTime: string | Date | undefined): string => {
     second: '2-digit'
   })
 }
+
+// 格式化超时时间
+const formatTimeout = (timeout: number): string => {
+  if (timeout < 60) {
+    return `${timeout}秒`
+  } else if (timeout < 3600) {
+    const minutes = Math.floor(timeout / 60)
+    const seconds = timeout % 60
+    if (seconds === 0) {
+      return `${minutes}分钟`
+    } else {
+      return `${minutes}分${seconds}秒`
+    }
+  } else {
+    const hours = Math.floor(timeout / 3600)
+    const minutes = Math.floor((timeout % 3600) / 60)
+    const seconds = timeout % 60
+    if (minutes === 0 && seconds === 0) {
+      return `${hours}小时`
+    } else if (seconds === 0) {
+      return `${hours}小时${minutes}分钟`
+    } else {
+      return `${hours}小时${minutes}分${seconds}秒`
+    }
+  }
+}
+
 
 // 执行记录相关方法
 const loadExecutionRecords = async () => {
@@ -1760,6 +1792,13 @@ const getStatusColor = (status: number): string => {
   color: #999;
   font-size: 13px;
 }
+
+.timeout-text {
+  color: #1890ff;
+  font-size: 13px;
+  font-weight: 500;
+}
+
 
 :deep(.ant-descriptions-item-label) {
   font-weight: 500;

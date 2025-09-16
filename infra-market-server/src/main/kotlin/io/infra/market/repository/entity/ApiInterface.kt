@@ -84,4 +84,12 @@ data class ApiInterface(
      * 可选字段，存储枚举值对应的字符串
      */
     var environment: String? = null,
+    
+    /**
+     * 超时时间（秒）
+     * 接口执行时的超时时间，单位为秒
+     * 可选字段，默认值为60（60秒）
+     * 如果未设置，则使用系统默认超时时间
+     */
+    var timeout: Long? = null,
 ) : BaseActiveRecordEntity<ApiInterface, Long>()

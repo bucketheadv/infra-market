@@ -95,7 +95,15 @@ data class ApiInterfaceDto(
      * Body参数列表
      * 接口的请求体参数配置，用于POST、PUT、PATCH请求
      */
-    var bodyParams: List<ApiParamDto>? = null
+    var bodyParams: List<ApiParamDto>? = null,
+    
+    /**
+     * 超时时间（秒）
+     * 接口执行时的超时时间，单位为秒
+     * 可选字段，默认值为60（60秒）
+     * 如果未设置，则使用系统默认超时时间
+     */
+    var timeout: Long? = null
 )
 
 /**
@@ -265,7 +273,15 @@ data class ApiInterfaceFormDto(
      * Body参数列表
      * 接口的Body参数配置
      */
-    var bodyParams: List<ApiParamDto>? = null
+    var bodyParams: List<ApiParamDto>? = null,
+    
+    /**
+     * 超时时间（秒）
+     * 接口执行时的超时时间，单位为秒
+     * 可选字段，默认值为60（60秒）
+     * 如果未设置，则使用系统默认超时时间
+     */
+    var timeout: Long? = null
 )
 
 /**
@@ -347,7 +363,14 @@ data class ApiExecuteRequestDto(
      * Body参数值
      * 实际的Body参数值，key为参数名，value为参数值
      */
-    var bodyParams: Map<String, Any>? = null
+    var bodyParams: Map<String, Any>? = null,
+    
+    /**
+     * 超时时间（秒）
+     * 可选字段，用于覆盖接口配置的超时时间
+     * 如果未设置，则使用接口配置的超时时间或系统默认超时时间
+     */
+    var timeout: Long? = null
 )
 
 /**

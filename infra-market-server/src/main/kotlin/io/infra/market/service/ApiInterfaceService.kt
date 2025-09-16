@@ -19,7 +19,11 @@ import org.springframework.http.HttpMethod
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
 import org.springframework.http.ResponseEntity
+import org.springframework.http.client.SimpleClientHttpRequestFactory
 import java.util.Date
+import com.github.benmanes.caffeine.cache.Caffeine
+import com.github.benmanes.caffeine.cache.Cache
+import java.util.concurrent.TimeUnit
 
 /**
  * 接口管理服务
@@ -29,9 +33,18 @@ class ApiInterfaceService(
     private val apiInterfaceDao: ApiInterfaceDao,
     private val apiInterfaceExecutionRecordDao: ApiInterfaceExecutionRecordDao,
     private val userDao: UserDao,
-    private val restTemplate: RestTemplate,
     private val objectMapper: ObjectMapper
 ) {
+    
+    /**
+     * RestTemplate缓存，避免重复创建
+     * Key: 超时时间（毫秒），Value: RestTemplate实例
+     * 使用Caffeine缓存，设置最大缓存100个实例，30分钟过期
+     */
+    private val restTemplateCache: Cache<Long, RestTemplate> = Caffeine.newBuilder()
+        .maximumSize(100)
+        .expireAfterAccess(30, TimeUnit.MINUTES)
+        .build()
 
     fun findAll(query: ApiInterfaceQueryDto): List<ApiInterfaceDto> {
         val interfaces = apiInterfaceDao.findByCondition(query)
@@ -193,7 +206,15 @@ class ApiInterfaceService(
             val httpMethod = HttpMethod.valueOf(method!!.code)
             val httpEntity = HttpEntity(body, headers)
 
-            val response: ResponseEntity<String> = restTemplate.exchange(
+            // 确定超时时间：请求中的超时时间 > 接口配置的超时时间 > 系统默认超时时间
+            // 注意：接口配置和请求中的超时时间单位为秒，需要转换为毫秒
+            val timeoutSeconds = request.timeout ?: interfaceInfo.timeout ?: 60L
+            val timeoutMillis = timeoutSeconds * 1000L
+            
+            // 创建带超时配置的RestTemplate
+            val timeoutRestTemplate = createRestTemplateWithTimeout(timeoutMillis)
+
+            val response: ResponseEntity<String> = timeoutRestTemplate.exchange(
                 finalUrl,
                 httpMethod,
                 httpEntity,
@@ -287,6 +308,7 @@ class ApiInterfaceService(
             updateTime = entity.updateTime,
             postType = entity.postType?.let { PostTypeEnum.fromCode(it) },
             environment = entity.environment?.let { EnvironmentEnum.fromCode(it) },
+            timeout = entity.timeout,
             urlParams = urlParams,
             headerParams = headerParams,
             bodyParams = bodyParams
@@ -317,6 +339,7 @@ class ApiInterfaceService(
             description = form.description,
             postType = form.postType?.code,
             environment = form.environment?.code,
+            timeout = form.timeout,
             params = paramsJson
         )
     }
@@ -439,6 +462,21 @@ class ApiInterfaceService(
         } catch (e: Exception) {
             // 记录执行记录失败不影响主流程，只打印日志
             println("保存接口执行记录失败: ${e.message}")
+        }
+    }
+    
+    /**
+     * 创建带超时配置的RestTemplate（使用Caffeine缓存）
+     * 
+     * @param timeout 超时时间（毫秒）
+     * @return 配置了超时时间的RestTemplate实例
+     */
+    private fun createRestTemplateWithTimeout(timeout: Long): RestTemplate {
+        return restTemplateCache.get(timeout) { timeoutMillis ->
+            val factory = SimpleClientHttpRequestFactory()
+            factory.setConnectTimeout(timeoutMillis.toInt())
+            factory.setReadTimeout(timeoutMillis.toInt())
+            RestTemplate(factory)
         }
     }
 }

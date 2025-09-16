@@ -164,6 +164,7 @@ CREATE TABLE IF NOT EXISTS `api_interface` (
     `params` TEXT NULL COMMENT '参数配置JSON',
     `status` INT NOT NULL DEFAULT 1 COMMENT '状态：1-启用，0-禁用',
     `environment` VARCHAR(50) NULL COMMENT '接口环境，用于标识接口所属的环境，如测试环境、正式环境',
+    `timeout` BIGINT NULL COMMENT '超时时间（秒），接口执行时的超时时间，默认60（60秒）',
     `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     PRIMARY KEY (`id`),
