@@ -2,6 +2,7 @@ package io.infra.market.dto
 
 import io.infra.market.util.DateTimeUtil
 import org.joda.time.DateTime
+import java.util.Date
 
 /**
  * 接口执行记录DTO
@@ -97,7 +98,7 @@ data class ApiInterfaceExecutionRecordDto(
     /**
      * 创建时间
      */
-    var createTime: DateTime? = null,
+    var createTime: Long? = null,
 
     /**
      * 创建时间格式化字符串
@@ -107,7 +108,7 @@ data class ApiInterfaceExecutionRecordDto(
     /**
      * 更新时间
      */
-    var updateTime: DateTime? = null,
+    var updateTime: Long? = null,
 
     /**
      * 更新时间格式化字符串
@@ -118,8 +119,8 @@ data class ApiInterfaceExecutionRecordDto(
      * 格式化时间字段
      */
     fun formatTimeFields() {
-        createTimeStr = DateTimeUtil.formatDateTime(createTime?.toDate())
-        updateTimeStr = DateTimeUtil.formatDateTime(updateTime?.toDate())
+        createTimeStr = DateTimeUtil.formatDateTime(createTime)
+        updateTimeStr = DateTimeUtil.formatDateTime(updateTime)
     }
 }
 
@@ -269,6 +270,6 @@ data class ApiInterfaceExecutionRecordStatsDto(
      * 格式化时间字段
      */
     fun formatTimeFields() {
-        lastExecutionTimeStr = DateTimeUtil.formatDateTime(lastExecutionTime?.toDate())
+        lastExecutionTimeStr = DateTimeUtil.formatDateTime(lastExecutionTime?.millis)
     }
 }

@@ -114,7 +114,7 @@ class UserDao : ServiceImpl<UserMapper, User>() {
      */
     fun countBeforeDate(dateTime: DateTime): Long {
         val query = query().whereWith {
-            User::status.ne(StatusEnum.DELETED.code) and User::createTime.le(dateTime.toDate())
+            User::status.ne(StatusEnum.DELETED.code) and User::createTime.le(dateTime.millis)
         }
         return mapper.selectCountByQuery(query)
     }

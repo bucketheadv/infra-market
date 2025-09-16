@@ -102,7 +102,7 @@ class RoleDao : ServiceImpl<RoleMapper, Role>() {
      */
     fun countBeforeDate(dateTime: DateTime): Long {
         val query = query().whereWith {
-            Role::status.ne(StatusEnum.DELETED.code) and Role::createTime.le(dateTime.toDate())
+            Role::status.ne(StatusEnum.DELETED.code) and Role::createTime.le(dateTime.millis)
         }
         return mapper.selectCountByQuery(query)
     }

@@ -16,7 +16,6 @@ import io.infra.market.util.DateTimeUtil
 import io.infra.market.util.AesUtil
 import io.infra.market.util.JwtUtil
 import org.springframework.stereotype.Service
-import java.util.Date
 
 @Service
 class AuthService(
@@ -41,7 +40,7 @@ class AuthService(
         }
         
         // 更新登录时间
-        user.lastLoginTime = Date()
+        user.lastLoginTime = System.currentTimeMillis()
         userDao.updateById(user)
         
         // 获取用户权限

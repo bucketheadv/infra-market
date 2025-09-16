@@ -125,8 +125,8 @@ class ApiInterfaceExecutionRecordService(
             errorMessage = record.errorMessage,
             clientIp = record.clientIp,
             userAgent = record.userAgent,
-            createTime = record.createTime?.let { DateTime(it) },
-            updateTime = record.updateTime?.let { DateTime(it) }
+            createTime = record.createTime,
+            updateTime = record.updateTime
         )
         
         dto.formatTimeFields()

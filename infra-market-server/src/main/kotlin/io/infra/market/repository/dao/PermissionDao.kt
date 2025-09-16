@@ -120,7 +120,7 @@ class PermissionDao : ServiceImpl<PermissionMapper, Permission>() {
      */
     fun countBeforeDate(dateTime: DateTime): Long {
         val query = query().whereWith {
-            Permission::status.ne(StatusEnum.DELETED.code) and Permission::createTime.le(dateTime.toDate())
+            Permission::status.ne(StatusEnum.DELETED.code) and Permission::createTime.le(dateTime.millis)
         }
         return mapper.selectCountByQuery(query)
     }

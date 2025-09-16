@@ -59,11 +59,11 @@ class ApiInterfaceExecutionRecordDao : ServiceImpl<ApiInterfaceExecutionRecordMa
 
         // 时间范围查询
         queryDto.startTime?.let {
-            query.where(ApiInterfaceExecutionRecord::createTime.ge(it.toDate()))
+            query.where(ApiInterfaceExecutionRecord::createTime.ge(it.millis))
         }
         
         queryDto.endTime?.let {
-            query.where(ApiInterfaceExecutionRecord::createTime.le(it.toDate()))
+            query.where(ApiInterfaceExecutionRecord::createTime.le(it.millis))
         }
 
         // 排序
@@ -144,7 +144,7 @@ class ApiInterfaceExecutionRecordDao : ServiceImpl<ApiInterfaceExecutionRecordMa
 
         val minExecutionTime = executionTimes.minOrNull() ?: 0L
         val maxExecutionTime = executionTimes.maxOrNull() ?: 0L
-        val lastExecutionTime = records.maxByOrNull { it.createTime?.time ?: 0L }?.createTime?.let { DateTime(it) }
+        val lastExecutionTime = records.maxByOrNull { it.createTime ?: 0L }?.createTime?.let { DateTime(it) }
 
         return ApiInterfaceExecutionRecordStatsDto(
             interfaceId = interfaceId,
@@ -170,8 +170,8 @@ class ApiInterfaceExecutionRecordDao : ServiceImpl<ApiInterfaceExecutionRecordMa
         val query = QueryWrapper.create()
             .select()
             .from(ApiInterfaceExecutionRecord::class.java)
-            .where(ApiInterfaceExecutionRecord::createTime.ge(startTime.toDate()))
-            .where(ApiInterfaceExecutionRecord::createTime.le(endTime.toDate()))
+            .where(ApiInterfaceExecutionRecord::createTime.ge(startTime.millis))
+            .where(ApiInterfaceExecutionRecord::createTime.le(endTime.millis))
 
         return mapper.selectCountByQuery(query)
     }
@@ -185,7 +185,7 @@ class ApiInterfaceExecutionRecordDao : ServiceImpl<ApiInterfaceExecutionRecordMa
     fun deleteByTimeBefore(beforeTime: DateTime): Int {
         val query = QueryWrapper.create()
             .from(ApiInterfaceExecutionRecord::class.java)
-            .where(ApiInterfaceExecutionRecord::createTime.lt(beforeTime.toDate()))
+            .where(ApiInterfaceExecutionRecord::createTime.lt(beforeTime.millis))
 
         return mapper.deleteByQuery(query)
     }

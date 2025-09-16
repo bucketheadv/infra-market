@@ -20,7 +20,6 @@ import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
 import org.springframework.http.ResponseEntity
 import org.springframework.http.client.SimpleClientHttpRequestFactory
-import java.util.Date
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.Cache
 import java.util.concurrent.TimeUnit
@@ -62,8 +61,8 @@ class ApiInterfaceService(
         validatePostType(form)
         
         val apiInterface = convertToEntity(form)
-        apiInterface.createTime = Date()
-        apiInterface.updateTime = Date()
+        apiInterface.createTime = System.currentTimeMillis()
+        apiInterface.updateTime = System.currentTimeMillis()
         apiInterface.status = 1
 
         apiInterfaceDao.save(apiInterface)
@@ -81,7 +80,7 @@ class ApiInterfaceService(
         val apiInterface = convertToEntity(form)
         apiInterface.id = id
         apiInterface.createTime = existingInterface.createTime
-        apiInterface.updateTime = Date()
+        apiInterface.updateTime = System.currentTimeMillis()
         apiInterface.status = existingInterface.status
 
         apiInterfaceDao.updateById(apiInterface, false)
@@ -99,7 +98,7 @@ class ApiInterfaceService(
             ?: throw RuntimeException("接口不存在")
 
         existingInterface.status = status
-        existingInterface.updateTime = Date()
+        existingInterface.updateTime = System.currentTimeMillis()
         apiInterfaceDao.updateById(existingInterface)
         
         return convertToDto(existingInterface)
@@ -113,8 +112,8 @@ class ApiInterfaceService(
         val newInterface = existingInterface.copy()
         newInterface.id = null
         newInterface.name = "${existingInterface.name}_副本"
-        newInterface.createTime = Date()
-        newInterface.updateTime = Date()
+        newInterface.createTime = System.currentTimeMillis()
+        newInterface.updateTime = System.currentTimeMillis()
         newInterface.status = 1
 
         apiInterfaceDao.save(newInterface)

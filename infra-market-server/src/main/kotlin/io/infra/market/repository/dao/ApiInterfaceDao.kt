@@ -52,7 +52,7 @@ class ApiInterfaceDao : ServiceImpl<ApiInterfaceMapper, ApiInterface>() {
         val queryWrapper = QueryWrapper.create()
             .select()
             .from(ApiInterface::class.java)
-            .where(ApiInterface::createTime.le(dateTime.toDate()))
+            .where(ApiInterface::createTime.le(dateTime.millis))
         
         return mapper.selectCountByQuery(queryWrapper)
     }

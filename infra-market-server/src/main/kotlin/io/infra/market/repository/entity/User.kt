@@ -49,7 +49,7 @@ data class User(
     
     /**
      * 最后登录时间
-     * 记录用户最后一次成功登录的时间
+     * 记录用户最后一次成功登录的时间（毫秒时间戳）
      */
-    var lastLoginTime: Date? = null
+    var lastLoginTime: Long? = null
 ) : BaseActiveRecordEntity<User, Long>()
