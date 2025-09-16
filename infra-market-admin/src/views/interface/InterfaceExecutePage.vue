@@ -67,6 +67,9 @@
               <a-descriptions-item v-if="interfaceData.timeout" label="超时时间">
                 <span class="timeout-text">{{ formatTimeout(interfaceData.timeout) }}</span>
               </a-descriptions-item>
+              <a-descriptions-item v-if="interfaceData.valuePath" label="取值路径">
+                <code class="value-path-text">{{ interfaceData.valuePath }}</code>
+              </a-descriptions-item>
               <a-descriptions-item label="创建时间">
                 <span class="time-text">{{ formatDateTime(interfaceData.createTime) }}</span>
               </a-descriptions-item>
@@ -2157,6 +2160,18 @@ const getStatusColor = (status: number): string => {
 .timeout-text {
   color: #1890ff;
   font-size: 13px;
+  font-weight: 500;
+}
+
+.value-path-text {
+  background: linear-gradient(135deg, #fff7e6 0%, #fffbe6 100%);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 11px;
+  color: #fa8c16;
+  word-break: break-all;
+  border: 1px solid #ffd591;
   font-weight: 500;
 }
 
