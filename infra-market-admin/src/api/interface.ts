@@ -13,6 +13,7 @@ export interface ApiInterface {
   postType?: string
   environment?: string
   timeout?: number
+  valuePath?: string
   urlParams?: ApiParam[]
   headerParams?: ApiParam[]
   bodyParams?: ApiParam[]
@@ -45,6 +46,7 @@ export interface ApiInterfaceForm {
   description?: string
   postType?: string
   timeout?: number
+  valuePath?: string
   urlParams?: ApiParam[]
   headerParams?: ApiParam[]
   bodyParams?: ApiParam[]
@@ -65,6 +67,7 @@ export interface ApiExecuteResponse {
   responseTime: number
   success: boolean
   error?: string
+  extractedValue?: string
 }
 
 

@@ -165,6 +165,7 @@ CREATE TABLE IF NOT EXISTS `api_interface` (
     `status` INT NOT NULL DEFAULT 1 COMMENT '状态：1-启用，0-禁用',
     `environment` VARCHAR(50) NULL COMMENT '接口环境，用于标识接口所属的环境，如测试环境、正式环境',
     `timeout` BIGINT NULL COMMENT '超时时间（秒），接口执行时的超时时间，默认60（60秒）',
+    `value_path` VARCHAR(500) NULL COMMENT '取值路径，用于从响应结果中提取特定值的JSONPath表达式',
     `create_time` BIGINT NOT NULL DEFAULT (FLOOR(UNIX_TIMESTAMP(NOW(3)) * 1000)) COMMENT '创建时间（毫秒时间戳）',
     `update_time` BIGINT NOT NULL DEFAULT (FLOOR(UNIX_TIMESTAMP(NOW(3)) * 1000)) COMMENT '更新时间（毫秒时间戳）',
     PRIMARY KEY (`id`),

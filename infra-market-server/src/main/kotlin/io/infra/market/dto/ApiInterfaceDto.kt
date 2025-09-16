@@ -103,7 +103,15 @@ data class ApiInterfaceDto(
      * 可选字段，默认值为60（60秒）
      * 如果未设置，则使用系统默认超时时间
      */
-    var timeout: Long? = null
+    var timeout: Long? = null,
+    
+    /**
+     * 取值路径
+     * 用于从响应结果中提取特定值的JSONPath表达式
+     * 可选字段，支持JSONPath语法，如：$.data.result、$.items[0].name等
+     * 如果设置，则返回该路径对应的值，否则返回完整响应体
+     */
+    var valuePath: String? = null
 )
 
 /**
@@ -281,7 +289,15 @@ data class ApiInterfaceFormDto(
      * 可选字段，默认值为60（60秒）
      * 如果未设置，则使用系统默认超时时间
      */
-    var timeout: Long? = null
+    var timeout: Long? = null,
+    
+    /**
+     * 取值路径
+     * 用于从响应结果中提取特定值的JSONPath表达式
+     * 可选字段，支持JSONPath语法，如：$.data.result、$.items[0].name等
+     * 如果设置，则返回该路径对应的值，否则返回完整响应体
+     */
+    var valuePath: String? = null
 )
 
 /**
@@ -417,5 +433,12 @@ data class ApiExecuteResponseDto(
      * 错误信息
      * 当执行失败时的错误描述
      */
-    var error: String? = null
+    var error: String? = null,
+    
+    /**
+     * 提取的值
+     * 当设置了valuePath时，返回该路径对应的值
+     * 如果valuePath为空或提取失败，则此字段为null
+     */
+    var extractedValue: String? = null
 )

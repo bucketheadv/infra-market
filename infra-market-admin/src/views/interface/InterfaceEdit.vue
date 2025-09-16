@@ -144,6 +144,35 @@
               </div>
             </a-form-item>
 
+            <a-form-item label="取值路径" name="valuePath">
+              <a-input
+                v-model:value="form.valuePath"
+                placeholder="例如：$.data.result 或 $.items[0].name"
+                size="middle"
+                class="form-input"
+                allow-clear
+              >
+                <template #prefix>
+                  <NodeIndexOutlined class="input-icon" />
+                </template>
+                <template #suffix>
+                  <a-tooltip title="JSONPath示例">
+                    <a-button 
+                      type="text" 
+                      size="small" 
+                      @click="showJsonPathExamples"
+                      style="padding: 0; height: auto;"
+                    >
+                      <span style="font-size: 12px;">示例</span>
+                    </a-button>
+                  </a-tooltip>
+                </template>
+              </a-input>
+              <div class="form-help-text">
+                可选，用于从响应结果中提取特定值。支持JSONPath表达式，如：$.data.result、$.items[0].name等
+              </div>
+            </a-form-item>
+
             <a-form-item label="接口描述" name="description">
               <a-textarea
                 v-model:value="form.description"
@@ -354,13 +383,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, h } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { message } from 'ant-design-vue'
-import { PlusOutlined, ApiOutlined, IdcardOutlined, LinkOutlined, SettingOutlined, CheckOutlined, CloseOutlined, DeleteOutlined, EnvironmentOutlined, ClockCircleOutlined } from '@ant-design/icons-vue'
+import { message, Modal } from 'ant-design-vue'
+import { PlusOutlined, ApiOutlined, IdcardOutlined, LinkOutlined, SettingOutlined, CheckOutlined, CloseOutlined, DeleteOutlined, EnvironmentOutlined, ClockCircleOutlined, NodeIndexOutlined } from '@ant-design/icons-vue'
 import { interfaceApi, HTTP_METHODS, POST_TYPES, TAGS, type ApiInterface, type ApiParam } from '@/api/interface'
 import ThemeButton from '@/components/ThemeButton.vue'
 import ParamForm from './ParamForm.vue'
+import { JsonPathValidator } from '@/utils/jsonpath-validator'
 
 const route = useRoute()
 const router = useRouter()
@@ -380,6 +410,7 @@ const form = reactive({
   postType: '',
   environment: '',
   timeout: 60,
+  valuePath: '',
   urlParams: [] as ApiParam[],
   headerParams: [] as ApiParam[],
   bodyParams: [] as ApiParam[]
@@ -389,7 +420,25 @@ const form = reactive({
 const rules = {
   name: [{ required: true, message: '请输入接口名称', trigger: 'blur' }],
   method: [{ required: true, message: '请选择请求方法', trigger: 'change' }],
-  url: [{ required: true, message: '请输入请求URL', trigger: 'blur' }]
+  url: [{ required: true, message: '请输入请求URL', trigger: 'blur' }],
+  valuePath: [
+    {
+      validator: (_rule: any, value: string, callback: any) => {
+        if (!value || value.trim() === '') {
+          callback()
+          return
+        }
+        
+        const result = JsonPathValidator.validate(value)
+        if (!result.isValid) {
+          callback(new Error(result.errorMessage))
+        } else {
+          callback()
+        }
+      },
+      trigger: 'blur'
+    }
+  ]
 }
 
 // 获取接口ID
@@ -432,6 +481,7 @@ const loadInterfaceData = async () => {
     Object.assign(form, {
       ...response.data,
       timeout: response.data.timeout || 60,
+      valuePath: response.data.valuePath || '',
       urlParams: response.data.urlParams ? [...response.data.urlParams] : [],
       headerParams: response.data.headerParams ? [...response.data.headerParams] : [],
       bodyParams: response.data.bodyParams ? [...response.data.bodyParams] : []
@@ -446,6 +496,39 @@ const loadInterfaceData = async () => {
 // 返回上一页
 const handleBack = () => {
   router.back()
+}
+
+// 显示JSONPath示例
+const showJsonPathExamples = () => {
+  const examples = JsonPathValidator.getExamples()
+  const exampleText = examples.join('\n')
+  
+  Modal.info({
+    title: 'JSONPath表达式示例',
+    content: h('div', [
+      h('p', '以下是一些常用的JSONPath表达式示例：'),
+      h('pre', {
+        style: {
+          background: '#f5f5f5',
+          padding: '12px',
+          borderRadius: '4px',
+          fontSize: '12px',
+          lineHeight: '1.5',
+          overflow: 'auto',
+          maxHeight: '300px'
+        }
+      }, exampleText),
+      h('p', {
+        style: { marginTop: '12px', fontSize: '12px', color: '#666' }
+      }, '点击示例可以复制到输入框')
+    ]),
+    width: 500,
+    onOk() {
+      // 用户点击确定后，可以选择一个示例填入输入框
+      const selectedExample = examples[0] // 默认选择第一个示例
+      form.valuePath = selectedExample
+    }
+  })
 }
 
 // 验证选项value
@@ -487,7 +570,8 @@ const handleSave = async () => {
       ...form,
       environment: form.environment && form.environment.trim() !== '' ? form.environment : undefined,
       postType: form.postType && form.postType.trim() !== '' ? form.postType : undefined,
-      description: form.description && form.description.trim() !== '' ? form.description : undefined
+      description: form.description && form.description.trim() !== '' ? form.description : undefined,
+      valuePath: form.valuePath && form.valuePath.trim() !== '' ? form.valuePath : undefined
     }
     
     // 调试日志

@@ -89,6 +89,12 @@
             <groupId>cn.hutool</groupId>
             <artifactId>hutool-poi</artifactId>
         </dependency>
+        
+        <!-- JSONPath for value extraction -->
+        <dependency>
+            <groupId>com.jayway.jsonpath</groupId>
+            <artifactId>json-path</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>org.springframework.boot</groupId>

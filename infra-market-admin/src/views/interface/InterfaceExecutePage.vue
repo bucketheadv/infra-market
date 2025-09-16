@@ -280,6 +280,7 @@
                       <div v-if="urlParams.length === 0 && headerParams.length === 0 && bodyParams.length === 0" class="no-params">
                         <a-empty description="该接口无需配置参数" />
                       </div>
+
                     </a-form>
                   </div>
                 </div>
@@ -322,24 +323,77 @@
                               响应时间: {{ executeResult.responseTime }}ms
                             </span>
                           </div>
+                          <!-- 提取值显示 -->
+                          <div v-if="executeResult.extractedValue" class="extracted-value-section">
+                            <h4>提取的值</h4>
+                            <div class="extracted-value-content">
+                              <CodeEditor
+                                :model-value="formatResponseBody(executeResult.extractedValue)"
+                                :readonly="true"
+                                :height="400"
+                                :language="detectResponseLanguage(executeResult.extractedValue)"
+                                :options="{
+                                  minimap: { enabled: false },
+                                  scrollBeyondLastLine: false,
+                                  wordWrap: 'on',
+                                  lineNumbers: 'on',
+                                  folding: false,
+                                  fontSize: 10,
+                                  fontFamily: 'Monaco, Menlo, Ubuntu Mono, monospace',
+                                  lineHeight: 16,
+                                  readOnly: true
+                                }"
+                              />
+                            </div>
+                          </div>
                           <div class="response-body">
-                            <CodeEditor
-                              :model-value="formatResponseBody(executeResult.body)"
-                              :readonly="true"
-                              :height="400"
-                              :language="detectResponseLanguage(executeResult.body)"
-                              :options="{
-                                minimap: { enabled: true },
-                                scrollBeyondLastLine: false,
-                                wordWrap: 'on',
-                                lineNumbers: 'on',
-                                folding: true,
-                                fontSize: 10,
-                                fontFamily: 'Monaco, Menlo, Ubuntu Mono, monospace',
-                                lineHeight: 16,
-                                readOnly: true
-                              }"
-                            />
+                            <div class="response-body-header" @click="executeResult.extractedValue ? toggleResponseBody() : null" :class="{ 'clickable': executeResult.extractedValue }">
+                              <h4>响应体</h4>
+                              <div class="response-header-right">
+                                <span class="response-size">{{ executeResult.body?.length || 0 }} 字符</span>
+                                <a-button 
+                                  v-if="executeResult.extractedValue"
+                                  type="text" 
+                                  size="small" 
+                                  class="collapse-btn"
+                                  :icon="responseBodyCollapsed ? h(DownOutlined) : h(UpOutlined)"
+                                />
+                              </div>
+                            </div>
+                            <div v-show="!executeResult.extractedValue || !responseBodyCollapsed" class="response-body-content">
+                              <CodeEditor
+                                :model-value="formatResponseBody(executeResult.body)"
+                                :readonly="true"
+                                :height="400"
+                                :language="detectResponseLanguage(executeResult.body)"
+                                :options="{
+                                  minimap: { enabled: true },
+                                  scrollBeyondLastLine: false,
+                                  wordWrap: 'on',
+                                  lineNumbers: 'on',
+                                  folding: true,
+                                  fontSize: 10,
+                                  fontFamily: 'Monaco, Menlo, Ubuntu Mono, monospace',
+                                  lineHeight: 16,
+                                  readOnly: true,
+                                  theme: 'vs-light',
+                                  renderLineHighlight: 'gutter',
+                                  cursorStyle: 'line',
+                                  selectOnLineNumbers: true,
+                                  roundedSelection: false,
+                                  scrollbar: {
+                                    vertical: 'auto',
+                                    horizontal: 'auto',
+                                    verticalScrollbarSize: 10,
+                                    horizontalScrollbarSize: 10
+                                  },
+                                  padding: { top: 12, bottom: 12 },
+                                  contextmenu: true,
+                                  mouseWheelZoom: true,
+                                  smoothScrolling: true
+                                }"
+                              />
+                            </div>
                           </div>
                         </div>
                       </a-tab-pane>
@@ -636,7 +690,7 @@
 import { ref, reactive, computed, onMounted, onUnmounted, h } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { message, Modal } from 'ant-design-vue'
-import { PlayCircleOutlined, CloseOutlined, QuestionCircleOutlined, ReloadOutlined, EyeOutlined, EditOutlined } from '@ant-design/icons-vue'
+import { PlayCircleOutlined, CloseOutlined, QuestionCircleOutlined, ReloadOutlined, EyeOutlined, EditOutlined, DownOutlined, UpOutlined } from '@ant-design/icons-vue'
 import { interfaceApi, executionRecordApi, POST_TYPES, TAGS, type ApiInterface, type ApiParam, type ApiExecuteRequest, type ApiExecuteResponse, type ApiInterfaceExecutionRecord, type ApiInterfaceExecutionRecordQuery } from '@/api/interface'
 import ThemeButton from '@/components/ThemeButton.vue'
 import CodeEditor from '@/components/CodeEditor.vue'
@@ -653,6 +707,7 @@ const interfaceData = ref<ApiInterface | null>(null)
 const executeResult = ref<ApiExecuteResponse | null>(null)
 const activeTab = ref('response')
 const mainActiveTab = ref('execute')
+const responseBodyCollapsed = ref(true) // 响应体默认收起
 
 // 超时倒计时相关
 const timeoutCountdown = ref(0)
@@ -943,6 +998,11 @@ const getCountdownAlertType = () => {
   } else {
     return 'info'
   }
+}
+
+// 切换响应体展开/收起状态
+const toggleResponseBody = () => {
+  responseBodyCollapsed.value = !responseBodyCollapsed.value
 }
 
 // 执行接口
@@ -1746,6 +1806,50 @@ const getStatusColor = (status: number): string => {
   height: 100%;
 }
 
+.extracted-value-section {
+  margin-bottom: 16px;
+  background: linear-gradient(135deg, #f6ffed 0%, #d9f7be 100%);
+  border: 2px solid #52c41a;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(82, 196, 26, 0.15);
+  overflow: hidden;
+  position: relative;
+}
+
+.extracted-value-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #52c41a 0%, #73d13d 50%, #52c41a 100%);
+}
+
+.extracted-value-section h4 {
+  margin: 0;
+  padding: 16px 16px 8px 16px;
+  color: #389e0d;
+  font-size: 15px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.extracted-value-section h4::before {
+  content: '✨';
+  font-size: 16px;
+}
+
+.extracted-value-content {
+  background: #fff;
+  margin: 0 12px 12px 12px;
+  border-radius: 8px;
+  border: 1px solid #b7eb8f;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
 .response-header {
   display: flex;
   justify-content: space-between;
@@ -1761,7 +1865,98 @@ const getStatusColor = (status: number): string => {
 }
 
 .response-body {
-  padding: 0;
+  margin-top: 16px;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border: 2px solid #1890ff;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(24, 144, 255, 0.15);
+  overflow: hidden;
+  position: relative;
+}
+
+.response-body::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #1890ff 0%, #40a9ff 50%, #1890ff 100%);
+}
+
+.response-body-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 16px 8px 16px;
+  background: transparent;
+  border-bottom: 1px solid rgba(24, 144, 255, 0.1);
+  transition: background-color 0.2s ease;
+}
+
+.response-body-header.clickable {
+  cursor: pointer;
+}
+
+.response-body-header.clickable:hover {
+  background: rgba(24, 144, 255, 0.05);
+}
+
+.response-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.response-body-header h4 {
+  margin: 0;
+  color: #0050b3;
+  font-size: 15px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.response-body-header h4::before {
+  content: '📄';
+  font-size: 16px;
+}
+
+.response-size {
+  font-size: 12px;
+  color: #1890ff;
+  background: rgba(24, 144, 255, 0.1);
+  padding: 4px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(24, 144, 255, 0.2);
+  font-weight: 500;
+}
+
+.response-body-content {
+  background: #fff;
+  margin: 0 12px 12px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(24, 144, 255, 0.1);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.collapse-btn {
+  color: #1890ff !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 4px !important;
+  min-width: 24px !important;
+  height: 24px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.2s ease !important;
+}
+
+.collapse-btn:hover {
+  background: rgba(24, 144, 255, 0.1) !important;
+  color: #0050b3 !important;
 }
 
 .headers-container,

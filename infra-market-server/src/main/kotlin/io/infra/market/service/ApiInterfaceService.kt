@@ -24,6 +24,8 @@ import org.springframework.http.client.SimpleClientHttpRequestFactory
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.Cache
 import java.util.concurrent.TimeUnit
+import com.jayway.jsonpath.JsonPath
+import com.jayway.jsonpath.PathNotFoundException
 
 /**
  * 接口管理服务
@@ -238,6 +240,18 @@ class ApiInterfaceService(
                 responseTime = responseTime,
                 success = true
             )
+            
+            // 如果接口配置了取值路径，尝试提取值
+            val valuePath = interfaceInfo.valuePath
+            if (!valuePath.isNullOrBlank() && !response.body.isNullOrBlank()) {
+                try {
+                    val extractedValue = extractValueByPath(response.body, valuePath)
+                    responseDto.extractedValue = extractedValue
+                } catch (e: Exception) {
+                    // 提取失败时记录日志，但不影响整体执行结果
+                    println("JSONPath提取失败: ${e.message}, 路径: $valuePath")
+                }
+            }
 
             // 记录执行记录
             saveExecutionRecord(
@@ -316,6 +330,7 @@ class ApiInterfaceService(
             postType = entity.postType?.let { PostTypeEnum.fromCode(it) },
             environment = entity.environment?.let { EnvironmentEnum.fromCode(it) },
             timeout = entity.timeout,
+            valuePath = entity.valuePath,
             urlParams = urlParams,
             headerParams = headerParams,
             bodyParams = bodyParams
@@ -347,6 +362,7 @@ class ApiInterfaceService(
             postType = form.postType?.code,
             environment = form.environment?.code,
             timeout = form.timeout,
+            valuePath = form.valuePath,
             params = paramsJson
         )
     }
@@ -467,6 +483,33 @@ class ApiInterfaceService(
         } catch (e: Exception) {
             // 记录执行记录失败不影响主流程，只打印日志
             println("保存接口执行记录失败: ${e.message}")
+        }
+    }
+    
+    /**
+     * 根据JSONPath提取值
+     * 
+     * @param jsonString JSON字符串
+     * @param path JSONPath表达式
+     * @return 提取的值，如果提取失败返回null
+     */
+    private fun extractValueByPath(jsonString: String?, path: String): String? {
+        return try {
+            val document = JsonPath.parse(jsonString)
+            // 将结果转换为字符串
+            when (val result = document.read<Any>(path)) {
+                is String -> result
+                is Number -> result.toString()
+                is Boolean -> result.toString()
+                is List<*> -> objectMapper.writeValueAsString(result)
+                is Map<*, *> -> objectMapper.writeValueAsString(result)
+                null -> null
+                else -> result.toString()
+            }
+        } catch (_: PathNotFoundException) {
+            null
+        } catch (e: Exception) {
+            throw e
         }
     }
     

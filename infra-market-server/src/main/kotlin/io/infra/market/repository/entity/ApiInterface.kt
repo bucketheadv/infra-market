@@ -92,4 +92,12 @@ data class ApiInterface(
      * 如果未设置，则使用系统默认超时时间
      */
     var timeout: Long? = null,
+    
+    /**
+     * 取值路径
+     * 用于从响应结果中提取特定值的JSONPath表达式
+     * 可选字段，支持JSONPath语法，如：$.data.result、$.items[0].name等
+     * 如果设置，则返回该路径对应的值，否则返回完整响应体
+     */
+    var valuePath: String? = null,
 ) : BaseActiveRecordEntity<ApiInterface, Long>()
