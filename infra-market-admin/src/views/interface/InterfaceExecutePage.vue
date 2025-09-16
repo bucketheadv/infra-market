@@ -1646,10 +1646,10 @@ const getStatusColor = (status: number): string => {
 }
 
 .main-tabs :deep(.ant-tabs-nav) {
-  margin-bottom: 16px;
+  margin-bottom: 12px;
   background: #fff;
   border-radius: 6px;
-  padding: 0 16px;
+  padding: 0 12px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
   border: 1px solid #f0f0f0;
 }
@@ -1659,14 +1659,14 @@ const getStatusColor = (status: number): string => {
 }
 
 .main-tabs :deep(.ant-tabs-tab) {
-  padding: 12px 20px;
+  padding: 8px 8px;
   font-weight: 500;
-  font-size: 14px;
+  font-size: 13px;
   color: #666;
   border: none;
   background: transparent;
   border-radius: 4px;
-  margin-right: 4px;
+  margin-right: 0px;
   transition: all 0.2s ease;
 }
 
@@ -1698,12 +1698,12 @@ const getStatusColor = (status: number): string => {
 .tab-content {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 14px;
+  gap: 4px;
+  font-size: 13px;
 }
 
 .tab-icon {
-  font-size: 14px;
+  font-size: 13px;
   opacity: 0.8;
 }
 
