@@ -53,8 +53,8 @@ class RoleService(
         val result = PageResultDto(
             records = roleDtos,
             total = page.totalRow,
-            current = page.pageNumber.toInt(),
-            size = page.pageSize.toInt()
+            current = page.pageNumber,
+            size = page.pageSize
         )
         
         return ApiResponse.success(result)

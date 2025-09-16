@@ -6,6 +6,11 @@ import com.mybatisflex.kotlin.extensions.kproperty.eq
 import com.mybatisflex.kotlin.extensions.kproperty.ge
 import com.mybatisflex.kotlin.extensions.kproperty.le
 import com.mybatisflex.kotlin.extensions.kproperty.lt
+import com.mybatisflex.kotlin.extensions.kproperty.like
+import com.mybatisflex.kotlin.extensions.kproperty.isNotNull
+import com.mybatisflex.kotlin.extensions.wrapper.whereWith
+import com.mybatisflex.kotlin.extensions.condition.and
+import com.mybatisflex.core.paginate.Page
 import io.infra.market.dto.ApiInterfaceExecutionRecordQueryDto
 import io.infra.market.dto.ApiInterfaceExecutionRecordStatsDto
 import io.infra.market.repository.entity.ApiInterfaceExecutionRecord
@@ -77,6 +82,71 @@ class ApiInterfaceExecutionRecordDao : ServiceImpl<ApiInterfaceExecutionRecordMa
         }
 
         return mapper.selectListByQuery(query)
+    }
+
+    /**
+     * 分页查询执行记录
+     * 
+     * @param queryDto 查询条件
+     * @return 分页结果
+     */
+    fun page(queryDto: ApiInterfaceExecutionRecordQueryDto): Page<ApiInterfaceExecutionRecord> {
+        val queryBuilder = query()
+        
+        // 构建查询条件
+        queryBuilder.whereWith {
+            var condition = ApiInterfaceExecutionRecord::id.isNotNull
+            
+            // 添加查询条件
+            if (queryDto.interfaceId != null) {
+                condition = condition and ApiInterfaceExecutionRecord::interfaceId.eq(queryDto.interfaceId)
+            }
+            
+            if (!queryDto.interfaceName.isNullOrBlank()) {
+                // 这里需要关联接口表查询，暂时跳过
+                // condition = condition and ApiInterface::name.like("%${queryDto.interfaceName}%")
+            }
+            
+            if (queryDto.executorId != null) {
+                condition = condition and ApiInterfaceExecutionRecord::executorId.eq(queryDto.executorId)
+            }
+            
+            if (!queryDto.executorName.isNullOrBlank()) {
+                condition = condition and ApiInterfaceExecutionRecord::executorName.like("%${queryDto.executorName}%")
+            }
+            
+            if (queryDto.success != null) {
+                condition = condition and ApiInterfaceExecutionRecord::success.eq(queryDto.success)
+            }
+            
+            val minExecutionTime = queryDto.minExecutionTime
+            if (minExecutionTime != null) {
+                condition = condition and ApiInterfaceExecutionRecord::executionTime.ge(minExecutionTime)
+            }
+            
+            val maxExecutionTime = queryDto.maxExecutionTime
+            if (maxExecutionTime != null) {
+                condition = condition and ApiInterfaceExecutionRecord::executionTime.le(maxExecutionTime)
+            }
+            
+            val startTime = queryDto.startTime
+            if (startTime != null) {
+                condition = condition and ApiInterfaceExecutionRecord::createTime.ge(startTime.millis)
+            }
+            
+            val endTime = queryDto.endTime
+            if (endTime != null) {
+                condition = condition and ApiInterfaceExecutionRecord::createTime.le(endTime.millis)
+            }
+            
+            condition
+        }
+        
+        // 按创建时间倒序排序
+        queryBuilder.orderBy("create_time DESC")
+        
+        val page = Page<ApiInterfaceExecutionRecord>(queryDto.page ?: 1, queryDto.size ?: 10)
+        return page(page, queryBuilder)
     }
 
     /**

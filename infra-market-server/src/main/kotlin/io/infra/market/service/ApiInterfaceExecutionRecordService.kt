@@ -32,6 +32,18 @@ class ApiInterfaceExecutionRecordService(
         return records.map { convertToDto(it) }
     }
 
+    fun findPage(queryDto: ApiInterfaceExecutionRecordQueryDto): PageResultDto<ApiInterfaceExecutionRecordDto> {
+        val page = apiInterfaceExecutionRecordDao.page(queryDto)
+        val recordDtos = page.records.map { convertToDto(it) }
+        
+        return PageResultDto(
+            records = recordDtos,
+            total = page.totalRow,
+            current = page.pageNumber,
+            size = page.pageSize
+        )
+    }
+
     /**
      * 根据ID查询执行记录
      * 

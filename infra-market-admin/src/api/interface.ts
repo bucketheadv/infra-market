@@ -70,14 +70,16 @@ export interface ApiExecuteResponse {
 
 // 接口管理API
 export const interfaceApi = {
-  // 获取接口列表
+  // 获取接口列表（支持分页）
   getList: (params?: {
     name?: string
     method?: string
     status?: number
     environment?: string
+    page?: number
+    size?: number
   }) => {
-    return request.get<ApiInterface[]>('/api/interface/list', { params })
+    return request.get<PageResult<ApiInterface>>('/api/interface/list', { params })
   },
 
   // 获取接口详情
@@ -228,19 +230,24 @@ export interface ApiInterfaceExecutionRecordStats {
   maxExecutionTime: number
 }
 
+// 分页响应类型
+export interface PageResult<T> {
+  records: T[]
+  total: number
+  current: number
+  size: number
+}
+
 // 执行记录API
 export const executionRecordApi = {
   // 分页查询执行记录
   getList: (query: ApiInterfaceExecutionRecordQuery) => 
-    request.post<ApiInterfaceExecutionRecord[]>('/api/interface/execution/record/list', query),
+    request.post<PageResult<ApiInterfaceExecutionRecord>>('/api/interface/execution/record/list', query),
   
   // 根据ID查询执行记录详情
   getById: (id: number) => 
     request.get<ApiInterfaceExecutionRecord>(`/api/interface/execution/record/${id}`),
   
-  // 根据接口ID查询执行记录
-  getByInterfaceId: (interfaceId: number, limit: number = 10) => 
-    request.get<ApiInterfaceExecutionRecord[]>(`/api/interface/execution/record/interface/${interfaceId}?limit=${limit}`),
   
   // 根据执行人ID查询执行记录
   getByExecutorId: (executorId: number, limit: number = 10) => 

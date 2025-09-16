@@ -38,9 +38,9 @@ class ApiInterfaceExecutionRecordController(
      */
     @PostMapping("/list")
     @RequiresPermission("interface:view")
-    fun list(@Valid @RequestBody queryDto: ApiInterfaceExecutionRecordQueryDto): ApiResponse<List<ApiInterfaceExecutionRecordDto>> {
-        val records = apiInterfaceExecutionRecordService.findByCondition(queryDto)
-        return ApiResponse.success(records)
+    fun list(@Valid @RequestBody queryDto: ApiInterfaceExecutionRecordQueryDto): ApiResponse<PageResultDto<ApiInterfaceExecutionRecordDto>> {
+        val pageResult = apiInterfaceExecutionRecordService.findPage(queryDto)
+        return ApiResponse.success(pageResult)
     }
 
     /**
@@ -56,25 +56,6 @@ class ApiInterfaceExecutionRecordController(
     fun getById(@PathVariable id: Long): ApiResponse<ApiInterfaceExecutionRecordDto?> {
         val record = apiInterfaceExecutionRecordService.getById(id)
         return ApiResponse.success(record)
-    }
-
-    /**
-     * 根据接口ID查询执行记录
-     * 
-     * 获取指定接口的执行记录列表，按执行时间倒序排列。
-     * 
-     * @param interfaceId 接口ID
-     * @param limit 限制返回数量，默认10条
-     * @return 执行记录列表
-     */
-    @GetMapping("/interface/{interfaceId}")
-    @RequiresPermission("interface:view")
-    fun getByInterfaceId(
-        @PathVariable interfaceId: Long,
-        @RequestParam(defaultValue = "10") limit: Int
-    ): ApiResponse<List<ApiInterfaceExecutionRecordDto>> {
-        val records = apiInterfaceExecutionRecordService.findByInterfaceId(interfaceId, limit)
-        return ApiResponse.success(records)
     }
 
     /**

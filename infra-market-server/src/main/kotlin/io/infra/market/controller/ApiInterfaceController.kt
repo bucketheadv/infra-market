@@ -50,15 +50,19 @@ class ApiInterfaceController(
     fun getList(@RequestParam(required = false) name: String?,
                 @RequestParam(required = false) method: String?,
                 @RequestParam(required = false) status: Int?,
-                @RequestParam(required = false) environment: String?): ApiResponse<List<ApiInterfaceDto>> {
+                @RequestParam(required = false) environment: String?,
+                @RequestParam(defaultValue = "1") page: Int,
+                @RequestParam(defaultValue = "10") size: Int): ApiResponse<PageResultDto<ApiInterfaceDto>> {
         val query = ApiInterfaceQueryDto(
             name = name,
             method = HttpMethodEnum.fromCode(method ?: ""),
             status = status,
-            environment = EnvironmentEnum.fromCode(environment ?: "")
+            environment = EnvironmentEnum.fromCode(environment ?: ""),
+            page = page,
+            size = size
         )
-        val interfaces = apiInterfaceService.findAll(query)
-        return ApiResponse.success(interfaces)
+        val pageResult = apiInterfaceService.findPage(query)
+        return ApiResponse.success(pageResult)
     }
 
     /**

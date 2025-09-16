@@ -171,11 +171,11 @@ data class PageResultDto<T>(
      * 当前页码
      * 当前查询的页码
      */
-    val current: Int,
+    val current: Long,
     
     /**
      * 每页大小
      * 每页显示的记录数
      */
-    val size: Int
+    val size: Long
 )

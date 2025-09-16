@@ -7,6 +7,10 @@ import com.mybatisflex.core.query.QueryWrapper
 import com.mybatisflex.kotlin.extensions.kproperty.eq
 import com.mybatisflex.kotlin.extensions.kproperty.like
 import com.mybatisflex.kotlin.extensions.kproperty.le
+import com.mybatisflex.kotlin.extensions.kproperty.isNotNull
+import com.mybatisflex.kotlin.extensions.wrapper.whereWith
+import com.mybatisflex.kotlin.extensions.condition.and
+import com.mybatisflex.core.paginate.Page
 import com.mybatisflex.spring.service.impl.ServiceImpl
 import org.joda.time.DateTime
 import org.springframework.stereotype.Repository
@@ -43,6 +47,48 @@ class ApiInterfaceDao : ServiceImpl<ApiInterfaceMapper, ApiInterface>() {
 
         queryWrapper.orderBy("create_time DESC")
         return mapper.selectListByQuery(queryWrapper)
+    }
+
+    /**
+     * 分页查询接口
+     * 
+     * @param query 查询条件
+     * @return 分页结果
+     */
+    fun page(query: ApiInterfaceQueryDto): Page<ApiInterface> {
+        val queryBuilder = query()
+        
+        // 构建查询条件
+        queryBuilder.whereWith {
+            var condition = ApiInterface::id.isNotNull
+            
+            // 添加查询条件
+            if (!query.name.isNullOrBlank()) {
+                condition = condition and ApiInterface::name.like("%${query.name}%")
+            }
+            
+            val method = query.method
+            if (method != null) {
+                condition = condition and ApiInterface::method.eq(method.code)
+            }
+            
+            if (query.status != null) {
+                condition = condition and ApiInterface::status.eq(query.status)
+            }
+            
+            val environment = query.environment
+            if (environment != null) {
+                condition = condition and ApiInterface::environment.eq(environment.code)
+            }
+            
+            condition
+        }
+        
+        // 按创建时间倒序排序
+        queryBuilder.orderBy("create_time DESC")
+        
+        val page = Page<ApiInterface>(query.page ?: 1, query.size ?: 10)
+        return page(page, queryBuilder)
     }
     
     /**

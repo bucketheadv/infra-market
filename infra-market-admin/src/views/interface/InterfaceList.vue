@@ -359,10 +359,12 @@ const loadData = async () => {
       name: searchForm.name || undefined,
       method: searchForm.method || undefined,
       status: searchForm.status,
-      environment: searchForm.environment || undefined
+      environment: searchForm.environment || undefined,
+      page: pagination.current,
+      size: pagination.pageSize
     })
-    dataSource.value = response.data || []
-    pagination.total = response.data?.length || 0
+    dataSource.value = response.data?.records || []
+    pagination.total = response.data?.total || 0
   } catch (error) {
     message.error('加载数据失败')
   } finally {

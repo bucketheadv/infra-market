@@ -41,8 +41,8 @@ class PermissionService(
         val result = PageResultDto(
             records = permissionDtos,
             total = page.totalRow,
-            current = page.pageNumber.toInt(),
-            size = page.pageSize.toInt()
+            current = page.pageNumber,
+            size = page.pageSize
         )
         
         return ApiResponse.success(result)

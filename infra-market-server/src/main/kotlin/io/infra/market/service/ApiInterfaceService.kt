@@ -51,6 +51,18 @@ class ApiInterfaceService(
         return interfaces.map { convertToDto(it) }
     }
 
+    fun findPage(query: ApiInterfaceQueryDto): PageResultDto<ApiInterfaceDto> {
+        val page = apiInterfaceDao.page(query)
+        val interfaceDtos = page.records.map { convertToDto(it) }
+        
+        return PageResultDto(
+            records = interfaceDtos,
+            total = page.totalRow,
+            current = page.pageNumber,
+            size = page.pageSize
+        )
+    }
+
     fun findById(id: Long): ApiInterfaceDto? {
         val apiInterface = apiInterfaceDao.getById(id)
         return apiInterface?.let { convertToDto(it) }

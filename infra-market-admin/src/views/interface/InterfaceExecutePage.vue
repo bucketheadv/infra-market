@@ -1302,11 +1302,10 @@ const loadExecutionRecords = async () => {
     }
     
     const response = await executionRecordApi.getList(query)
-    executionRecords.value = response.data || []
+    executionRecords.value = response.data?.records || []
     
-    // 注意：这里需要根据实际API返回的分页信息更新total
-    // 由于当前API没有返回总数，我们暂时使用当前页数据长度
-    recordPagination.total = executionRecords.value.length
+    // 使用API返回的分页信息更新total
+    recordPagination.total = response.data?.total || 0
   } catch (error) {
     console.error('加载执行记录失败:', error)
     message.error('加载执行记录失败')
