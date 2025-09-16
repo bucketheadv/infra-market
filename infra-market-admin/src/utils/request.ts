@@ -62,6 +62,10 @@ request.interceptors.response.use(
         default:
           message.error(data?.message || '请求失败')
       }
+    } else if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+      // 处理超时错误
+      const timeoutMessage = '请求超时，请检查网络连接或增加超时时间'
+      return Promise.reject(new Error(timeoutMessage))
     } else {
       message.error('网络错误，请检查网络连接')
     }
@@ -134,6 +138,10 @@ export const setupRequestInterceptors = (requestInstance: AxiosInstance) => {
           default:
             message.error(data?.message || '请求失败')
         }
+      } else if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+        // 处理超时错误
+        const timeoutMessage = '请求超时，请检查网络连接或增加超时时间'
+        return Promise.reject(new Error(timeoutMessage))
       } else {
         message.error('网络错误，请检查网络连接')
       }

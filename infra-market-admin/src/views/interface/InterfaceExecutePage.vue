@@ -297,6 +297,15 @@
                   <div v-if="executing" class="executing-container">
                     <a-spin size="large" />
                     <div class="executing-text">正在执行接口...</div>
+                    <div v-if="timeoutCountdown > 0" class="timeout-countdown">
+                      <a-alert 
+                        :message="`预计剩余时间: ${timeoutCountdown}秒`"
+                        :type="getCountdownAlertType()" 
+                        show-icon
+                        :closable="false"
+                        class="countdown-alert"
+                      />
+                    </div>
                   </div>
                   <div v-else-if="!executeResult" class="no-result">
                     <a-empty description="点击执行按钮开始测试接口" />
@@ -624,7 +633,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, h } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted, h } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { message, Modal } from 'ant-design-vue'
 import { PlayCircleOutlined, CloseOutlined, QuestionCircleOutlined, ReloadOutlined, EyeOutlined, EditOutlined } from '@ant-design/icons-vue'
@@ -644,6 +653,12 @@ const interfaceData = ref<ApiInterface | null>(null)
 const executeResult = ref<ApiExecuteResponse | null>(null)
 const activeTab = ref('response')
 const mainActiveTab = ref('execute')
+
+// 超时倒计时相关
+const timeoutCountdown = ref(0)
+const countdownTimer = ref<NodeJS.Timeout | null>(null)
+const totalTimeout = ref(0)
+const warningShown = ref(false)
 
 // 执行记录相关
 const recordsLoading = ref(false)
@@ -754,6 +769,11 @@ onMounted(async () => {
     message.error('接口ID不存在')
     router.back()
   }
+})
+
+// 组件卸载时清理定时器
+onUnmounted(() => {
+  stopCountdown()
 })
 
 // 加载接口数据
@@ -875,6 +895,56 @@ const showProductionConfirm = (): Promise<boolean> => {
   })
 }
 
+// 开始倒计时
+const startCountdown = (timeout: number) => {
+  timeoutCountdown.value = timeout
+  totalTimeout.value = timeout
+  warningShown.value = false
+  
+  countdownTimer.value = setInterval(() => {
+    timeoutCountdown.value--
+    
+    // 检查是否需要显示警告（剩余时间少于10秒或少于总时间的20%）
+    const shouldShowWarning = timeoutCountdown.value <= 10 || 
+                             timeoutCountdown.value <= Math.ceil(totalTimeout.value * 0.2)
+    
+    if (shouldShowWarning && !warningShown.value) {
+      warningShown.value = true
+      message.warning({
+        content: `接口执行即将超时，剩余时间：${timeoutCountdown.value}秒`,
+        duration: 3
+      })
+    }
+    
+    if (timeoutCountdown.value <= 0) {
+      clearInterval(countdownTimer.value!)
+      countdownTimer.value = null
+    }
+  }, 1000)
+}
+
+// 停止倒计时
+const stopCountdown = () => {
+  if (countdownTimer.value) {
+    clearInterval(countdownTimer.value)
+    countdownTimer.value = null
+  }
+  timeoutCountdown.value = 0
+  totalTimeout.value = 0
+  warningShown.value = false
+}
+
+// 获取倒计时警告类型
+const getCountdownAlertType = () => {
+  if (timeoutCountdown.value <= 5) {
+    return 'error'
+  } else if (timeoutCountdown.value <= 10 || timeoutCountdown.value <= Math.ceil(totalTimeout.value * 0.2)) {
+    return 'warning'
+  } else {
+    return 'info'
+  }
+}
+
 // 执行接口
 const handleExecute = async () => {
   if (!interfaceData.value) return
@@ -896,6 +966,10 @@ const handleExecute = async () => {
   try {
     executing.value = true
     executeResult.value = null
+    
+    // 启动倒计时
+    const timeout = interfaceData.value.timeout || 60
+    startCountdown(timeout)
     
     const request: ApiExecuteRequest = {
       interfaceId: interfaceData.value.id!,
@@ -922,19 +996,57 @@ const handleExecute = async () => {
   } catch (error: any) {
     console.error('接口执行失败:', error)
     
-    // 处理HTTP错误响应
-    if (error.response?.data?.message) {
-      message.error(error.response.data.message)
-    } else if (error.response?.data?.data) {
-      message.error(error.response.data.data)
-    } else if (error.message) {
-      // 处理响应拦截器转换的错误
-      message.error(error.message)
+    // 检查是否为超时错误
+    const isTimeoutError = error.code === 'ECONNABORTED' || 
+                          error.message?.includes('timeout') || 
+                          error.message?.includes('请求超时')
+    
+    if (isTimeoutError) {
+      // 超时错误处理
+      const timeout = interfaceData.value?.timeout || 60
+      message.error({
+        content: `接口执行超时（${timeout}秒），请检查网络连接或增加超时时间`,
+        duration: 6
+      })
+      
+      // 创建超时错误结果
+      executeResult.value = {
+        status: 0,
+        headers: {},
+        body: '',
+        responseTime: timeout * 1000,
+        success: false,
+        error: `请求超时，超过${timeout}秒未响应`
+      }
+      activeTab.value = 'error'
     } else {
-      message.error('接口执行失败')
+      // 其他错误处理
+      let errorMessage = '接口执行失败'
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message
+      } else if (error.response?.data?.data) {
+        errorMessage = error.response.data.data
+      } else if (error.message) {
+        errorMessage = error.message
+      }
+      
+      message.error(errorMessage)
+      
+      // 创建错误结果
+      executeResult.value = {
+        status: error.response?.status || 0,
+        headers: error.response?.headers || {},
+        body: error.response?.data || '',
+        responseTime: 0,
+        success: false,
+        error: errorMessage
+      }
+      activeTab.value = 'error'
     }
   } finally {
     executing.value = false
+    stopCountdown()
   }
 }
 
@@ -1534,6 +1646,54 @@ const getStatusColor = (status: number): string => {
   color: #0369a1;
   font-weight: 500;
   text-align: center;
+}
+
+.timeout-countdown {
+  margin-top: 12px;
+  width: 100%;
+  max-width: 300px;
+}
+
+.countdown-alert {
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.countdown-alert.ant-alert-info {
+  border: 1px solid #91d5ff;
+  background: linear-gradient(135deg, #e6f7ff 0%, #f0f9ff 100%);
+}
+
+.countdown-alert.ant-alert-info .ant-alert-message {
+  font-weight: 500;
+  color: #1890ff;
+}
+
+.countdown-alert.ant-alert-warning {
+  border: 1px solid #ffd591;
+  background: linear-gradient(135deg, #fff7e6 0%, #fffbe6 100%);
+}
+
+.countdown-alert.ant-alert-warning .ant-alert-message {
+  font-weight: 600;
+  color: #fa8c16;
+}
+
+.countdown-alert.ant-alert-error {
+  border: 1px solid #ffccc7;
+  background: linear-gradient(135deg, #fff2f0 0%, #fff1f0 100%);
+  animation: pulse 1s infinite;
+}
+
+.countdown-alert.ant-alert-error .ant-alert-message {
+  font-weight: 600;
+  color: #ff4d4f;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+  100% { transform: scale(1); }
 }
 
 .param-group {
