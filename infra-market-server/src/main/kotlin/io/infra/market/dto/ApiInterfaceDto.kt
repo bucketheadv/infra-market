@@ -56,15 +56,15 @@ data class ApiInterfaceDto(
 
     /**
      * 创建时间
-     * 接口记录的创建时间戳（毫秒）
+     * 接口记录的创建时间，格式化的字符串
      */
-    var createTime: Long? = null,
+    var createTime: String? = null,
 
     /**
      * 更新时间
-     * 接口记录的最后修改时间戳（毫秒）
+     * 接口记录的最后修改时间，格式化的字符串
      */
-    var updateTime: Long? = null,
+    var updateTime: String? = null,
 
     /**
      * POST类型

@@ -216,6 +216,13 @@ const columns = [
     align: 'center',
   },
   {
+    title: '更新时间',
+    dataIndex: 'updateTime',
+    key: 'updateTime',
+    width: 160,
+    align: 'center',
+  },
+  {
     title: '操作',
     key: 'action',
     width: 140,

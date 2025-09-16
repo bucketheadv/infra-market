@@ -424,7 +424,7 @@
                         <span v-else class="text-muted">-</span>
                       </template>
                       <template v-else-if="column.key === 'createTime'">
-                        {{ record.createTimeStr || '-' }}
+                        {{ record.createTime || '-' }}
                       </template>
                       <template v-else-if="column.key === 'action'">
                         <a-space size="small">
@@ -525,7 +525,7 @@
             {{ selectedRecord.clientIp || '-' }}
           </a-descriptions-item>
           <a-descriptions-item label="执行时间" :span="2">
-            {{ selectedRecord.createTimeStr || '暂无' }}
+            {{ selectedRecord.createTime || '暂无' }}
           </a-descriptions-item>
           <a-descriptions-item v-if="selectedRecord.errorMessage" label="错误信息" :span="2">
             <div class="error-message">{{ selectedRecord.errorMessage }}</div>
@@ -1245,6 +1245,12 @@ const getTagColor = (tag: string) => {
 const formatDateTime = (dateTime: string | Date | undefined): string => {
   if (!dateTime) return '暂无'
   
+  // 如果后端返回的是格式化的字符串，直接返回
+  if (typeof dateTime === 'string' && dateTime.includes('-') && dateTime.includes(':')) {
+    return dateTime
+  }
+  
+  // 如果是 Date 对象或其他格式，进行转换
   const date = new Date(dateTime)
   return date.toLocaleString('zh-CN', {
     year: 'numeric',

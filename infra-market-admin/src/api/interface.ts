@@ -203,9 +203,7 @@ export interface ApiInterfaceExecutionRecord {
   clientIp?: string
   userAgent?: string
   createTime: string
-  createTimeStr?: string
   updateTime: string
-  updateTimeStr?: string
 }
 
 export interface ApiInterfaceExecutionRecordQuery {

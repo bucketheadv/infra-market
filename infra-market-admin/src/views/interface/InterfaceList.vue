@@ -141,6 +141,9 @@
           <template v-else-if="column.key === 'createTime'">
             {{ formatDateTime(record.createTime) }}
           </template>
+          <template v-else-if="column.key === 'updateTime'">
+            {{ formatDateTime(record.updateTime) }}
+          </template>
           <template v-else-if="column.key === 'action'">
             <div class="action-buttons">
               <ThemeButton 
@@ -335,6 +338,12 @@ const columns = [
     width: 150
   },
   {
+    title: '更新时间',
+    dataIndex: 'updateTime',
+    key: 'updateTime',
+    width: 150
+  },
+  {
     title: '操作',
     key: 'action',
     width: 200,
@@ -449,7 +458,8 @@ const getRowClassName = (record: ApiInterface, index: number) => {
 
 const formatDateTime = (dateTime: string) => {
   if (!dateTime) return ''
-  return new Date(dateTime).toLocaleString('zh-CN')
+  // 后端返回的是 "yyyy-MM-dd HH:mm:ss" 格式的字符串，直接返回即可
+  return dateTime
 }
 
 // 获取标签显示名称

@@ -1,8 +1,6 @@
 package io.infra.market.dto
 
-import io.infra.market.util.DateTimeUtil
 import org.joda.time.DateTime
-import java.util.Date
 
 /**
  * 接口执行记录DTO
@@ -97,32 +95,16 @@ data class ApiInterfaceExecutionRecordDto(
 
     /**
      * 创建时间
+     * 格式化的字符串，如 "2024-01-01 12:00:00"
      */
-    var createTime: Long? = null,
-
-    /**
-     * 创建时间格式化字符串
-     */
-    var createTimeStr: String? = null,
+    var createTime: String? = null,
 
     /**
      * 更新时间
+     * 格式化的字符串，如 "2024-01-01 12:00:00"
      */
-    var updateTime: Long? = null,
-
-    /**
-     * 更新时间格式化字符串
-     */
-    var updateTimeStr: String? = null
-) {
-    /**
-     * 格式化时间字段
-     */
-    fun formatTimeFields() {
-        createTimeStr = DateTimeUtil.formatDateTime(createTime)
-        updateTimeStr = DateTimeUtil.formatDateTime(updateTime)
-    }
-}
+    var updateTime: String? = null
+)
 
 /**
  * 接口执行记录查询DTO
@@ -258,18 +240,7 @@ data class ApiInterfaceExecutionRecordStatsDto(
 
     /**
      * 最后执行时间
+     * 格式化的字符串，如 "2024-01-01 12:00:00"
      */
-    var lastExecutionTime: DateTime? = null,
-
-    /**
-     * 最后执行时间格式化字符串
-     */
-    var lastExecutionTimeStr: String? = null
-) {
-    /**
-     * 格式化时间字段
-     */
-    fun formatTimeFields() {
-        lastExecutionTimeStr = DateTimeUtil.formatDateTime(lastExecutionTime?.millis)
-    }
-}
+    var lastExecutionTime: String? = null
+)

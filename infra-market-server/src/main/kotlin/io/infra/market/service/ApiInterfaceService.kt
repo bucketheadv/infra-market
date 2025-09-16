@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import io.infra.market.enums.PostTypeEnum
 import io.infra.market.enums.EnvironmentEnum
 import io.infra.market.util.AuthThreadLocal
+import io.infra.market.util.DateTimeUtil
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -303,8 +304,8 @@ class ApiInterfaceService(
             url = entity.url,
             description = entity.description,
             status = entity.status,
-            createTime = entity.createTime,
-            updateTime = entity.updateTime,
+            createTime = DateTimeUtil.formatDateTime(entity.createTime),
+            updateTime = DateTimeUtil.formatDateTime(entity.updateTime),
             postType = entity.postType?.let { PostTypeEnum.fromCode(it) },
             environment = entity.environment?.let { EnvironmentEnum.fromCode(it) },
             timeout = entity.timeout,
