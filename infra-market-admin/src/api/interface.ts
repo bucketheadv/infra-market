@@ -1,4 +1,4 @@
-import request from '@/utils/request'
+import request, { createRequestWithTimeout, setupRequestInterceptors } from '@/utils/request'
 
 // 接口管理相关类型定义
 export interface ApiInterface {
@@ -114,6 +114,13 @@ export const interfaceApi = {
 
   // 执行接口
   execute: (data: ApiExecuteRequest) => {
+    // 如果请求中指定了超时时间，使用自定义超时时间的请求实例
+    if (data.timeout && data.timeout > 0) {
+      const customRequest = createRequestWithTimeout(data.timeout)
+      setupRequestInterceptors(customRequest)
+      return customRequest.post<ApiExecuteResponse>('/api/interface/execute', data)
+    }
+    // 否则使用默认请求实例
     return request.post<ApiExecuteResponse>('/api/interface/execute', data)
   }
 }

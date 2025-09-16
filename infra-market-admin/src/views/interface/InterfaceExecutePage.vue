@@ -901,7 +901,8 @@ const handleExecute = async () => {
       interfaceId: interfaceData.value.id!,
       headers: executeForm.headers,
       urlParams: executeForm.params,
-      bodyParams: executeForm.bodyParams
+      bodyParams: executeForm.bodyParams,
+      timeout: interfaceData.value.timeout
     }
     
     const response = await interfaceApi.execute(request)
