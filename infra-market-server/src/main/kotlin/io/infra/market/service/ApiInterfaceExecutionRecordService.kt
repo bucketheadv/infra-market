@@ -21,17 +21,6 @@ class ApiInterfaceExecutionRecordService(
     private val apiInterfaceExecutionRecordDao: ApiInterfaceExecutionRecordDao
 ) {
 
-    /**
-     * 根据查询条件分页查询执行记录
-     * 
-     * @param queryDto 查询条件
-     * @return 执行记录列表
-     */
-    fun findByCondition(queryDto: ApiInterfaceExecutionRecordQueryDto): List<ApiInterfaceExecutionRecordDto> {
-        val records = apiInterfaceExecutionRecordDao.findByCondition(queryDto)
-        return records.map { convertToDto(it) }
-    }
-
     fun findPage(queryDto: ApiInterfaceExecutionRecordQueryDto): PageResultDto<ApiInterfaceExecutionRecordDto> {
         val page = apiInterfaceExecutionRecordDao.page(queryDto)
         val recordDtos = page.records.map { convertToDto(it) }

@@ -21,34 +21,6 @@ import org.springframework.stereotype.Repository
 @Repository
 class ApiInterfaceDao : ServiceImpl<ApiInterfaceMapper, ApiInterface>() {
 
-    fun findByCondition(query: ApiInterfaceQueryDto): List<ApiInterface> {
-        val queryWrapper = QueryWrapper.create()
-            .select()
-            .from(ApiInterface::class.java)
-
-        // 构建查询条件
-        if (!query.name.isNullOrBlank()) {
-            queryWrapper.where(ApiInterface::name.like("%${query.name}%"))
-        }
-
-        val method = query.method
-        if (method != null) {
-            queryWrapper.where(ApiInterface::method.eq(method.code))
-        }
-
-        if (query.status != null) {
-            queryWrapper.where(ApiInterface::status.eq(query.status))
-        }
-
-        val environment = query.environment
-        if (environment != null) {
-            queryWrapper.where(ApiInterface::environment.eq(environment.code))
-        }
-
-        queryWrapper.orderBy("create_time DESC")
-        return mapper.selectListByQuery(queryWrapper)
-    }
-
     /**
      * 分页查询接口
      * 

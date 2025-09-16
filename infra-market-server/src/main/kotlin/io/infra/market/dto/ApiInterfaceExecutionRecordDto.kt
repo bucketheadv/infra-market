@@ -123,12 +123,6 @@ data class ApiInterfaceExecutionRecordQueryDto(
     var interfaceId: Long? = null,
 
     /**
-     * 接口名称
-     * 支持模糊查询
-     */
-    var interfaceName: String? = null,
-
-    /**
      * 执行人ID
      * 精确匹配查询
      */

@@ -32,59 +32,6 @@ import org.joda.time.DateTime
 class ApiInterfaceExecutionRecordDao : ServiceImpl<ApiInterfaceExecutionRecordMapper, ApiInterfaceExecutionRecord>() {
 
     /**
-     * 根据查询条件分页查询执行记录
-     * 
-     * @param queryDto 查询条件
-     * @return 执行记录列表
-     */
-    fun findByCondition(queryDto: ApiInterfaceExecutionRecordQueryDto): List<ApiInterfaceExecutionRecord> {
-        val query = QueryWrapper.create()
-            .select()
-            .from(ApiInterfaceExecutionRecord::class.java)
-
-        // 添加查询条件
-        queryDto.interfaceId?.let {
-            query.where(ApiInterfaceExecutionRecord::interfaceId.eq(it))
-        }
-        
-        queryDto.executorId?.let {
-            query.where(ApiInterfaceExecutionRecord::executorId.eq(it))
-        }
-        
-        queryDto.success?.let {
-            query.where(ApiInterfaceExecutionRecord::success.eq(it))
-        }
-        
-        queryDto.minExecutionTime?.let {
-            query.where(ApiInterfaceExecutionRecord::executionTime.ge(it))
-        }
-        
-        queryDto.maxExecutionTime?.let {
-            query.where(ApiInterfaceExecutionRecord::executionTime.le(it))
-        }
-
-        // 时间范围查询
-        queryDto.startTime?.let {
-            query.where(ApiInterfaceExecutionRecord::createTime.ge(it.millis))
-        }
-        
-        queryDto.endTime?.let {
-            query.where(ApiInterfaceExecutionRecord::createTime.le(it.millis))
-        }
-
-        // 排序
-        query.orderBy("create_time DESC")
-
-        // 分页查询
-        if (queryDto.page != null && queryDto.size != null) {
-            val offset = (queryDto.page!! - 1) * queryDto.size!!
-            query.limit(offset, queryDto.size!!)
-        }
-
-        return mapper.selectListByQuery(query)
-    }
-
-    /**
      * 分页查询执行记录
      * 
      * @param queryDto 查询条件
@@ -100,11 +47,6 @@ class ApiInterfaceExecutionRecordDao : ServiceImpl<ApiInterfaceExecutionRecordMa
             // 添加查询条件
             if (queryDto.interfaceId != null) {
                 condition = condition and ApiInterfaceExecutionRecord::interfaceId.eq(queryDto.interfaceId)
-            }
-            
-            if (!queryDto.interfaceName.isNullOrBlank()) {
-                // 这里需要关联接口表查询，暂时跳过
-                // condition = condition and ApiInterface::name.like("%${queryDto.interfaceName}%")
             }
             
             if (queryDto.executorId != null) {

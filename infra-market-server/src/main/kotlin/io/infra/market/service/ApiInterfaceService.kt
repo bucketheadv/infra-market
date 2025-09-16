@@ -46,11 +46,6 @@ class ApiInterfaceService(
         .expireAfterAccess(30, TimeUnit.MINUTES)
         .build()
 
-    fun findAll(query: ApiInterfaceQueryDto): List<ApiInterfaceDto> {
-        val interfaces = apiInterfaceDao.findByCondition(query)
-        return interfaces.map { convertToDto(it) }
-    }
-
     fun findPage(query: ApiInterfaceQueryDto): PageResultDto<ApiInterfaceDto> {
         val page = apiInterfaceDao.page(query)
         val interfaceDtos = page.records.map { convertToDto(it) }
@@ -300,7 +295,7 @@ class ApiInterfaceService(
             } else {
                 objectMapper.readValue(entity.params, Array<ApiParamDto>::class.java).toList()
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             emptyList()
         }
 
@@ -340,7 +335,7 @@ class ApiInterfaceService(
             } else {
                 objectMapper.writeValueAsString(allParams)
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
 
@@ -379,7 +374,7 @@ class ApiInterfaceService(
             } else {
                 objectMapper.readValue(interfaceInfo.params, Array<ApiParamDto>::class.java).toList()
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             emptyList()
         }
         
@@ -410,10 +405,8 @@ class ApiInterfaceService(
             // 只验证必填参数
             if (param.required == true) {
                 val paramName = param.name ?: return@forEach
-                val paramValue = requestParams?.get(paramName)
-                
                 // 检查参数值是否为空或空字符串
-                val isEmpty = when (paramValue) {
+                val isEmpty = when (val paramValue = requestParams?.get(paramName)) {
                     null -> true
                     is String -> paramValue.trim().isEmpty()
                     is Collection<*> -> paramValue.isEmpty()
