@@ -19,6 +19,7 @@
 
     <properties>
         <infra.kotlin.version>${kotlin.version}</infra.kotlin.version>
+        <mybatis.flex.version>1.11.1</mybatis.flex.version>
     </properties>
 
 
