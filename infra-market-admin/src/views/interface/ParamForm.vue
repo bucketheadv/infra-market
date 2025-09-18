@@ -1331,6 +1331,8 @@ const handleCodeCancel = () => {
   transition: border-color 0.2s ease;
   height: 32px;
   padding: 4px 8px;
+  margin-top: 4px;
+  margin-bottom: 4px;
 }
 
 .code-preview-input :deep(.ant-input):hover {
