@@ -2,16 +2,19 @@ package io.infra.market.util
 
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.Jwts
-import io.jsonwebtoken.SignatureAlgorithm
 import io.jsonwebtoken.security.Keys
 import org.springframework.stereotype.Component
 import java.util.*
+import javax.crypto.SecretKey
 
 @Component
 object JwtUtil {
     
     private const val SECRET_KEY = "infra-market-jwt-secret-key-2024-very-long-secret-key-for-security"
     private const val EXPIRATION_TIME = 24 * 60 * 60 * 1000L // 24小时
+    
+    // 生成密钥
+    private val key: SecretKey = Keys.hmacShaKeyFor(SECRET_KEY.toByteArray())
     
     /**
      * 生成JWT token
@@ -21,11 +24,11 @@ object JwtUtil {
         val expiration = Date(now.time + EXPIRATION_TIME)
         
         return Jwts.builder()
-            .setSubject(userId.toString())
+            .subject(userId.toString())
             .claim("username", username)
-            .setIssuedAt(now)
-            .setExpiration(expiration)
-            .signWith(Keys.hmacShaKeyFor(SECRET_KEY.toByteArray()), SignatureAlgorithm.HS256)
+            .issuedAt(now)
+            .expiration(expiration)
+            .signWith(key)
             .compact()
     }
     
@@ -36,18 +39,6 @@ object JwtUtil {
         return try {
             val claims = getClaimsFromToken(token)
             claims.subject.toLong()
-        } catch (_: Exception) {
-            null
-        }
-    }
-    
-    /**
-     * 从token中获取用户名
-     */
-    fun getUsernameFromToken(token: String): String? {
-        return try {
-            val claims = getClaimsFromToken(token)
-            claims["username"] as String?
         } catch (_: Exception) {
             null
         }
@@ -69,10 +60,10 @@ object JwtUtil {
      * 从token中获取Claims
      */
     private fun getClaimsFromToken(token: String): Claims {
-        return Jwts.parserBuilder()
-            .setSigningKey(Keys.hmacShaKeyFor(SECRET_KEY.toByteArray()))
+        return Jwts.parser()
+            .verifyWith(key)
             .build()
-            .parseClaimsJws(token)
-            .body
+            .parseSignedClaims(token)
+            .payload
     }
 }

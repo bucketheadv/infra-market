@@ -5,7 +5,7 @@
     <parent>
         <groupId>com.github.bucketheadv</groupId>
         <artifactId>infra-pom</artifactId>
-        <version>0.4.1-RELEASE</version>
+        <version>0.4.2-RELEASE</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>io.infra</groupId>
@@ -19,7 +19,6 @@
 
     <properties>
         <infra.kotlin.version>${kotlin.version}</infra.kotlin.version>
-        <mybatis.flex.version>1.11.1</mybatis.flex.version>
     </properties>
 
 
