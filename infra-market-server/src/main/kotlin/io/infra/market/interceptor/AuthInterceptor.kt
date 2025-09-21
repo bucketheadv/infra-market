@@ -2,11 +2,14 @@ package io.infra.market.interceptor
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.infra.market.dto.ApiData
+import io.infra.market.enums.ErrorMessageEnum
 import io.infra.market.service.TokenService
 import io.infra.market.util.JwtUtil
 import io.infra.market.util.AuthHolder
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
+import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.stereotype.Component
 import org.springframework.web.servlet.HandlerInterceptor
 
@@ -21,13 +24,13 @@ class AuthInterceptor(
         val token = request.getHeader("Authorization")?.removePrefix("Bearer ")
         
         if (token.isNullOrBlank()) {
-            handleUnauthorized(response, "未提供token")
+            handleUnauthorized(response, ErrorMessageEnum.LOGIN_EXPIRED.message)
             return false
         }
         
         // 验证token
         if (!tokenService.validateToken(token)) {
-            handleUnauthorized(response, "token无效或已过期")
+            handleUnauthorized(response, ErrorMessageEnum.LOGIN_EXPIRED.message)
             return false
         }
         
@@ -46,12 +49,15 @@ class AuthInterceptor(
     }
     
     private fun handleUnauthorized(response: HttpServletResponse, message: String) {
-        response.status = HttpServletResponse.SC_UNAUTHORIZED
-        response.contentType = "application/json;charset=UTF-8"
+        response.status = HttpStatus.UNAUTHORIZED.value()
+        response.contentType = MediaType.APPLICATION_JSON_VALUE
         
-        val apiData = ApiData.error<Unit>(message)
+        val apiData = ApiData.error<Unit>(message, HttpStatus.UNAUTHORIZED.value())
         val jsonResponse = objectMapper.writeValueAsString(apiData)
         
-        response.writer.write(jsonResponse)
+        response.writer.use { writer ->
+            writer.write(jsonResponse)
+            writer.flush()
+        }
     }
 }

@@ -3,9 +3,12 @@ package io.infra.market.interceptor
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.infra.market.annotation.RequiresPermission
 import io.infra.market.dto.ApiData
+import io.infra.market.enums.ErrorMessageEnum
 import io.infra.market.service.PermissionCheckService
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
+import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.stereotype.Component
 import org.springframework.web.method.HandlerMethod
 import org.springframework.web.servlet.HandlerInterceptor
@@ -47,9 +50,9 @@ class PermissionInterceptor(
         // 如果没有权限，返回403错误
         if (!hasPermission) {
             val errorMessage = if (permissionAnnotation.description.isNotBlank()) {
-                "权限不足：${permissionAnnotation.description}"
+                "${ErrorMessageEnum.PERMISSION_DENIED.message}：${permissionAnnotation.description}"
             } else {
-                "权限不足：需要 ${permissionAnnotation.value} 权限"
+                "${ErrorMessageEnum.PERMISSION_DENIED.message}：需要 ${permissionAnnotation.value} 权限"
             }
             handleForbidden(response, errorMessage)
             return false
@@ -62,12 +65,15 @@ class PermissionInterceptor(
      * 处理权限不足的情况
      */
     private fun handleForbidden(response: HttpServletResponse, message: String) {
-        response.status = HttpServletResponse.SC_FORBIDDEN
-        response.contentType = "application/json;charset=UTF-8"
+        response.status = HttpStatus.FORBIDDEN.value()
+        response.contentType = MediaType.APPLICATION_JSON_VALUE
         
-        val errorResponse = ApiData.error<Unit>(message)
+        val errorResponse = ApiData.error<Unit>(message, HttpStatus.FORBIDDEN.value())
         val jsonResponse = objectMapper.writeValueAsString(errorResponse)
         
-        response.writer.write(jsonResponse)
+        response.writer.use { writer ->
+            writer.write(jsonResponse)
+            writer.flush()
+        }
     }
 }

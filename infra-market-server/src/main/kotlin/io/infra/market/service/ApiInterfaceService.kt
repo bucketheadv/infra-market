@@ -26,6 +26,7 @@ import com.github.benmanes.caffeine.cache.Cache
 import java.util.concurrent.TimeUnit
 import com.jayway.jsonpath.JsonPath
 import com.jayway.jsonpath.PathNotFoundException
+import io.infra.market.enums.ParamTypeEnum
 
 /**
  * 接口管理服务
@@ -202,12 +203,12 @@ class ApiInterfaceService(
                             .joinToString("&") { (key, value) -> 
                                 "${encodeURIComponent(key)}=${encodeURIComponent(value.toString())}" 
                             }
-                        headers.set("Content-Type", "application/x-www-form-urlencoded")
+                        headers.set("Content-Type", postType.code)
                     }
                     PostTypeEnum.APPLICATION_JSON, null -> {
                         // JSON格式（默认）
                         body = objectMapper.writeValueAsString(bodyParams)
-                        headers.set("Content-Type", "application/json")
+                        headers.set("Content-Type", postType?.code ?: PostTypeEnum.APPLICATION_JSON.code)
                     }
                 }
             }
@@ -320,9 +321,9 @@ class ApiInterfaceService(
         }
 
         // 分离不同类型的参数
-        val urlParams = allParams.filter { it.paramType?.code == "URL_PARAM" }
-        val headerParams = allParams.filter { it.paramType?.code == "HEADER_PARAM" }
-        val bodyParams = allParams.filter { it.paramType?.code == "BODY_PARAM" }
+        val urlParams = allParams.filter { it.paramType == ParamTypeEnum.URL_PARAM }
+        val headerParams = allParams.filter { it.paramType == ParamTypeEnum.HEADER_PARAM }
+        val bodyParams = allParams.filter { it.paramType == ParamTypeEnum.BODY_PARAM }
         
         return Triple(urlParams, headerParams, bodyParams)
     }
