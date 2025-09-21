@@ -1,9 +1,9 @@
 package io.infra.market.config
 
 import io.infra.market.dto.ApiData
+import io.infra.market.enums.ErrorMessageEnum
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
-import org.springframework.http.ResponseEntity
 import org.springframework.validation.FieldError
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
@@ -25,7 +25,7 @@ class GlobalExceptionHandler {
      * 处理参数校验失败异常
      */
     @ExceptionHandler(MethodArgumentNotValidException::class)
-    fun handleValidationException(ex: MethodArgumentNotValidException): ResponseEntity<ApiData<Nothing>> {
+    fun handleValidationException(ex: MethodArgumentNotValidException): ApiData<Nothing> {
         val errors = ex.bindingResult.fieldErrors.stream()
             .collect(Collectors.toMap(
                 FieldError::getField,
@@ -35,41 +35,56 @@ class GlobalExceptionHandler {
         val errorMessage = errors.values.joinToString("; ")
         logger.warn("参数校验失败: {}", errorMessage)
         
-        return ResponseEntity.badRequest()
-            .body(ApiData.error("参数校验失败", errorMessage, 400))
+        return ApiData.error(
+            ErrorMessageEnum.VALIDATION_FAILED.message, 
+            errorMessage, 
+            HttpStatus.BAD_REQUEST.value()
+        )
     }
     
     /**
      * 处理参数类型不匹配异常
      */
     @ExceptionHandler(MethodArgumentTypeMismatchException::class)
-    fun handleTypeMismatchException(ex: MethodArgumentTypeMismatchException): ResponseEntity<ApiData<Nothing>> {
-        val errorMessage = "参数 '${ex.name}' 类型错误，期望类型: ${ex.requiredType?.simpleName}"
+    fun handleTypeMismatchException(ex: MethodArgumentTypeMismatchException): ApiData<Nothing> {
+        val errorMessage = ErrorMessageEnum.getParamTypeErrorMessage(
+            ex.name ?: "unknown", 
+            ex.requiredType?.simpleName
+        )
         logger.warn("参数类型错误: {}", errorMessage)
         
-        return ResponseEntity.badRequest()
-            .body(ApiData.error("参数类型错误", errorMessage, 400))
+        return ApiData.error(
+            ErrorMessageEnum.PARAM_TYPE_ERROR.message, 
+            errorMessage, 
+            HttpStatus.BAD_REQUEST.value()
+        )
     }
     
     /**
      * 处理其他运行时异常
      */
     @ExceptionHandler(RuntimeException::class)
-    fun handleRuntimeException(ex: RuntimeException): ResponseEntity<ApiData<Nothing>> {
+    fun handleRuntimeException(ex: RuntimeException): ApiData<Nothing> {
         logger.error("运行时异常", ex)
         
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-            .body(ApiData.error("系统内部错误", ex.message ?: "未知错误"))
+        return ApiData.error(
+            ErrorMessageEnum.SYSTEM_INTERNAL_ERROR.message, 
+            ex.message ?: ErrorMessageEnum.UNKNOWN_ERROR.message, 
+            HttpStatus.INTERNAL_SERVER_ERROR.value()
+        )
     }
     
     /**
      * 处理其他异常
      */
     @ExceptionHandler(Exception::class)
-    fun handleException(ex: Exception): ResponseEntity<ApiData<Nothing>> {
+    fun handleException(ex: Exception): ApiData<Nothing> {
         logger.error("系统异常", ex)
         
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-            .body(ApiData.error("系统异常", ex.message ?: "未知错误"))
+        return ApiData.error(
+            ErrorMessageEnum.SYSTEM_ERROR.message, 
+            ex.message ?: ErrorMessageEnum.UNKNOWN_ERROR.message, 
+            HttpStatus.INTERNAL_SERVER_ERROR.value()
+        )
     }
 }
