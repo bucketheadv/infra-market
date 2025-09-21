@@ -301,13 +301,19 @@ class ApiInterfaceService(
     private fun encodeURIComponent(str: String): String {
         return java.net.URLEncoder.encode(str, "UTF-8")
     }
-
-    private fun convertToDto(entity: ApiInterface): ApiInterfaceDto {
+    
+    /**
+     * 解析并分离接口参数
+     * 
+     * @param paramsJson 参数JSON字符串
+     * @return Triple(urlParams, headerParams, bodyParams) 分离后的参数列表
+     */
+    private fun parseAndSeparateParams(paramsJson: String?): Triple<List<ApiParamDto>, List<ApiParamDto>, List<ApiParamDto>> {
         val allParams = try {
-            if (entity.params.isNullOrBlank()) {
+            if (paramsJson.isNullOrBlank()) {
                 emptyList()
             } else {
-                objectMapper.readValue(entity.params, Array<ApiParamDto>::class.java).toList()
+                objectMapper.readValue(paramsJson, Array<ApiParamDto>::class.java).toList()
             }
         } catch (_: Exception) {
             emptyList()
@@ -317,6 +323,12 @@ class ApiInterfaceService(
         val urlParams = allParams.filter { it.paramType?.code == "URL_PARAM" }
         val headerParams = allParams.filter { it.paramType?.code == "HEADER_PARAM" }
         val bodyParams = allParams.filter { it.paramType?.code == "BODY_PARAM" }
+        
+        return Triple(urlParams, headerParams, bodyParams)
+    }
+
+    private fun convertToDto(entity: ApiInterface): ApiInterfaceDto {
+        val (urlParams, headerParams, bodyParams) = parseAndSeparateParams(entity.params)
 
         return ApiInterfaceDto(
             id = entity.id,
@@ -383,21 +395,7 @@ class ApiInterfaceService(
      * 验证必填参数
      */
     private fun validateRequiredParams(interfaceInfo: ApiInterface, request: ApiExecuteRequestDto) {
-        // 解析接口参数配置
-        val allParams = try {
-            if (interfaceInfo.params.isNullOrBlank()) {
-                emptyList()
-            } else {
-                objectMapper.readValue(interfaceInfo.params, Array<ApiParamDto>::class.java).toList()
-            }
-        } catch (_: Exception) {
-            emptyList()
-        }
-        
-        // 分离不同类型的参数
-        val urlParams = allParams.filter { it.paramType?.code == "URL_PARAM" }
-        val headerParams = allParams.filter { it.paramType?.code == "HEADER_PARAM" }
-        val bodyParams = allParams.filter { it.paramType?.code == "BODY_PARAM" }
+        val (urlParams, headerParams, bodyParams) = parseAndSeparateParams(interfaceInfo.params)
         
         // 验证URL参数
         validateParams(urlParams, request.urlParams, "URL参数")

@@ -33,13 +33,6 @@ class UserRoleDao : ServiceImpl<UserRoleMapper, UserRole>() {
         return mapper.selectListByQuery(query)
     }
     
-    fun findByRoleId(roleId: Long): List<UserRole> {
-        val query = query().whereWith {
-            UserRole::roleId.eq(roleId)
-        }
-        return mapper.selectListByQuery(query)
-    }
-    
     fun deleteByUserId(userId: Long): Int {
         val query = query().whereWith {
             UserRole::userId.eq(userId)

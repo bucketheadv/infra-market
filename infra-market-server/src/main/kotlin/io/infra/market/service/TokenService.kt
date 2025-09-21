@@ -9,22 +9,22 @@ class TokenService(
     private val jedisTemplate: JedisTemplate
 ) {
     
-    private val TOKEN_PREFIX = "token:"
-    private val TOKEN_EXPIRE_TIME: Long = 24 * 60 * 60 // 24小时（秒）
+    private val tokenPrefix = "token:"
+    private val tokenExpireTime: Long = 24 * 60 * 60 // 24小时（秒）
     
     /**
      * 保存token到Redis
      */
     fun saveToken(userId: Long, token: String) {
-        val key = "$TOKEN_PREFIX$userId"
-        jedisTemplate.setex(key, TOKEN_EXPIRE_TIME, token)
+        val key = "$tokenPrefix$userId"
+        jedisTemplate.setex(key, tokenExpireTime, token)
     }
     
     /**
      * 从Redis获取token
      */
     fun getToken(userId: Long): String? {
-        val key = "$TOKEN_PREFIX$userId"
+        val key = "$tokenPrefix$userId"
         return jedisTemplate.get(key)
     }
     
@@ -32,7 +32,7 @@ class TokenService(
      * 验证token是否有效
      */
     fun validateToken(token: String): Boolean {
-        val userId = JwtUtil.getUserIdFromToken(token) ?: return false
+        val userId = JwtUtil.getUidFromToken(token) ?: return false
         
         // 验证JWT token本身
         if (!JwtUtil.validateToken(token)) {
@@ -48,7 +48,7 @@ class TokenService(
      * 删除token
      */
     fun deleteToken(userId: Long) {
-        val key = "$TOKEN_PREFIX$userId"
+        val key = "$tokenPrefix$userId"
         jedisTemplate.del(key)
     }
     

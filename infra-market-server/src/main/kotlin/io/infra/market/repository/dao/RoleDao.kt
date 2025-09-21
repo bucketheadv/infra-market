@@ -24,13 +24,6 @@ import org.springframework.stereotype.Repository
 @Repository
 class RoleDao : ServiceImpl<RoleMapper, Role>() {
     
-    fun findByName(name: String): Role? {
-        val query = query().whereWith {
-            Role::name.eq(name) and  Role::status.ne(StatusEnum.DELETED.code)
-        }
-        return mapper.selectOneByQuery(query)
-    }
-    
     fun findByCode(code: String): Role? {
         val query = query().whereWith {
             Role::code.eq(code) and Role::status.ne(StatusEnum.DELETED.code)

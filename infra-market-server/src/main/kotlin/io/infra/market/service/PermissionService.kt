@@ -200,11 +200,8 @@ class PermissionService(
         val permission = permissionDao.getById(id) ?: return ApiResponse.error("权限不存在")
         
         // 验证状态值是否有效
-        val statusEnum = StatusEnum.fromCode(status)
-        if (statusEnum == null) {
-            return ApiResponse.error("无效的状态值")
-        }
-        
+        StatusEnum.fromCode(status) ?: return ApiResponse.error("无效的状态值")
+
         // 检查是否为系统权限
         if (permission.code == "system" && status == StatusEnum.DELETED.code) {
             return ApiResponse.error("不能删除系统权限")

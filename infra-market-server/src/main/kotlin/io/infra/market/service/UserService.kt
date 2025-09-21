@@ -27,8 +27,8 @@ class UserService(
         val page = userDao.page(query)
         
         // 批量获取所有用户的角色ID，避免N+1查询
-        val userIds = page.records.mapNotNull { it.id }
-        val userRoles = userRoleDao.findByUserIds(userIds)
+        val uids = page.records.mapNotNull { it.id }
+        val userRoles = userRoleDao.findByUserIds(uids)
         val userRoleMap = userRoles.groupBy { it.userId }
         
         val userDtos = page.records.map { user ->

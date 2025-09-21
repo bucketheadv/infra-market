@@ -45,18 +45,6 @@ class ApiInterfaceExecutionRecordService(
     }
 
     /**
-     * 根据接口ID查询执行记录
-     * 
-     * @param interfaceId 接口ID
-     * @param limit 限制返回数量
-     * @return 执行记录列表
-     */
-    fun findByInterfaceId(interfaceId: Long, limit: Int = 10): List<ApiInterfaceExecutionRecordDto> {
-        val records = apiInterfaceExecutionRecordDao.findByInterfaceId(interfaceId, limit)
-        return records.map { convertToDto(it) }
-    }
-
-    /**
      * 根据执行人ID查询执行记录
      * 
      * @param executorId 执行人ID

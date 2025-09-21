@@ -32,7 +32,7 @@ class AuthInterceptor(
         }
         
         // 从token中解析用户ID并保存到ThreadLocal
-        val userId = JwtUtil.getUserIdFromToken(token)
+        val userId = JwtUtil.getUidFromToken(token)
         if (userId != null) {
             AuthHolder.setUid(userId)
         }

@@ -35,7 +35,7 @@ object JwtUtil {
     /**
      * 从token中获取用户ID
      */
-    fun getUserIdFromToken(token: String): Long? {
+    fun getUidFromToken(token: String): Long? {
         return try {
             val claims = getClaimsFromToken(token)
             claims.subject.toLong()

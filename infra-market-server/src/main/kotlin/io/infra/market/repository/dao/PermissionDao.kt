@@ -49,20 +49,6 @@ class PermissionDao : ServiceImpl<PermissionMapper, Permission>() {
         return mapper.selectListByQuery(query)
     }
     
-    fun findMenusByIds(ids: List<Long>): List<Permission> {
-        if (ids.isEmpty()) {
-            return emptyList()
-        }
-        val query = query().whereWith {
-            Permission::id.inList(ids)
-        }
-        val permissions = mapper.selectListByQuery(query)
-        // 在内存中过滤菜单权限
-        return permissions.filter { 
-            it.status == StatusEnum.ACTIVE.code && it.type == PermissionTypeEnum.MENU.code 
-        }
-    }
-    
     fun findByParentId(parentId: Long): List<Permission> {
         val query = query().whereWith {
             Permission::parentId.eq(parentId) and Permission::status.ne(StatusEnum.DELETED.code)
