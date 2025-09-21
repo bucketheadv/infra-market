@@ -74,7 +74,6 @@
         :data-source="permissions"
         :loading="loading"
         :pagination="pagination"
-        row-key="id"
         class="permission-table"
         :row-class-name="getRowClassName"
         :scroll="{ x: 1120 }"
@@ -367,7 +366,7 @@ const handleDelete = async (record: Permission) => {
 }
 
 // 获取行样式类名
-const getRowClassName = (record: Permission, index: number) => {
+const getRowClassName = (_record: Permission, index: number) => {
   return index % 2 === 0 ? 'table-row-even' : 'table-row-odd'
 }
 

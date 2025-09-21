@@ -241,7 +241,22 @@ data class PermissionDto(
          * @return PermissionDto列表
          */
         fun fromEntityList(permissions: List<Permission>): List<PermissionDto> {
-            return permissions.map { fromEntity(it) }
+            return permissions.map { permission ->
+                PermissionDto(
+                    id = permission.id ?: 0,
+                    name = permission.name ?: "",
+                    code = permission.code ?: "",
+                    type = permission.type,
+                    parentId = permission.parentId,
+                    path = permission.path,
+                    icon = permission.icon,
+                    sort = permission.sort,
+                    status = permission.status,
+                    children = null, // 列表页面不需要children字段
+                    createTime = DateTimeUtil.formatDateTime(permission.createTime),
+                    updateTime = DateTimeUtil.formatDateTime(permission.updateTime)
+                )
+            }
         }
         
         /**
