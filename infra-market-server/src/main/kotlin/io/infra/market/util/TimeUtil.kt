@@ -1,7 +1,6 @@
 package io.infra.market.util
 
 import org.joda.time.DateTime
-import org.joda.time.format.DateTimeFormat
 import java.util.Date
 
 /**
@@ -9,18 +8,17 @@ import java.util.Date
  * @author liuqinglin
  * Date: 2025/8/30
  */
-object DateTimeUtil {
-    
+object TimeUtil {
+
+    private const val PATTERN = "yyyy-MM-dd HH:mm:ss"
+
     /**
      * 格式化日期时间为字符串
      * @param timestamp 毫秒时间戳
      * @return 格式化后的字符串，如果为null则返回空字符串
      */
-    fun formatDateTime(timestamp: Long?): String {
-        return if (timestamp != null) {
-            val dateTime = DateTime(timestamp)
-            dateTime.toString(DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss"))
-        } else ""
+    fun format(timestamp: Long?, pattern: String = PATTERN): String {
+        return if (timestamp != null) DateTime(timestamp).toString(pattern) else ""
     }
     
     /**
@@ -29,8 +27,8 @@ object DateTimeUtil {
      * @return 格式化后的字符串，如果为null则返回空字符串
      * @deprecated 请使用 formatDateTime(Long?) 方法
      */
-    @Deprecated("请使用 formatDateTime(Long?) 方法", ReplaceWith("formatDateTime(dateTime?.time)"))
-    fun formatDateTime(dateTime: Date?): String {
-        return formatDateTime(dateTime?.time)
+    @Deprecated("请使用 format(Long?, String) 方法", ReplaceWith("format(dateTime?.time, String)"))
+    fun format(dateTime: Date?): String {
+        return format(dateTime?.time)
     }
 }

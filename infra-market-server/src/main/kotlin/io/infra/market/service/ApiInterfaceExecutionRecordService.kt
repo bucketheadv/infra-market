@@ -3,7 +3,7 @@ package io.infra.market.service
 import io.infra.market.dto.*
 import io.infra.market.repository.dao.ApiInterfaceExecutionRecordDao
 import io.infra.market.repository.entity.ApiInterfaceExecutionRecord
-import io.infra.market.util.DateTimeUtil
+import io.infra.market.util.TimeUtil
 import org.joda.time.DateTime
 import org.springframework.stereotype.Service
 
@@ -114,8 +114,8 @@ class ApiInterfaceExecutionRecordService(
             errorMessage = record.errorMessage,
             clientIp = record.clientIp,
             userAgent = record.userAgent,
-            createTime = DateTimeUtil.formatDateTime(record.createTime),
-            updateTime = DateTimeUtil.formatDateTime(record.updateTime)
+            createTime = TimeUtil.format(record.createTime),
+            updateTime = TimeUtil.format(record.updateTime)
         )
     }
 }

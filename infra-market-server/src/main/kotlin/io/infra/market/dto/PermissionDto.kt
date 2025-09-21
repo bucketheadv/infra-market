@@ -1,7 +1,7 @@
 package io.infra.market.dto
 
 import io.infra.market.repository.entity.Permission
-import io.infra.market.util.DateTimeUtil
+import io.infra.market.util.TimeUtil
 import jakarta.validation.constraints.Max
 import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotBlank
@@ -229,8 +229,8 @@ data class PermissionDto(
                 sort = permission.sort,
                 status = permission.status,
                 children = children,
-                createTime = DateTimeUtil.formatDateTime(permission.createTime),
-                updateTime = DateTimeUtil.formatDateTime(permission.updateTime)
+                createTime = TimeUtil.format(permission.createTime),
+                updateTime = TimeUtil.format(permission.updateTime)
             )
         }
         
@@ -253,8 +253,8 @@ data class PermissionDto(
                     sort = permission.sort,
                     status = permission.status,
                     children = null, // 列表页面不需要children字段
-                    createTime = DateTimeUtil.formatDateTime(permission.createTime),
-                    updateTime = DateTimeUtil.formatDateTime(permission.updateTime)
+                    createTime = TimeUtil.format(permission.createTime),
+                    updateTime = TimeUtil.format(permission.updateTime)
                 )
             }
         }

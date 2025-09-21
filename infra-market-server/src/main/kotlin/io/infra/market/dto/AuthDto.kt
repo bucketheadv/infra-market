@@ -1,7 +1,7 @@
 package io.infra.market.dto
 
 import io.infra.market.repository.entity.User
-import io.infra.market.util.DateTimeUtil
+import io.infra.market.util.TimeUtil
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Size
 
@@ -140,10 +140,10 @@ data class UserDto(
                 email = user.email,
                 phone = user.phone,
                 status = user.status,
-                lastLoginTime = DateTimeUtil.formatDateTime(user.lastLoginTime),
+                lastLoginTime = TimeUtil.format(user.lastLoginTime),
                 roleIds = roleIds,
-                createTime = DateTimeUtil.formatDateTime(user.createTime),
-                updateTime = DateTimeUtil.formatDateTime(user.updateTime)
+                createTime = TimeUtil.format(user.createTime),
+                updateTime = TimeUtil.format(user.updateTime)
             )
         }
         

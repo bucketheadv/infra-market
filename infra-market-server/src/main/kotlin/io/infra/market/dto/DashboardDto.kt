@@ -1,7 +1,7 @@
 package io.infra.market.dto
 
 import io.infra.market.repository.entity.User
-import io.infra.market.util.DateTimeUtil
+import io.infra.market.util.TimeUtil
 
 /**
  * 仪表盘统计数据DTO
@@ -115,7 +115,7 @@ data class RecentUserDto(
                 username = user.username ?: "",
                 email = user.email,
                 status = user.status,
-                lastLoginTime = DateTimeUtil.formatDateTime(user.lastLoginTime)
+                lastLoginTime = TimeUtil.format(user.lastLoginTime)
             )
         }
         

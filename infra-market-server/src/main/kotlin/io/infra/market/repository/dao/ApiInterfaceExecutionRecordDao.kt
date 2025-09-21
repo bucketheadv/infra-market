@@ -15,7 +15,7 @@ import io.infra.market.dto.ApiInterfaceExecutionRecordQueryDto
 import io.infra.market.dto.ApiInterfaceExecutionRecordStatsDto
 import io.infra.market.repository.entity.ApiInterfaceExecutionRecord
 import io.infra.market.repository.mapper.ApiInterfaceExecutionRecordMapper
-import io.infra.market.util.DateTimeUtil
+import io.infra.market.util.TimeUtil
 import org.springframework.stereotype.Repository
 import org.joda.time.DateTime
 
@@ -140,7 +140,7 @@ class ApiInterfaceExecutionRecordDao : ServiceImpl<ApiInterfaceExecutionRecordMa
         val minExecutionTime = executionTimes.minOrNull() ?: 0L
         val maxExecutionTime = executionTimes.maxOrNull() ?: 0L
         val lastExecutionTime = records.maxByOrNull { it.createTime ?: 0L }?.createTime?.let { 
-            DateTimeUtil.formatDateTime(it) 
+            TimeUtil.format(it)
         }
 
         return ApiInterfaceExecutionRecordStatsDto(

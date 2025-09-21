@@ -1,7 +1,7 @@
 package io.infra.market.dto
 
 import io.infra.market.repository.entity.Role
-import io.infra.market.util.DateTimeUtil
+import io.infra.market.util.TimeUtil
 import jakarta.validation.constraints.Max
 import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotBlank
@@ -172,8 +172,8 @@ data class RoleDto(
                 description = role.description,
                 status = role.status,
                 permissionIds = permissionIds,
-                createTime = DateTimeUtil.formatDateTime(role.createTime),
-                updateTime = DateTimeUtil.formatDateTime(role.updateTime)
+                createTime = TimeUtil.format(role.createTime),
+                updateTime = TimeUtil.format(role.updateTime)
             )
         }
         
