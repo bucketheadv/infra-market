@@ -11,7 +11,6 @@ import io.infra.market.repository.dao.UserDao
 import io.infra.market.repository.dao.UserRoleDao
 import io.infra.market.repository.entity.User
 import io.infra.market.repository.entity.UserRole
-import io.infra.market.util.DateTimeUtil
 import io.infra.market.util.AesUtil
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -30,21 +29,10 @@ class UserService(
         val uids = page.records.mapNotNull { it.id }
         val userRoles = userRoleDao.findByUserIds(uids)
         val userRoleMap = userRoles.groupBy { it.userId }
+            .mapValues { (_, roles) -> roles.mapNotNull { it.roleId } }
+            .mapKeys { (key, _) -> key ?: 0L }
         
-        val userDtos = page.records.map { user ->
-            val roleIds = userRoleMap[user.id]?.mapNotNull { it.roleId } ?: emptyList()
-            UserDto(
-                id = user.id ?: 0,
-                username = user.username ?: "",
-                email = user.email,
-                phone = user.phone,
-                status = user.status,
-                lastLoginTime = DateTimeUtil.formatDateTime(user.lastLoginTime),
-                roleIds = roleIds,
-                createTime = DateTimeUtil.formatDateTime(user.createTime),
-                updateTime = DateTimeUtil.formatDateTime(user.updateTime)
-            )
-        }
+        val userDtos = UserDto.fromEntityList(page.records, userRoleMap)
         
         val result = PageResultDto(
             records = userDtos,
@@ -62,17 +50,7 @@ class UserService(
         // 获取用户的角色ID列表
         val roleIds = userRoleDao.findByUserId(id).mapNotNull { it.roleId }
         
-        val userDto = UserDto(
-            id = user.id ?: 0,
-            username = user.username ?: "",
-            email = user.email,
-            phone = user.phone,
-            status = user.status,
-            lastLoginTime = DateTimeUtil.formatDateTime(user.lastLoginTime),
-            roleIds = roleIds,
-            createTime = DateTimeUtil.formatDateTime(user.createTime),
-            updateTime = DateTimeUtil.formatDateTime(user.updateTime)
-        )
+        val userDto = UserDto.fromEntity(user, roleIds)
         
         return ApiResponse.success(userDto)
     }
@@ -116,17 +94,7 @@ class UserService(
             userRoleDao.save(userRole)
         }
         
-        val userDto = UserDto(
-            id = user.id ?: 0,
-            username = user.username ?: "",
-            email = user.email,
-            phone = user.phone,
-            status = user.status,
-            lastLoginTime = DateTimeUtil.formatDateTime(user.lastLoginTime),
-            roleIds = form.roleIds,
-            createTime = DateTimeUtil.formatDateTime(user.createTime),
-            updateTime = DateTimeUtil.formatDateTime(user.updateTime)
-        )
+        val userDto = UserDto.fromEntity(user, form.roleIds)
         
         return ApiResponse.success(userDto)
     }
@@ -178,17 +146,7 @@ class UserService(
             userRoleDao.save(userRole)
         }
         
-        val userDto = UserDto(
-            id = user.id ?: 0,
-            username = user.username ?: "",
-            email = user.email,
-            phone = user.phone,
-            status = user.status,
-            lastLoginTime = DateTimeUtil.formatDateTime(user.lastLoginTime),
-            roleIds = form.roleIds,
-            createTime = DateTimeUtil.formatDateTime(user.createTime),
-            updateTime = DateTimeUtil.formatDateTime(user.updateTime)
-        )
+        val userDto = UserDto.fromEntity(user, form.roleIds)
         
         return ApiResponse.success(userDto)
     }

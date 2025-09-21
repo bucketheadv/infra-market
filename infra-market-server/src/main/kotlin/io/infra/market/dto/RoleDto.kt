@@ -1,5 +1,7 @@
 package io.infra.market.dto
 
+import io.infra.market.repository.entity.Role
+import io.infra.market.util.DateTimeUtil
 import jakarta.validation.constraints.Max
 import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotBlank
@@ -153,4 +155,43 @@ data class RoleDto(
      * 角色信息最后更新的时间，格式化的字符串
      */
     val updateTime: String
-)
+) {
+    companion object {
+        /**
+         * 从Role实体转换为RoleDto
+         * 
+         * @param role 角色实体
+         * @param permissionIds 角色权限ID列表，默认为空列表
+         * @return RoleDto
+         */
+        fun fromEntity(role: Role, permissionIds: List<Long> = emptyList()): RoleDto {
+            return RoleDto(
+                id = role.id ?: 0,
+                name = role.name ?: "",
+                code = role.code ?: "",
+                description = role.description,
+                status = role.status,
+                permissionIds = permissionIds,
+                createTime = DateTimeUtil.formatDateTime(role.createTime),
+                updateTime = DateTimeUtil.formatDateTime(role.updateTime)
+            )
+        }
+        
+        /**
+         * 批量从Role实体列表转换为RoleDto列表
+         * 
+         * @param roles 角色实体列表
+         * @param rolePermissionMap 角色ID到权限ID列表的映射，默认为空映射
+         * @return RoleDto列表
+         */
+        fun fromEntityList(
+            roles: List<Role>,
+            rolePermissionMap: Map<Long, List<Long>> = emptyMap()
+        ): List<RoleDto> {
+            return roles.map { role ->
+                val permissionIds = rolePermissionMap[role.id] ?: emptyList()
+                fromEntity(role, permissionIds)
+            }
+        }
+    }
+}

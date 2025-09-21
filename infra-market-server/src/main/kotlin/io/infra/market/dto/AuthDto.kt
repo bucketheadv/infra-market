@@ -1,5 +1,7 @@
 package io.infra.market.dto
 
+import io.infra.market.repository.entity.User
+import io.infra.market.util.DateTimeUtil
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Size
 
@@ -122,4 +124,44 @@ data class UserDto(
      * 用户信息最后更新的时间，格式化的字符串
      */
     val updateTime: String
-)
+) {
+    companion object {
+        /**
+         * 从User实体转换为UserDto
+         * 
+         * @param user 用户实体
+         * @param roleIds 用户角色ID列表，默认为空列表
+         * @return UserDto
+         */
+        fun fromEntity(user: User, roleIds: List<Long> = emptyList()): UserDto {
+            return UserDto(
+                id = user.id ?: 0,
+                username = user.username ?: "",
+                email = user.email,
+                phone = user.phone,
+                status = user.status,
+                lastLoginTime = DateTimeUtil.formatDateTime(user.lastLoginTime),
+                roleIds = roleIds,
+                createTime = DateTimeUtil.formatDateTime(user.createTime),
+                updateTime = DateTimeUtil.formatDateTime(user.updateTime)
+            )
+        }
+        
+        /**
+         * 批量从User实体列表转换为UserDto列表
+         * 
+         * @param users 用户实体列表
+         * @param userRoleMap 用户ID到角色ID列表的映射，默认为空映射
+         * @return UserDto列表
+         */
+        fun fromEntityList(
+            users: List<User>,
+            userRoleMap: Map<Long, List<Long>> = emptyMap()
+        ): List<UserDto> {
+            return users.map { user ->
+                val roleIds = userRoleMap[user.id] ?: emptyList()
+                fromEntity(user, roleIds)
+            }
+        }
+    }
+}

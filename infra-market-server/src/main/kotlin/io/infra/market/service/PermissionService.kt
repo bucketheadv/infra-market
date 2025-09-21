@@ -9,7 +9,6 @@ import io.infra.market.enums.StatusEnum
 import io.infra.market.repository.dao.PermissionDao
 import io.infra.market.repository.dao.RolePermissionDao
 import io.infra.market.repository.entity.Permission
-import io.infra.market.util.DateTimeUtil
 import org.springframework.stereotype.Service
 
 @Service
@@ -22,21 +21,7 @@ class PermissionService(
         // 使用DAO的page方法进行分页查询
         val page = permissionDao.page(query)
         
-        val permissionDtos = page.records.map { permission ->
-            PermissionDto(
-                id = permission.id ?: 0,
-                name = permission.name ?: "",
-                code = permission.code ?: "",
-                type = permission.type,
-                parentId = permission.parentId,
-                path = permission.path,
-                icon = permission.icon,
-                sort = permission.sort,
-                status = permission.status,
-                createTime = DateTimeUtil.formatDateTime(permission.createTime),
-                updateTime = DateTimeUtil.formatDateTime(permission.updateTime)
-            )
-        }
+        val permissionDtos = PermissionDto.fromEntityList(page.records)
         
         val result = PageResultDto(
             records = permissionDtos,
@@ -51,24 +36,8 @@ class PermissionService(
     fun getPermissionTree(): ApiResponse<List<PermissionDto>> {
         val permissions = permissionDao.findByStatus(StatusEnum.ACTIVE.code)
         
-        val permissionDtos = permissions.map { permission ->
-            PermissionDto(
-                id = permission.id ?: 0,
-                name = permission.name ?: "",
-                code = permission.code ?: "",
-                type = permission.type,
-                parentId = permission.parentId,
-                path = permission.path,
-                icon = permission.icon,
-                sort = permission.sort,
-                status = permission.status,
-                createTime = DateTimeUtil.formatDateTime(permission.createTime),
-                updateTime = DateTimeUtil.formatDateTime(permission.updateTime)
-            )
-        }
-        
         // 构建树形结构
-        val tree = buildPermissionTree(permissionDtos)
+        val tree = PermissionDto.buildTree(permissions)
         
         return ApiResponse.success(tree)
     }
@@ -76,19 +45,7 @@ class PermissionService(
     fun getPermission(id: Long): ApiResponse<PermissionDto> {
         val permission = permissionDao.getById(id) ?: return ApiResponse.error("权限不存在")
         
-        val permissionDto = PermissionDto(
-            id = permission.id ?: 0,
-            name = permission.name ?: "",
-            code = permission.code ?: "",
-            type = permission.type,
-            parentId = permission.parentId,
-            path = permission.path,
-            icon = permission.icon,
-            sort = permission.sort,
-            status = permission.status,
-            createTime = DateTimeUtil.formatDateTime(permission.createTime),
-            updateTime = DateTimeUtil.formatDateTime(permission.updateTime)
-        )
+        val permissionDto = PermissionDto.fromEntity(permission)
         
         return ApiResponse.success(permissionDto)
     }
@@ -112,19 +69,7 @@ class PermissionService(
         
         permissionDao.save(permission)
         
-        val permissionDto = PermissionDto(
-            id = permission.id ?: 0,
-            name = permission.name ?: "",
-            code = permission.code ?: "",
-            type = permission.type,
-            parentId = permission.parentId,
-            path = permission.path,
-            icon = permission.icon,
-            sort = permission.sort,
-            status = permission.status,
-            createTime = DateTimeUtil.formatDateTime(permission.createTime),
-            updateTime = DateTimeUtil.formatDateTime(permission.updateTime)
-        )
+        val permissionDto = PermissionDto.fromEntity(permission)
         
         return ApiResponse.success(permissionDto)
     }
@@ -147,19 +92,7 @@ class PermissionService(
         
         permissionDao.updateById(permission)
         
-        val permissionDto = PermissionDto(
-            id = permission.id ?: 0,
-            name = permission.name ?: "",
-            code = permission.code ?: "",
-            type = permission.type,
-            parentId = permission.parentId,
-            path = permission.path,
-            icon = permission.icon,
-            sort = permission.sort,
-            status = permission.status,
-            createTime = DateTimeUtil.formatDateTime(permission.createTime),
-            updateTime = DateTimeUtil.formatDateTime(permission.updateTime)
-        )
+        val permissionDto = PermissionDto.fromEntity(permission)
         
         return ApiResponse.success(permissionDto)
     }
@@ -223,36 +156,6 @@ class PermissionService(
         return ApiResponse.success()
     }
     
-    private fun buildPermissionTree(permissions: List<PermissionDto>): List<PermissionDto> {
-        val permissionMap = permissions.associateBy { it.id }
-        val rootPermissions = mutableListOf<PermissionDto>()
-        
-        for (permission in permissions) {
-            if (permission.parentId == null) {
-                // 根节点，直接添加到结果列表
-                rootPermissions.add(buildPermissionWithChildren(permission, permissionMap))
-            }
-        }
-        
-        return rootPermissions.sortedBy { it.sort }
-    }
-    
-    private fun buildPermissionWithChildren(permission: PermissionDto, permissionMap: Map<Long, PermissionDto>): PermissionDto {
-        val children = mutableListOf<PermissionDto>()
-        
-        // 查找所有以当前权限为父级的权限
-        for (childPermission in permissionMap.values) {
-            if (childPermission.parentId == permission.id) {
-                children.add(buildPermissionWithChildren(childPermission, permissionMap))
-            }
-        }
-        
-        // 按sort字段排序子权限
-        val sortedChildren = children.sortedBy { it.sort }
-        
-        // 返回带有子权限的新PermissionDto
-        return permission.copy(children = sortedChildren)
-    }
     
     fun batchDeletePermissions(ids: List<Long>): ApiResponse<Unit> {
         if (ids.isEmpty()) {

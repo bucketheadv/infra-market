@@ -11,7 +11,6 @@ import io.infra.market.repository.dao.RolePermissionDao
 import io.infra.market.repository.dao.UserRoleDao
 import io.infra.market.repository.entity.Role
 import io.infra.market.repository.entity.RolePermission
-import io.infra.market.util.DateTimeUtil
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -28,27 +27,9 @@ class RoleService(
         
         // 批量获取所有角色的权限ID列表，避免N+1查询
         val roleIds = page.records.mapNotNull { it.id }
-        val allRolePermissions = if (roleIds.isNotEmpty()) {
-            rolePermissionDao.findByRoleIds(roleIds)
-        } else {
-            emptyList()
-        }
-        val rolePermissionsMap = allRolePermissions.groupBy { it.roleId }
+        val rolePermissionsMap = buildRolePermissionsMap(roleIds)
         
-        val roleDtos = page.records.map { role ->
-            val permissionIds = rolePermissionsMap[role.id]?.mapNotNull { it.permissionId } ?: emptyList()
-            
-            RoleDto(
-                id = role.id ?: 0,
-                name = role.name ?: "",
-                code = role.code ?: "",
-                description = role.description,
-                status = role.status,
-                permissionIds = permissionIds,
-                createTime = DateTimeUtil.formatDateTime(role.createTime),
-                updateTime = DateTimeUtil.formatDateTime(role.updateTime)
-            )
-        }
+        val roleDtos = RoleDto.fromEntityList(page.records, rolePermissionsMap)
         
         val result = PageResultDto(
             records = roleDtos,
@@ -65,27 +46,9 @@ class RoleService(
         
         // 批量获取所有角色的权限ID列表，避免N+1查询
         val roleIds = roles.mapNotNull { it.id }
-        val allRolePermissions = if (roleIds.isNotEmpty()) {
-            rolePermissionDao.findByRoleIds(roleIds)
-        } else {
-            emptyList()
-        }
-        val rolePermissionsMap = allRolePermissions.groupBy { it.roleId }
+        val rolePermissionsMap = buildRolePermissionsMap(roleIds)
         
-        val roleDtos = roles.map { role ->
-            val permissionIds = rolePermissionsMap[role.id]?.mapNotNull { it.permissionId } ?: emptyList()
-            
-            RoleDto(
-                id = role.id ?: 0,
-                name = role.name ?: "",
-                code = role.code ?: "",
-                description = role.description,
-                status = role.status,
-                permissionIds = permissionIds,
-                createTime = DateTimeUtil.formatDateTime(role.createTime),
-                updateTime = DateTimeUtil.formatDateTime(role.updateTime)
-            )
-        }
+        val roleDtos = RoleDto.fromEntityList(roles, rolePermissionsMap)
         
         return ApiResponse.success(roleDtos)
     }
@@ -97,16 +60,7 @@ class RoleService(
         val rolePermissions = rolePermissionDao.findByRoleId(role.id ?: 0)
         val permissionIds = rolePermissions.mapNotNull { it.permissionId }
         
-        val roleDto = RoleDto(
-            id = role.id ?: 0,
-            name = role.name ?: "",
-            code = role.code ?: "",
-            description = role.description,
-            status = role.status,
-            permissionIds = permissionIds,
-            createTime = DateTimeUtil.formatDateTime(role.createTime),
-            updateTime = DateTimeUtil.formatDateTime(role.updateTime)
-        )
+        val roleDto = RoleDto.fromEntity(role, permissionIds)
         
         return ApiResponse.success(roleDto)
     }
@@ -136,16 +90,7 @@ class RoleService(
             rolePermissionDao.save(rolePermission)
         }
         
-        val roleDto = RoleDto(
-            id = role.id ?: 0,
-            name = role.name ?: "",
-            code = role.code ?: "",
-            description = role.description,
-            status = role.status,
-            permissionIds = form.permissionIds,
-            createTime = DateTimeUtil.formatDateTime(role.createTime),
-            updateTime = DateTimeUtil.formatDateTime(role.updateTime)
-        )
+        val roleDto = RoleDto.fromEntity(role, form.permissionIds)
         
         return ApiResponse.success(roleDto)
     }
@@ -175,16 +120,7 @@ class RoleService(
             rolePermissionDao.save(rolePermission)
         }
         
-        val roleDto = RoleDto(
-            id = role.id ?: 0,
-            name = role.name ?: "",
-            code = role.code ?: "",
-            description = role.description,
-            status = role.status,
-            permissionIds = form.permissionIds,
-            createTime = DateTimeUtil.formatDateTime(role.createTime),
-            updateTime = DateTimeUtil.formatDateTime(role.updateTime)
-        )
+        val roleDto = RoleDto.fromEntity(role, form.permissionIds)
         
         return ApiResponse.success(roleDto)
     }
@@ -273,5 +209,22 @@ class RoleService(
         }
         
         return ApiResponse.success()
+    }
+    
+    /**
+     * 构建角色权限映射
+     * 
+     * @param roleIds 角色ID列表
+     * @return 角色ID到权限ID列表的映射
+     */
+    private fun buildRolePermissionsMap(roleIds: List<Long>): Map<Long, List<Long>> {
+        val allRolePermissions = if (roleIds.isNotEmpty()) {
+            rolePermissionDao.findByRoleIds(roleIds)
+        } else {
+            emptyList()
+        }
+        return allRolePermissions.groupBy { it.roleId }
+            .mapValues { (_, permissions) -> permissions.mapNotNull { it.permissionId } }
+            .mapKeys { (key, _) -> key ?: 0L }
     }
 }

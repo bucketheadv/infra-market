@@ -1,5 +1,7 @@
 package io.infra.market.dto
 
+import io.infra.market.repository.entity.Permission
+import io.infra.market.util.DateTimeUtil
 import jakarta.validation.constraints.Max
 import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotBlank
@@ -206,4 +208,91 @@ data class PermissionDto(
      * 当前权限的子权限列表，用于构建权限树，默认为null
      */
     val children: List<PermissionDto>? = null
-)
+) {
+    companion object {
+        /**
+         * 从Permission实体转换为PermissionDto
+         * 
+         * @param permission 权限实体
+         * @param children 子权限列表，默认为空列表
+         * @return PermissionDto
+         */
+        fun fromEntity(permission: Permission, children: List<PermissionDto> = emptyList()): PermissionDto {
+            return PermissionDto(
+                id = permission.id ?: 0,
+                name = permission.name ?: "",
+                code = permission.code ?: "",
+                type = permission.type,
+                parentId = permission.parentId,
+                path = permission.path,
+                icon = permission.icon,
+                sort = permission.sort,
+                status = permission.status,
+                children = children,
+                createTime = DateTimeUtil.formatDateTime(permission.createTime),
+                updateTime = DateTimeUtil.formatDateTime(permission.updateTime)
+            )
+        }
+        
+        /**
+         * 批量从Permission实体列表转换为PermissionDto列表
+         * 
+         * @param permissions 权限实体列表
+         * @return PermissionDto列表
+         */
+        fun fromEntityList(permissions: List<Permission>): List<PermissionDto> {
+            return permissions.map { fromEntity(it) }
+        }
+        
+        /**
+         * 构建权限树形结构
+         * 
+         * @param permissions 权限实体列表
+         * @return 树形结构的PermissionDto列表
+         */
+        fun buildTree(permissions: List<Permission>): List<PermissionDto> {
+            val permissionDtos = fromEntityList(permissions)
+            return buildPermissionTree(permissionDtos)
+        }
+        
+        /**
+         * 构建权限树形结构（内部方法）
+         */
+        private fun buildPermissionTree(permissions: List<PermissionDto>): List<PermissionDto> {
+            val permissionMap = permissions.associateBy { it.id }
+            val rootPermissions = mutableListOf<PermissionDto>()
+            
+            for (permission in permissions) {
+                if (permission.parentId == null) {
+                    // 根节点，直接添加到结果列表
+                    rootPermissions.add(buildPermissionWithChildren(permission, permissionMap))
+                }
+            }
+            
+            return rootPermissions.sortedBy { it.sort }
+        }
+        
+        /**
+         * 递归构建带子权限的权限对象
+         */
+        private fun buildPermissionWithChildren(
+            permission: PermissionDto,
+            permissionMap: Map<Long, PermissionDto>
+        ): PermissionDto {
+            val children = mutableListOf<PermissionDto>()
+            
+            // 查找所有以当前权限为父级的权限
+            for (childPermission in permissionMap.values) {
+                if (childPermission.parentId == permission.id) {
+                    children.add(buildPermissionWithChildren(childPermission, permissionMap))
+                }
+            }
+            
+            // 按sort字段排序子权限
+            val sortedChildren = children.sortedBy { it.sort }
+            
+            // 返回带有子权限的新PermissionDto
+            return permission.copy(children = sortedChildren)
+        }
+    }
+}
