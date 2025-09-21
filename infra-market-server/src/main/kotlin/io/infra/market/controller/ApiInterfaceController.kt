@@ -52,7 +52,7 @@ class ApiInterfaceController(
                 @RequestParam(required = false) status: Int?,
                 @RequestParam(required = false) environment: String?,
                 @RequestParam(defaultValue = "1") page: Int,
-                @RequestParam(defaultValue = "10") size: Int): ApiResponse<PageResultDto<ApiInterfaceDto>> {
+                @RequestParam(defaultValue = "10") size: Int): ApiData<PageResultDto<ApiInterfaceDto>> {
         val query = ApiInterfaceQueryDto(
             name = name,
             method = HttpMethodEnum.fromCode(method ?: ""),
@@ -62,7 +62,7 @@ class ApiInterfaceController(
             size = size
         )
         val pageResult = apiInterfaceService.findPage(query)
-        return ApiResponse.success(pageResult)
+        return ApiData.success(pageResult)
     }
 
     /**
@@ -75,12 +75,12 @@ class ApiInterfaceController(
      */
     @GetMapping("/{id}")
     @RequiresPermission("interface:view")
-    fun detail(@PathVariable id: Long): ApiResponse<ApiInterfaceDto> {
+    fun detail(@PathVariable id: Long): ApiData<ApiInterfaceDto> {
         val apiInterface = apiInterfaceService.findById(id)
         return if (apiInterface != null) {
-            ApiResponse.success(apiInterface)
+            ApiData.success(apiInterface)
         } else {
-            ApiResponse.error("接口不存在")
+            ApiData.error("接口不存在")
         }
     }
 
@@ -95,9 +95,9 @@ class ApiInterfaceController(
      */
     @PostMapping
     @RequiresPermission("interface:create")
-    fun create(@Valid @RequestBody form: ApiInterfaceFormDto): ApiResponse<ApiInterfaceDto> {
+    fun create(@Valid @RequestBody form: ApiInterfaceFormDto): ApiData<ApiInterfaceDto> {
         val apiInterface = apiInterfaceService.save(form)
-        return ApiResponse.success(apiInterface)
+        return ApiData.success(apiInterface)
     }
 
     /**
@@ -112,9 +112,9 @@ class ApiInterfaceController(
      */
     @PutMapping("/{id}")
     @RequiresPermission("interface:update")
-    fun update(@PathVariable id: Long, @Valid @RequestBody form: ApiInterfaceFormDto): ApiResponse<ApiInterfaceDto> {
+    fun update(@PathVariable id: Long, @Valid @RequestBody form: ApiInterfaceFormDto): ApiData<ApiInterfaceDto> {
         val apiInterface = apiInterfaceService.update(id, form)
-        return ApiResponse.success(apiInterface)
+        return ApiData.success(apiInterface)
     }
 
     /**
@@ -128,9 +128,9 @@ class ApiInterfaceController(
      */
     @DeleteMapping("/{id}")
     @RequiresPermission("interface:delete")
-    fun delete(@PathVariable id: Long): ApiResponse<Boolean> {
+    fun delete(@PathVariable id: Long): ApiData<Boolean> {
         val result = apiInterfaceService.delete(id)
-        return ApiResponse.success(result)
+        return ApiData.success(result)
     }
 
     /**
@@ -144,9 +144,9 @@ class ApiInterfaceController(
      */
     @PutMapping("/{id}/status")
     @RequiresPermission("interface:update")
-    fun updateStatus(@PathVariable id: Long, @RequestParam status: Int): ApiResponse<ApiInterfaceDto> {
+    fun updateStatus(@PathVariable id: Long, @RequestParam status: Int): ApiData<ApiInterfaceDto> {
         val apiInterface = apiInterfaceService.updateStatus(id, status)
-        return ApiResponse.success(apiInterface)
+        return ApiData.success(apiInterface)
     }
 
     /**
@@ -160,9 +160,9 @@ class ApiInterfaceController(
      */
     @PostMapping("/{id}/copy")
     @RequiresPermission("interface:create")
-    fun copy(@PathVariable id: Long): ApiResponse<ApiInterfaceDto> {
+    fun copy(@PathVariable id: Long): ApiData<ApiInterfaceDto> {
         val apiInterface = apiInterfaceService.copy(id)
-        return ApiResponse.success(apiInterface)
+        return ApiData.success(apiInterface)
     }
 
     /**
@@ -186,8 +186,8 @@ class ApiInterfaceController(
     fun execute(
         @Valid @RequestBody request: ApiExecuteRequestDto,
         httpRequest: HttpServletRequest
-    ): ApiResponse<ApiExecuteResponseDto> {
+    ): ApiData<ApiExecuteResponseDto> {
         val response = apiInterfaceService.execute(request, httpRequest)
-        return ApiResponse.success(response)
+        return ApiData.success(response)
     }
 }

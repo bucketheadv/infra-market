@@ -1,6 +1,6 @@
 package io.infra.market.service
 
-import io.infra.market.dto.ApiResponse
+import io.infra.market.dto.ApiData
 import io.infra.market.dto.PageResultDto
 import io.infra.market.dto.UserDto
 import io.infra.market.dto.UserFormDto
@@ -21,7 +21,7 @@ class UserService(
     private val userRoleDao: UserRoleDao
 ) {
     
-    fun getUsers(query: UserQueryDto): ApiResponse<PageResultDto<UserDto>> {
+    fun getUsers(query: UserQueryDto): ApiData<PageResultDto<UserDto>> {
         // 使用DAO的page方法进行分页查询
         val page = userDao.page(query)
         
@@ -41,35 +41,35 @@ class UserService(
             size = page.pageSize
         )
         
-        return ApiResponse.success(result)
+        return ApiData.success(result)
     }
     
-    fun getUser(id: Long): ApiResponse<UserDto> {
-        val user = userDao.findByUid(id) ?: return ApiResponse.error("用户不存在")
+    fun getUser(id: Long): ApiData<UserDto> {
+        val user = userDao.findByUid(id) ?: return ApiData.error("用户不存在")
         
         // 获取用户的角色ID列表
         val roleIds = userRoleDao.findByUserId(id).mapNotNull { it.roleId }
         
         val userDto = UserDto.fromEntity(user, roleIds)
         
-        return ApiResponse.success(userDto)
+        return ApiData.success(userDto)
     }
     
     @Transactional
-    fun createUser(form: UserFormDto): ApiResponse<UserDto> {
+    fun createUser(form: UserFormDto): ApiData<UserDto> {
         // 检查用户名是否已存在
         if (userDao.findByUsername(form.username) != null) {
-            return ApiResponse.error("用户名已存在")
+            return ApiData.error("用户名已存在")
         }
         
         // 检查邮箱是否已存在
         if (!form.email.isNullOrBlank() && userDao.findByEmail(form.email) != null) {
-            return ApiResponse.error("邮箱已存在")
+            return ApiData.error("邮箱已存在")
         }
         
         // 检查手机号是否已存在
         if (!form.phone.isNullOrBlank() && userDao.findByPhone(form.phone) != null) {
-            return ApiResponse.error("手机号已存在")
+            return ApiData.error("手机号已存在")
         }
         
         // 加密密码
@@ -96,24 +96,24 @@ class UserService(
         
         val userDto = UserDto.fromEntity(user, form.roleIds)
         
-        return ApiResponse.success(userDto)
+        return ApiData.success(userDto)
     }
     
     @Transactional
-    fun updateUser(id: Long, form: UserUpdateDto): ApiResponse<UserDto> {
-        val user = userDao.findByUid(id) ?: return ApiResponse.error("用户不存在")
+    fun updateUser(id: Long, form: UserUpdateDto): ApiData<UserDto> {
+        val user = userDao.findByUid(id) ?: return ApiData.error("用户不存在")
         
         // 检查用户名是否已被其他用户使用
         val existingUser = userDao.findByUsername(form.username)
         if (existingUser != null && existingUser.id != user.id) {
-            return ApiResponse.error("用户名已存在")
+            return ApiData.error("用户名已存在")
         }
         
         // 检查邮箱是否已被其他用户使用
         if (!form.email.isNullOrBlank()) {
             val existingEmailUser = userDao.findByEmail(form.email)
             if (existingEmailUser != null && existingEmailUser.id != user.id) {
-                return ApiResponse.error("邮箱已存在")
+                return ApiData.error("邮箱已存在")
             }
         }
         
@@ -121,7 +121,7 @@ class UserService(
         if (!form.phone.isNullOrBlank()) {
             val existingPhoneUser = userDao.findByPhone(form.phone)
             if (existingPhoneUser != null && existingPhoneUser.id != user.id) {
-                return ApiResponse.error("手机号已存在")
+                return ApiData.error("手机号已存在")
             }
         }
         
@@ -148,43 +148,43 @@ class UserService(
         
         val userDto = UserDto.fromEntity(user, form.roleIds)
         
-        return ApiResponse.success(userDto)
+        return ApiData.success(userDto)
     }
     
-    fun deleteUser(id: Long): ApiResponse<Unit> {
-        val user = userDao.findByUid(id) ?: return ApiResponse.error("用户不存在")
+    fun deleteUser(id: Long): ApiData<Unit> {
+        val user = userDao.findByUid(id) ?: return ApiData.error("用户不存在")
         
         // 检查是否为超级管理员（假设用户名为admin的用户为超级管理员）
         if (user.username == "admin") {
-            return ApiResponse.error("不能删除超级管理员用户")
+            return ApiData.error("不能删除超级管理员用户")
         }
         
         // 检查用户当前状态
         if (user.status == StatusEnum.DELETED.code) {
-            return ApiResponse.error("用户已被删除")
+            return ApiData.error("用户已被删除")
         }
         
         // 软删除：将状态设置为已删除
         user.status = StatusEnum.DELETED.code
         userDao.updateById(user)
         
-        return ApiResponse.success()
+        return ApiData.success()
     }
     
-    fun updateUserStatus(id: Long, status: String): ApiResponse<Unit> {
-        val user = userDao.findByUid(id) ?: return ApiResponse.error("用户不存在")
+    fun updateUserStatus(id: Long, status: String): ApiData<Unit> {
+        val user = userDao.findByUid(id) ?: return ApiData.error("用户不存在")
         
         // 验证状态值是否有效
-        StatusEnum.fromCode(status) ?: return ApiResponse.error("无效的状态值")
+        StatusEnum.fromCode(status) ?: return ApiData.error("无效的状态值")
 
         // 检查是否为超级管理员
         if (user.username == "admin" && status == StatusEnum.DELETED.code) {
-            return ApiResponse.error("不能删除超级管理员用户")
+            return ApiData.error("不能删除超级管理员用户")
         }
         
         // 检查状态转换是否合理
         if (user.status == StatusEnum.DELETED.code && status != StatusEnum.DELETED.code) {
-            return ApiResponse.error("已删除的用户不能重新启用")
+            return ApiData.error("已删除的用户不能重新启用")
         }
         
         // 如果是要删除用户，调用删除方法
@@ -195,18 +195,18 @@ class UserService(
         user.status = status
         userDao.updateById(user)
         
-        return ApiResponse.success()
+        return ApiData.success()
     }
     
-    fun resetPassword(id: Long): ApiResponse<Map<String, String>> {
-        val user = userDao.findByUid(id) ?: return ApiResponse.error("用户不存在")
+    fun resetPassword(id: Long): ApiData<Map<String, String>> {
+        val user = userDao.findByUid(id) ?: return ApiData.error("用户不存在")
         
         // 生成随机密码
         val newPassword = generateRandomPassword()
         user.password = AesUtil.encrypt(newPassword)
         userDao.updateById(user)
         
-        return ApiResponse.success(mapOf("password" to newPassword))
+        return ApiData.success(mapOf("password" to newPassword))
     }
     
     private fun generateRandomPassword(): String {
@@ -214,20 +214,20 @@ class UserService(
         return (1..8).map { chars.random() }.joinToString("")
     }
     
-    fun batchDeleteUsers(ids: List<Long>): ApiResponse<Unit> {
+    fun batchDeleteUsers(ids: List<Long>): ApiData<Unit> {
         if (ids.isEmpty()) {
-            return ApiResponse.error("请选择要删除的用户")
+            return ApiData.error("请选择要删除的用户")
         }
         
         val users = userDao.findByUids(ids)
         if (users.size != ids.size) {
-            return ApiResponse.error("部分用户不存在")
+            return ApiData.error("部分用户不存在")
         }
         
         // 检查是否包含超级管理员
         val adminUser = users.find { it.username == "admin" }
         if (adminUser != null) {
-            return ApiResponse.error("不能删除超级管理员用户")
+            return ApiData.error("不能删除超级管理员用户")
         }
         
         // 批量删除
@@ -236,6 +236,6 @@ class UserService(
             userDao.updateById(user)
         }
         
-        return ApiResponse.success()
+        return ApiData.success()
     }
 }

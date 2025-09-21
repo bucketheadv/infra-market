@@ -2,7 +2,7 @@ package io.infra.market.interceptor
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.infra.market.annotation.RequiresPermission
-import io.infra.market.dto.ApiResponse
+import io.infra.market.dto.ApiData
 import io.infra.market.service.PermissionCheckService
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
@@ -65,7 +65,7 @@ class PermissionInterceptor(
         response.status = HttpServletResponse.SC_FORBIDDEN
         response.contentType = "application/json;charset=UTF-8"
         
-        val errorResponse = ApiResponse.error<Unit>(message)
+        val errorResponse = ApiData.error<Unit>(message)
         val jsonResponse = objectMapper.writeValueAsString(errorResponse)
         
         response.writer.write(jsonResponse)

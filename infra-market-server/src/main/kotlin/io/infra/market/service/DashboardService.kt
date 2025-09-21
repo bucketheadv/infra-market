@@ -22,7 +22,7 @@ class DashboardService(
     /**
      * 获取仪表盘数据
      */
-    fun getDashboardData(): ApiResponse<DashboardDataDto> {
+    fun getDashboardData(): ApiData<DashboardDataDto> {
         val statistics = getStatistics()
         val recentUsers = getRecentUsers()
         val systemInfo = getSystemInfo()
@@ -33,7 +33,7 @@ class DashboardService(
             systemInfo = systemInfo
         )
         
-        return ApiResponse.success(dashboardData)
+        return ApiData.success(dashboardData)
     }
     
     /**

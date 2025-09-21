@@ -38,9 +38,9 @@ class ApiInterfaceExecutionRecordController(
      */
     @PostMapping("/list")
     @RequiresPermission("interface:view")
-    fun list(@Valid @RequestBody queryDto: ApiInterfaceExecutionRecordQueryDto): ApiResponse<PageResultDto<ApiInterfaceExecutionRecordDto>> {
+    fun list(@Valid @RequestBody queryDto: ApiInterfaceExecutionRecordQueryDto): ApiData<PageResultDto<ApiInterfaceExecutionRecordDto>> {
         val pageResult = apiInterfaceExecutionRecordService.findPage(queryDto)
-        return ApiResponse.success(pageResult)
+        return ApiData.success(pageResult)
     }
 
     /**
@@ -53,9 +53,9 @@ class ApiInterfaceExecutionRecordController(
      */
     @GetMapping("/{id}")
     @RequiresPermission("interface:view")
-    fun detail(@PathVariable id: Long): ApiResponse<ApiInterfaceExecutionRecordDto?> {
+    fun detail(@PathVariable id: Long): ApiData<ApiInterfaceExecutionRecordDto?> {
         val record = apiInterfaceExecutionRecordService.getById(id)
-        return ApiResponse.success(record)
+        return ApiData.success(record)
     }
 
     /**
@@ -72,9 +72,9 @@ class ApiInterfaceExecutionRecordController(
     fun getByExecutorId(
         @PathVariable executorId: Long,
         @RequestParam(defaultValue = "10") limit: Int
-    ): ApiResponse<List<ApiInterfaceExecutionRecordDto>> {
+    ): ApiData<List<ApiInterfaceExecutionRecordDto>> {
         val records = apiInterfaceExecutionRecordService.findByExecutorId(executorId, limit)
-        return ApiResponse.success(records)
+        return ApiData.success(records)
     }
 
     /**
@@ -87,9 +87,9 @@ class ApiInterfaceExecutionRecordController(
      */
     @GetMapping("/stats/{interfaceId}")
     @RequiresPermission("interface:view")
-    fun getExecutionStats(@PathVariable interfaceId: Long): ApiResponse<ApiInterfaceExecutionRecordStatsDto?> {
+    fun getExecutionStats(@PathVariable interfaceId: Long): ApiData<ApiInterfaceExecutionRecordStatsDto?> {
         val stats = apiInterfaceExecutionRecordService.getExecutionStats(interfaceId)
-        return ApiResponse.success(stats)
+        return ApiData.success(stats)
     }
 
     /**
@@ -106,9 +106,9 @@ class ApiInterfaceExecutionRecordController(
     fun getExecutionCount(
         @RequestParam startTime: Long,
         @RequestParam endTime: Long
-    ): ApiResponse<Long> {
+    ): ApiData<Long> {
         val count = apiInterfaceExecutionRecordService.countByTimeRange(startTime, endTime)
-        return ApiResponse.success(count)
+        return ApiData.success(count)
     }
 
     /**
@@ -122,8 +122,8 @@ class ApiInterfaceExecutionRecordController(
      */
     @DeleteMapping("/cleanup")
     @RequiresPermission("interface:delete")
-    fun cleanupOldRecords(@RequestParam beforeTime: Long): ApiResponse<Int> {
+    fun cleanupOldRecords(@RequestParam beforeTime: Long): ApiData<Int> {
         val deletedCount = apiInterfaceExecutionRecordService.deleteByTimeBefore(beforeTime)
-        return ApiResponse.success(deletedCount)
+        return ApiData.success(deletedCount)
     }
 }

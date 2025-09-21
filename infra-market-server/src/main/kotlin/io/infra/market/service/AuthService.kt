@@ -1,6 +1,6 @@
 package io.infra.market.service
 
-import io.infra.market.dto.ApiResponse
+import io.infra.market.dto.ApiData
 import io.infra.market.dto.LoginRequest
 import io.infra.market.dto.LoginResponse
 import io.infra.market.dto.UserDto
@@ -25,17 +25,17 @@ class AuthService(
     private val tokenService: TokenService
 ) {
     
-    fun login(request: LoginRequest): ApiResponse<LoginResponse> {
-        val user = userDao.findByUsername(request.username) ?: return ApiResponse.error("用户名或密码错误")
+    fun login(request: LoginRequest): ApiData<LoginResponse> {
+        val user = userDao.findByUsername(request.username) ?: return ApiData.error("用户名或密码错误")
         
         // 验证密码
         if (!AesUtil.matches(request.password, user.password ?: "")) {
-            return ApiResponse.error("用户名或密码错误")
+            return ApiData.error("用户名或密码错误")
         }
         
         // 检查用户状态
         if (user.status != StatusEnum.ACTIVE.code) {
-            return ApiResponse.error("用户已被禁用")
+            return ApiData.error("用户已被禁用")
         }
         
         // 更新登录时间
@@ -59,23 +59,23 @@ class AuthService(
             permissions = permissions
         )
         
-        return ApiResponse.success(response)
+        return ApiData.success(response)
     }
     
-    fun logout(userId: Long): ApiResponse<Unit> {
+    fun logout(userId: Long): ApiData<Unit> {
         // 从Redis中删除token
         tokenService.deleteToken(userId)
         
-        return ApiResponse.success()
+        return ApiData.success()
     }
     
-    fun getCurrentUser(userId: Long): ApiResponse<LoginResponse> {
+    fun getCurrentUser(userId: Long): ApiData<LoginResponse> {
         
-        val user = userDao.findByUid(userId) ?: return ApiResponse.error("用户不存在")
+        val user = userDao.findByUid(userId) ?: return ApiData.error("用户不存在")
         
         // 检查用户状态
         if (user.status != StatusEnum.ACTIVE.code) {
-            return ApiResponse.error("用户已被禁用")
+            return ApiData.error("用户已被禁用")
         }
         
         val permissions = getUserPermissions(user.id ?: 0)
@@ -88,16 +88,16 @@ class AuthService(
             permissions = permissions
         )
         
-        return ApiResponse.success(response)
+        return ApiData.success(response)
     }
     
-    fun getUserMenus(userId: Long): ApiResponse<List<PermissionDto>> {
+    fun getUserMenus(userId: Long): ApiData<List<PermissionDto>> {
         
-        val user = userDao.findByUid(userId) ?: return ApiResponse.error("用户不存在")
+        val user = userDao.findByUid(userId) ?: return ApiData.error("用户不存在")
         
         // 检查用户状态
         if (user.status != StatusEnum.ACTIVE.code) {
-            return ApiResponse.error("用户已被禁用")
+            return ApiData.error("用户已被禁用")
         }
         
         // 获取用户角色
@@ -105,7 +105,7 @@ class AuthService(
         val roleIds = userRoles.mapNotNull { it.roleId }
 
         if (roleIds.isEmpty()) {
-            return ApiResponse.success(emptyList())
+            return ApiData.success(emptyList())
         }
         
         // 批量获取角色权限 - 避免N+1查询
@@ -113,7 +113,7 @@ class AuthService(
         val permissionIds = rolePermissions.mapNotNull { it.permissionId }.toSet()
         
         if (permissionIds.isEmpty()) {
-            return ApiResponse.success(emptyList())
+            return ApiData.success(emptyList())
         }
         
         // 获取用户拥有的所有权限（包括按钮权限）
@@ -193,47 +193,47 @@ class AuthService(
         // 构建菜单树
         val menuTree = PermissionDto.buildTree(permissions)
         
-        return ApiResponse.success(menuTree)
+        return ApiData.success(menuTree)
     }
     
     
-    fun refreshToken(userId: Long): ApiResponse<Map<String, String>> {
+    fun refreshToken(userId: Long): ApiData<Map<String, String>> {
         
-        val user = userDao.findByUid(userId) ?: return ApiResponse.error("用户不存在")
+        val user = userDao.findByUid(userId) ?: return ApiData.error("用户不存在")
         
         // 检查用户状态
         if (user.status != StatusEnum.ACTIVE.code) {
-            return ApiResponse.error("用户已被禁用")
+            return ApiData.error("用户已被禁用")
         }
         
         // 生成新的token
         val newToken = tokenService.refreshToken(userId, user.username ?: "")
         
-        return ApiResponse.success(mapOf("token" to newToken))
+        return ApiData.success(mapOf("token" to newToken))
     }
     
-    fun changePassword(userId: Long, request: ChangePasswordRequest): ApiResponse<Unit> {
+    fun changePassword(userId: Long, request: ChangePasswordRequest): ApiData<Unit> {
         
-        val user = userDao.findByUid(userId) ?: return ApiResponse.error("用户不存在")
+        val user = userDao.findByUid(userId) ?: return ApiData.error("用户不存在")
         
         // 检查用户状态
         if (user.status != StatusEnum.ACTIVE.code) {
-            return ApiResponse.error("用户已被禁用")
+            return ApiData.error("用户已被禁用")
         }
         
         // 验证旧密码
         if (!AesUtil.matches(request.oldPassword, user.password ?: "")) {
-            return ApiResponse.error("原密码错误")
+            return ApiData.error("原密码错误")
         }
         
         // 验证新密码不能与旧密码相同
         if (request.oldPassword == request.newPassword) {
-            return ApiResponse.error("新密码不能与原密码相同")
+            return ApiData.error("新密码不能与原密码相同")
         }
         
         // 验证新密码长度
         if (request.newPassword.length < 6) {
-            return ApiResponse.error("新密码长度不能少于6位")
+            return ApiData.error("新密码长度不能少于6位")
         }
         
         // 加密新密码
@@ -243,7 +243,7 @@ class AuthService(
         user.password = encryptedNewPassword
         userDao.updateById(user)
         
-        return ApiResponse.success()
+        return ApiData.success()
     }
     
     private fun getUserPermissions(userId: Long): List<String> {

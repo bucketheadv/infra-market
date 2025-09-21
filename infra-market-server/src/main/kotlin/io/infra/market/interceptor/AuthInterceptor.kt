@@ -1,7 +1,7 @@
 package io.infra.market.interceptor
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.infra.market.dto.ApiResponse
+import io.infra.market.dto.ApiData
 import io.infra.market.service.TokenService
 import io.infra.market.util.JwtUtil
 import io.infra.market.util.AuthHolder
@@ -49,8 +49,8 @@ class AuthInterceptor(
         response.status = HttpServletResponse.SC_UNAUTHORIZED
         response.contentType = "application/json;charset=UTF-8"
         
-        val apiResponse = ApiResponse.error<Unit>(message)
-        val jsonResponse = objectMapper.writeValueAsString(apiResponse)
+        val apiData = ApiData.error<Unit>(message)
+        val jsonResponse = objectMapper.writeValueAsString(apiData)
         
         response.writer.write(jsonResponse)
     }

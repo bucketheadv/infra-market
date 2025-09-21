@@ -14,7 +14,7 @@ import jakarta.validation.constraints.Size
  * @author liuqinglin
  * @since 1.0.0
  */
-data class ApiResponse<T>(
+data class ApiData<T>(
     /**
      * 响应状态码
      * 200表示成功，其他值表示各种错误状态
@@ -41,13 +41,13 @@ data class ApiResponse<T>(
          * @param data 响应数据
          * @return 成功响应对象
          */
-        fun <T> success(data: T): ApiResponse<T> = ApiResponse(data = data)
+        fun <T> success(data: T): ApiData<T> = ApiData(data = data)
         
         /**
          * 创建成功响应，不携带数据
          * @return 成功响应对象
          */
-        fun <T> success(): ApiResponse<T> = ApiResponse()
+        fun <T> success(): ApiData<T> = ApiData()
         
         /**
          * 创建错误响应
@@ -55,7 +55,7 @@ data class ApiResponse<T>(
          * @param code 错误状态码，默认为500
          * @return 错误响应对象
          */
-        fun <T> error(message: String, code: Int = 500): ApiResponse<T> = ApiResponse(code = code, message = message)
+        fun <T> error(message: String, code: Int = 500): ApiData<T> = ApiData(code = code, message = message)
         
         /**
          * 创建错误响应，携带详细信息
@@ -65,7 +65,7 @@ data class ApiResponse<T>(
          * @return 错误响应对象
          */
         @Suppress("UNCHECKED_CAST")
-        fun <T> error(message: String, detail: String, code: Int = 500) = ApiResponse(code = code, message = message, data = detail as T?)
+        fun <T> error(message: String, detail: String, code: Int = 500) = ApiData(code = code, message = message, data = detail as T?)
     }
 }
 

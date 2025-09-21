@@ -1,5 +1,5 @@
 import request from '@/utils/request'
-import type { ApiResponse } from '@/types'
+import type { ApiData } from '@/types'
 
 export interface DashboardStatistics {
   userCount: number
@@ -36,7 +36,7 @@ export interface DashboardData {
 
 export const dashboardApi = {
   // 获取仪表盘数据
-  getDashboardData(): Promise<ApiResponse<DashboardData>> {
+  getDashboardData(): Promise<ApiData<DashboardData>> {
     return request.get('/dashboard/data')
   },
 }

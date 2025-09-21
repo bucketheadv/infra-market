@@ -1,6 +1,6 @@
 package io.infra.market.service
 
-import io.infra.market.dto.ApiResponse
+import io.infra.market.dto.ApiData
 import io.infra.market.dto.PageResultDto
 import io.infra.market.dto.RoleDto
 import io.infra.market.dto.RoleFormDto
@@ -21,7 +21,7 @@ class RoleService(
     private val userRoleDao: UserRoleDao
 ) {
     
-    fun getRoles(query: RoleQueryDto): ApiResponse<PageResultDto<RoleDto>> {
+    fun getRoles(query: RoleQueryDto): ApiData<PageResultDto<RoleDto>> {
         // 使用DAO的page方法进行分页查询
         val page = roleDao.page(query)
         
@@ -38,10 +38,10 @@ class RoleService(
             size = page.pageSize
         )
         
-        return ApiResponse.success(result)
+        return ApiData.success(result)
     }
     
-    fun getAllRoles(): ApiResponse<List<RoleDto>> {
+    fun getAllRoles(): ApiData<List<RoleDto>> {
         val roles = roleDao.findByStatus(StatusEnum.ACTIVE.code)
         
         // 批量获取所有角色的权限ID列表，避免N+1查询
@@ -50,11 +50,11 @@ class RoleService(
         
         val roleDtos = RoleDto.fromEntityList(roles, rolePermissionsMap)
         
-        return ApiResponse.success(roleDtos)
+        return ApiData.success(roleDtos)
     }
     
-    fun getRole(id: Long): ApiResponse<RoleDto> {
-        val role = roleDao.getById(id) ?: return ApiResponse.error("角色不存在")
+    fun getRole(id: Long): ApiData<RoleDto> {
+        val role = roleDao.getById(id) ?: return ApiData.error("角色不存在")
         
         // 获取角色的权限ID列表
         val rolePermissions = rolePermissionDao.findByRoleId(role.id ?: 0)
@@ -62,14 +62,14 @@ class RoleService(
         
         val roleDto = RoleDto.fromEntity(role, permissionIds)
         
-        return ApiResponse.success(roleDto)
+        return ApiData.success(roleDto)
     }
     
     @Transactional
-    fun createRole(form: RoleFormDto): ApiResponse<RoleDto> {
+    fun createRole(form: RoleFormDto): ApiData<RoleDto> {
         // 检查角色编码是否已存在
         if (roleDao.findByCode(form.code) != null) {
-            return ApiResponse.error("角色编码已存在")
+            return ApiData.error("角色编码已存在")
         }
         
         val role = Role(
@@ -92,17 +92,17 @@ class RoleService(
         
         val roleDto = RoleDto.fromEntity(role, form.permissionIds)
         
-        return ApiResponse.success(roleDto)
+        return ApiData.success(roleDto)
     }
     
     @Transactional
-    fun updateRole(id: Long, form: RoleFormDto): ApiResponse<RoleDto> {
-        val role = roleDao.getById(id) ?: return ApiResponse.error("角色不存在")
+    fun updateRole(id: Long, form: RoleFormDto): ApiData<RoleDto> {
+        val role = roleDao.getById(id) ?: return ApiData.error("角色不存在")
         
         // 检查角色编码是否已被其他角色使用
         val existingRole = roleDao.findByCode(form.code)
         if (existingRole != null && existingRole.id != role.id) {
-            return ApiResponse.error("角色编码已存在")
+            return ApiData.error("角色编码已存在")
         }
         
         role.name = form.name
@@ -122,49 +122,49 @@ class RoleService(
         
         val roleDto = RoleDto.fromEntity(role, form.permissionIds)
         
-        return ApiResponse.success(roleDto)
+        return ApiData.success(roleDto)
     }
     
-    fun deleteRole(id: Long): ApiResponse<Unit> {
-        val role = roleDao.getById(id) ?: return ApiResponse.error("角色不存在")
+    fun deleteRole(id: Long): ApiData<Unit> {
+        val role = roleDao.getById(id) ?: return ApiData.error("角色不存在")
         
         // 检查是否为系统角色（假设角色编码为admin的角色为系统角色）
         if (role.code == "admin") {
-            return ApiResponse.error("不能删除系统角色")
+            return ApiData.error("不能删除系统角色")
         }
         
         // 检查角色当前状态
         if (role.status == StatusEnum.DELETED.code) {
-            return ApiResponse.error("角色已被删除")
+            return ApiData.error("角色已被删除")
         }
         
         // 检查是否有用户正在使用此角色
         val userCount = userRoleDao.countByRoleId(id)
         if (userCount > 0) {
-            return ApiResponse.error("该角色下还有用户，无法删除")
+            return ApiData.error("该角色下还有用户，无法删除")
         }
         
         // 软删除：将状态设置为已删除
         role.status = StatusEnum.DELETED.code
         roleDao.updateById(role)
         
-        return ApiResponse.success()
+        return ApiData.success()
     }
     
-    fun updateRoleStatus(id: Long, status: String): ApiResponse<Unit> {
-        val role = roleDao.getById(id) ?: return ApiResponse.error("角色不存在")
+    fun updateRoleStatus(id: Long, status: String): ApiData<Unit> {
+        val role = roleDao.getById(id) ?: return ApiData.error("角色不存在")
         
         // 验证状态值是否有效
-        StatusEnum.fromCode(status) ?: return ApiResponse.error("无效的状态值")
+        StatusEnum.fromCode(status) ?: return ApiData.error("无效的状态值")
 
         // 检查是否为系统角色
         if (role.code == "admin" && status == StatusEnum.DELETED.code) {
-            return ApiResponse.error("不能删除系统角色")
+            return ApiData.error("不能删除系统角色")
         }
         
         // 检查状态转换是否合理
         if (role.status == StatusEnum.DELETED.code && status != StatusEnum.DELETED.code) {
-            return ApiResponse.error("已删除的角色不能重新启用")
+            return ApiData.error("已删除的角色不能重新启用")
         }
         
         // 如果是要删除角色，调用删除方法
@@ -175,30 +175,30 @@ class RoleService(
         role.status = status
         roleDao.updateById(role)
         
-        return ApiResponse.success()
+        return ApiData.success()
     }
     
-    fun batchDeleteRoles(ids: List<Long>): ApiResponse<Unit> {
+    fun batchDeleteRoles(ids: List<Long>): ApiData<Unit> {
         if (ids.isEmpty()) {
-            return ApiResponse.error("请选择要删除的角色")
+            return ApiData.error("请选择要删除的角色")
         }
         
         val roles = roleDao.findByIds(ids)
         if (roles.size != ids.size) {
-            return ApiResponse.error("部分角色不存在")
+            return ApiData.error("部分角色不存在")
         }
         
         // 检查是否包含系统角色
         val systemRole = roles.find { it.code == "admin" }
         if (systemRole != null) {
-            return ApiResponse.error("不能删除系统角色")
+            return ApiData.error("不能删除系统角色")
         }
         
         // 检查是否有用户正在使用这些角色
         for (role in roles) {
             val userCount = userRoleDao.countByRoleId(role.id ?: 0)
             if (userCount > 0) {
-                return ApiResponse.error("角色 ${role.name} 下还有用户，无法删除")
+                return ApiData.error("角色 ${role.name} 下还有用户，无法删除")
             }
         }
         
@@ -208,7 +208,7 @@ class RoleService(
             roleDao.updateById(role)
         }
         
-        return ApiResponse.success()
+        return ApiData.success()
     }
     
     /**
