@@ -9,7 +9,7 @@ enum class EnvironmentEnum(val code: String, val label: String) {
 
     companion object {
         fun fromCode(code: String): EnvironmentEnum? {
-            return values().find { it.code == code }
+            return entries.find { it.code == code }
         }
     }
 }

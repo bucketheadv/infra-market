@@ -5,7 +5,6 @@ import io.infra.market.repository.dao.UserDao
 import io.infra.market.repository.dao.RoleDao
 import io.infra.market.repository.dao.PermissionDao
 import io.infra.market.repository.dao.ApiInterfaceDao
-import io.infra.market.util.DateTimeUtil
 import org.springframework.boot.SpringBootVersion
 import org.springframework.stereotype.Service
 import org.joda.time.DateTime
@@ -46,35 +45,21 @@ class DashboardService(
         // 获取昨天同一时间
         val yesterday = now.minusDays(1)
         
-        // 获取用户总数（排除已删除的用户）
-        val userCount = userDao.count()
-        val userCountYesterday = userDao.countBeforeDate(yesterday)
-        val userCountChangePercent = calculateChangePercent(userCountYesterday, userCount)
-        
-        // 获取角色总数（排除已删除的角色）
-        val roleCount = roleDao.count()
-        val roleCountYesterday = roleDao.countBeforeDate(yesterday)
-        val roleCountChangePercent = calculateChangePercent(roleCountYesterday, roleCount)
-        
-        // 获取权限总数（排除已删除的权限）
-        val permissionCount = permissionDao.count()
-        val permissionCountYesterday = permissionDao.countBeforeDate(yesterday)
-        val permissionCountChangePercent = calculateChangePercent(permissionCountYesterday, permissionCount)
-        
-        // 获取接口总数（排除已删除的接口）
-        val interfaceCount = apiInterfaceDao.count()
-        val interfaceCountYesterday = apiInterfaceDao.countBeforeDate(yesterday)
-        val interfaceCountChangePercent = calculateChangePercent(interfaceCountYesterday, interfaceCount)
+        // 获取各项统计数据
+        val userStats = getCountStats(userDao::count, userDao::countBeforeDate, yesterday)
+        val roleStats = getCountStats(roleDao::count, roleDao::countBeforeDate, yesterday)
+        val permissionStats = getCountStats(permissionDao::count, permissionDao::countBeforeDate, yesterday)
+        val interfaceStats = getCountStats(apiInterfaceDao::count, apiInterfaceDao::countBeforeDate, yesterday)
         
         return DashboardStatisticsDto(
-            userCount = userCount,
-            roleCount = roleCount,
-            permissionCount = permissionCount,
-            interfaceCount = interfaceCount,
-            userCountChangePercent = userCountChangePercent,
-            roleCountChangePercent = roleCountChangePercent,
-            permissionCountChangePercent = permissionCountChangePercent,
-            interfaceCountChangePercent = interfaceCountChangePercent
+            userCount = userStats.first,
+            roleCount = roleStats.first,
+            permissionCount = permissionStats.first,
+            interfaceCount = interfaceStats.first,
+            userCountChangePercent = userStats.second,
+            roleCountChangePercent = roleStats.second,
+            permissionCountChangePercent = permissionStats.second,
+            interfaceCountChangePercent = interfaceStats.second
         )
     }
     
@@ -101,15 +86,7 @@ class DashboardService(
         // 获取最近登录的用户
         val recentUsers = userDao.getRecentLoginUsers(5)
         
-        return recentUsers.map { user ->
-            RecentUserDto(
-                id = user.id ?: 0,
-                username = user.username ?: "",
-                email = user.email,
-                status = user.status,
-                lastLoginTime = DateTimeUtil.formatDateTime(user.lastLoginTime)
-            )
-        }
+        return RecentUserDto.fromEntityList(recentUsers)
     }
     
     /**
@@ -123,5 +100,24 @@ class DashboardService(
             kotlinVersion = KotlinVersion.CURRENT.toString(),
             lastUpdate = DateTime.now().toString(DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss"))
         )
+    }
+    
+    /**
+     * 获取统计数据
+     * 
+     * @param countFunction 获取当前数量的函数
+     * @param countBeforeDateFunction 获取指定日期前数量的函数
+     * @param date 比较的日期
+     * @return Pair<当前数量, 变化百分比>
+     */
+    private fun getCountStats(
+        countFunction: () -> Long,
+        countBeforeDateFunction: (DateTime) -> Long,
+        date: DateTime
+    ): Pair<Long, Double> {
+        val currentCount = countFunction()
+        val previousCount = countBeforeDateFunction(date)
+        val changePercent = calculateChangePercent(previousCount, currentCount)
+        return Pair(currentCount, changePercent)
     }
 }

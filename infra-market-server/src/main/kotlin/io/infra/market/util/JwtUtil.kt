@@ -19,12 +19,12 @@ object JwtUtil {
     /**
      * 生成JWT token
      */
-    fun generateToken(userId: Long, username: String): String {
+    fun generateToken(uid: Long, username: String): String {
         val now = Date()
         val expiration = Date(now.time + EXPIRATION_TIME)
         
         return Jwts.builder()
-            .subject(userId.toString())
+            .subject(uid.toString())
             .claim("username", username)
             .issuedAt(now)
             .expiration(expiration)

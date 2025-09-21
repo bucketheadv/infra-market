@@ -12,7 +12,6 @@ import io.infra.market.repository.dao.UserDao
 import io.infra.market.repository.dao.UserRoleDao
 import io.infra.market.repository.dao.RolePermissionDao
 import io.infra.market.repository.dao.PermissionDao
-import io.infra.market.util.DateTimeUtil
 import io.infra.market.util.AesUtil
 import io.infra.market.util.JwtUtil
 import org.springframework.stereotype.Service
@@ -52,16 +51,7 @@ class AuthService(
         // 保存token到Redis
         tokenService.saveToken(user.id ?: 0, token)
         
-        val userDto = UserDto(
-            id = user.id ?: 0,
-            username = user.username ?: "",
-            email = user.email,
-            phone = user.phone,
-            status = user.status,
-            lastLoginTime = DateTimeUtil.formatDateTime(user.lastLoginTime),
-            createTime = DateTimeUtil.formatDateTime(user.createTime),
-            updateTime = DateTimeUtil.formatDateTime(user.updateTime)
-        )
+        val userDto = UserDto.fromEntity(user)
         
         val response = LoginResponse(
             token = token,
@@ -90,16 +80,7 @@ class AuthService(
         
         val permissions = getUserPermissions(user.id ?: 0)
         
-        val userDto = UserDto(
-            id = user.id ?: 0,
-            username = user.username ?: "",
-            email = user.email,
-            phone = user.phone,
-            status = user.status,
-            lastLoginTime = DateTimeUtil.formatDateTime(user.lastLoginTime),
-            createTime = DateTimeUtil.formatDateTime(user.createTime),
-            updateTime = DateTimeUtil.formatDateTime(user.updateTime)
-        )
+        val userDto = UserDto.fromEntity(user)
         
         val response = LoginResponse(
             token = "", // 不再返回token，因为前端已经有token了
@@ -207,59 +188,14 @@ class AuthService(
         val allNeededPermissionIds = (allMenuPermissionIds + allUserPermissions.mapNotNull { it.id }).toSet()
         
         // 批量获取所有需要的权限详情
-        val permissions = permissionDao.findByIds(allNeededPermissionIds.toList()).map { permission ->
-            PermissionDto(
-                id = permission.id ?: 0,
-                name = permission.name ?: "",
-                code = permission.code ?: "",
-                type = permission.type,
-                parentId = permission.parentId,
-                path = permission.path,
-                icon = permission.icon,
-                sort = permission.sort,
-                status = permission.status,
-                createTime = DateTimeUtil.formatDateTime(permission.createTime),
-                updateTime = DateTimeUtil.formatDateTime(permission.updateTime)
-            )
-        }
+        val permissions = permissionDao.findByIds(allNeededPermissionIds.toList())
         
         // 构建菜单树
-        val menuTree = buildMenuTree(permissions)
+        val menuTree = PermissionDto.buildTree(permissions)
         
         return ApiResponse.success(menuTree)
     }
     
-    private fun buildMenuTree(permissions: List<PermissionDto>): List<PermissionDto> {
-        val permissionMap = permissions.associateBy { it.id }
-        val rootMenus = mutableListOf<PermissionDto>()
-        
-        for (permission in permissions) {
-            if (permission.parentId == null) {
-                // 根节点，构建菜单树
-                val menuWithChildren = buildMenuWithChildren(permission, permissionMap)
-                rootMenus.add(menuWithChildren)
-            }
-        }
-        
-        return rootMenus.sortedBy { it.sort }
-    }
-    
-    private fun buildMenuWithChildren(permission: PermissionDto, permissionMap: Map<Long, PermissionDto>): PermissionDto {
-        val children = mutableListOf<PermissionDto>()
-        
-        // 查找所有以当前权限为父级的权限
-        for (childPermission in permissionMap.values) {
-            if (childPermission.parentId == permission.id) {
-                children.add(buildMenuWithChildren(childPermission, permissionMap))
-            }
-        }
-        
-        // 按sort字段排序子权限
-        val sortedChildren = children.sortedBy { it.sort }
-        
-        // 返回带有子权限的新PermissionDto
-        return permission.copy(children = sortedChildren)
-    }
     
     fun refreshToken(userId: Long): ApiResponse<Map<String, String>> {
         
@@ -366,6 +302,5 @@ class AuthService(
         
         return allParentIds
     }
-    
 
 }

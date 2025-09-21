@@ -47,7 +47,7 @@ class ApiInterfaceController(
      */
     @GetMapping("/list")
     @RequiresPermission("interface:list")
-    fun getList(@RequestParam(required = false) name: String?,
+    fun list(@RequestParam(required = false) name: String?,
                 @RequestParam(required = false) method: String?,
                 @RequestParam(required = false) status: Int?,
                 @RequestParam(required = false) environment: String?,
@@ -75,7 +75,7 @@ class ApiInterfaceController(
      */
     @GetMapping("/{id}")
     @RequiresPermission("interface:view")
-    fun getById(@PathVariable id: Long): ApiResponse<ApiInterfaceDto> {
+    fun detail(@PathVariable id: Long): ApiResponse<ApiInterfaceDto> {
         val apiInterface = apiInterfaceService.findById(id)
         return if (apiInterface != null) {
             ApiResponse.success(apiInterface)

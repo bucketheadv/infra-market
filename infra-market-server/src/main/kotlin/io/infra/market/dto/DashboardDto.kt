@@ -1,5 +1,8 @@
 package io.infra.market.dto
 
+import io.infra.market.repository.entity.User
+import io.infra.market.util.DateTimeUtil
+
 /**
  * 仪表盘统计数据DTO
  * 
@@ -98,7 +101,35 @@ data class RecentUserDto(
      * 用户最后一次登录的时间，格式化的字符串
      */
     val lastLoginTime: String
-)
+) {
+    companion object {
+        /**
+         * 从User实体转换为RecentUserDto
+         * 
+         * @param user 用户实体
+         * @return RecentUserDto
+         */
+        fun fromEntity(user: User): RecentUserDto {
+            return RecentUserDto(
+                id = user.id ?: 0,
+                username = user.username ?: "",
+                email = user.email,
+                status = user.status,
+                lastLoginTime = DateTimeUtil.formatDateTime(user.lastLoginTime)
+            )
+        }
+        
+        /**
+         * 批量从User实体列表转换为RecentUserDto列表
+         * 
+         * @param users 用户实体列表
+         * @return RecentUserDto列表
+         */
+        fun fromEntityList(users: List<User>): List<RecentUserDto> {
+            return users.map { fromEntity(it) }
+        }
+    }
+}
 
 /**
  * 系统信息DTO

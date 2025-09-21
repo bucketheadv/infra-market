@@ -53,7 +53,7 @@ class ApiInterfaceExecutionRecordController(
      */
     @GetMapping("/{id}")
     @RequiresPermission("interface:view")
-    fun getById(@PathVariable id: Long): ApiResponse<ApiInterfaceExecutionRecordDto?> {
+    fun detail(@PathVariable id: Long): ApiResponse<ApiInterfaceExecutionRecordDto?> {
         val record = apiInterfaceExecutionRecordService.getById(id)
         return ApiResponse.success(record)
     }
