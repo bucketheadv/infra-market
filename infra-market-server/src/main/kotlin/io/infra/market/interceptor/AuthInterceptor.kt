@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import io.infra.market.dto.ApiResponse
 import io.infra.market.service.TokenService
 import io.infra.market.util.JwtUtil
-import io.infra.market.util.AuthThreadLocal
+import io.infra.market.util.AuthHolder
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.stereotype.Component
@@ -34,7 +34,7 @@ class AuthInterceptor(
         // 从token中解析用户ID并保存到ThreadLocal
         val userId = JwtUtil.getUserIdFromToken(token)
         if (userId != null) {
-            AuthThreadLocal.setCurrentUserId(userId)
+            AuthHolder.setUid(userId)
         }
         
         return true
@@ -42,7 +42,7 @@ class AuthInterceptor(
     
     override fun afterCompletion(request: HttpServletRequest, response: HttpServletResponse, handler: Any, ex: Exception?) {
         // 清理ThreadLocal，避免内存泄漏
-        AuthThreadLocal.clearCurrentUserId()
+        AuthHolder.clearUid()
     }
     
     private fun handleUnauthorized(response: HttpServletResponse, message: String) {

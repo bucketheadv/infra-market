@@ -10,7 +10,7 @@ import io.infra.market.enums.HttpMethodEnum
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.infra.market.enums.PostTypeEnum
 import io.infra.market.enums.EnvironmentEnum
-import io.infra.market.util.AuthThreadLocal
+import io.infra.market.util.AuthHolder
 import io.infra.market.util.DateTimeUtil
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.stereotype.Service
@@ -134,7 +134,7 @@ class ApiInterfaceService(
         val startTime = System.currentTimeMillis()
         
         // 获取当前用户信息
-        val executorId = AuthThreadLocal.getCurrentUserId()
+        val executorId = AuthHolder.getUid()
         val executorName = if (executorId != null) {
             val user = userDao.findByUid(executorId)
             user?.username ?: "用户${executorId}"

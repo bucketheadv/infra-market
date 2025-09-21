@@ -4,7 +4,7 @@ import io.infra.market.repository.dao.UserRoleDao
 import io.infra.market.repository.dao.RolePermissionDao
 import io.infra.market.repository.dao.PermissionDao
 import io.infra.market.enums.StatusEnum
-import io.infra.market.util.AuthThreadLocal
+import io.infra.market.util.AuthHolder
 import org.springframework.stereotype.Service
 
 /**
@@ -28,7 +28,7 @@ class PermissionCheckService(
      * @return 是否拥有权限
      */
     fun hasPermission(permissionCode: String): Boolean {
-        val userId = AuthThreadLocal.getCurrentUserId() ?: return false
+        val userId = AuthHolder.getUid() ?: return false
         return hasPermission(userId, permissionCode)
     }
     
@@ -71,7 +71,7 @@ class PermissionCheckService(
      * @return 是否拥有任意一个权限
      */
     fun hasAnyPermission(permissionCodes: List<String>): Boolean {
-        val userId = AuthThreadLocal.getCurrentUserId() ?: return false
+        val userId = AuthHolder.getUid() ?: return false
         return permissionCodes.any { hasPermission(userId, it) }
     }
     
@@ -82,7 +82,7 @@ class PermissionCheckService(
      * @return 是否拥有所有权限
      */
     fun hasAllPermissions(permissionCodes: List<String>): Boolean {
-        val userId = AuthThreadLocal.getCurrentUserId() ?: return false
+        val userId = AuthHolder.getUid() ?: return false
         return permissionCodes.all { hasPermission(userId, it) }
     }
     
@@ -92,7 +92,7 @@ class PermissionCheckService(
      * @return 权限编码列表
      */
     fun getCurrentUserPermissions(): List<String> {
-        val userId = AuthThreadLocal.getCurrentUserId() ?: return emptyList()
+        val userId = AuthHolder.getUid() ?: return emptyList()
         return getUserPermissions(userId)
     }
     

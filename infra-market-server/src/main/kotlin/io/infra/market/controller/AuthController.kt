@@ -3,7 +3,7 @@ package io.infra.market.controller
 import io.infra.market.dto.LoginRequest
 import io.infra.market.dto.ChangePasswordRequest
 import io.infra.market.service.AuthService
-import io.infra.market.util.AuthThreadLocal
+import io.infra.market.util.AuthHolder
 import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
@@ -46,7 +46,7 @@ class AuthController(
      * @return 当前用户的详细信息
      */
     @GetMapping("/current/user")
-    fun getCurrentUser() = authService.getCurrentUser(AuthThreadLocal.getCurrentUserId()!!)
+    fun getCurrentUser() = authService.getCurrentUser(AuthHolder.getUid()!!)
     
     /**
      * 获取用户菜单
@@ -56,7 +56,7 @@ class AuthController(
      * @return 用户可访问的菜单树结构
      */
     @GetMapping("/user/menus")
-    fun getUserMenus() = authService.getUserMenus(AuthThreadLocal.getCurrentUserId()!!)
+    fun getUserMenus() = authService.getUserMenus(AuthHolder.getUid()!!)
     
     /**
      * 刷新访问令牌
@@ -66,7 +66,7 @@ class AuthController(
      * @return 新的访问令牌
      */
     @PostMapping("/refresh/token")
-    fun refreshToken() = authService.refreshToken(AuthThreadLocal.getCurrentUserId()!!)
+    fun refreshToken() = authService.refreshToken(AuthHolder.getUid()!!)
     
     /**
      * 用户登出
@@ -76,7 +76,7 @@ class AuthController(
      * @return 登出操作结果
      */
     @PostMapping("/logout")
-    fun logout() = authService.logout(AuthThreadLocal.getCurrentUserId()!!)
+    fun logout() = authService.logout(AuthHolder.getUid()!!)
     
     /**
      * 修改密码
@@ -88,5 +88,5 @@ class AuthController(
      */
     @PostMapping("/change/password")
     fun changePassword(@Valid @RequestBody request: ChangePasswordRequest) = 
-        authService.changePassword(AuthThreadLocal.getCurrentUserId()!!, request)
+        authService.changePassword(AuthHolder.getUid()!!, request)
 }
