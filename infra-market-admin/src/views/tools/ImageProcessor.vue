@@ -256,7 +256,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, markRaw } from 'vue'
+import { ref, computed, markRaw, onUnmounted } from 'vue'
 import { message } from 'ant-design-vue'
 import {
   LinkOutlined,
@@ -326,6 +326,12 @@ const loadImageFromUrl = async () => {
     // 尝试多种方式加载图片
     await loadImageWithFallback(imageUrl.value)
 
+    // 清理之前的图片和PAG播放器
+    if (currentImage.value?.url.startsWith('blob:')) {
+      URL.revokeObjectURL(currentImage.value.url)
+    }
+    cleanupPagPlayer()
+
     // 设置当前图片
     currentImage.value = {
       name: `图片_${Date.now()}`,
@@ -338,7 +344,7 @@ const loadImageFromUrl = async () => {
     if (isPagFile(imageUrl.value)) {
       try {
         await loadLibPag()
-        if (pagPlayerLoaded.value && !pagPlayer.value) {
+        if (pagPlayerLoaded.value) {
           // 等待DOM更新后初始化播放器
           setTimeout(() => {
             initPagPlayer()
@@ -451,6 +457,12 @@ const beforeUpload = async (file: File) => {
     return false
   }
 
+  // 清理之前的图片和PAG播放器
+  if (currentImage.value?.url.startsWith('blob:')) {
+    URL.revokeObjectURL(currentImage.value.url)
+  }
+  cleanupPagPlayer()
+
   // 创建预览URL
   const url = URL.createObjectURL(file)
   currentImage.value = {
@@ -464,7 +476,7 @@ const beforeUpload = async (file: File) => {
   if (isPagFile(file.name)) {
     try {
       await loadLibPag()
-      if (pagPlayerLoaded.value && !pagPlayer.value) {
+      if (pagPlayerLoaded.value) {
         // 等待DOM更新后初始化播放器
         setTimeout(() => {
           initPagPlayer()
@@ -574,25 +586,9 @@ const loadLibPag = async (): Promise<void> => {
 const initPagPlayer = async (): Promise<void> => {
   if (!pagCanvas.value || !libpag.value || !currentImage.value) return
   
-  // 如果播放器已经初始化，直接返回
-  if (pagPlayer.value) {
-    return
-  }
-  
   // 如果播放器已经初始化，先清理再重新初始化
   if (pagPlayer.value) {
-    try {
-      if (typeof pagPlayer.value.stop === 'function') {
-        pagPlayer.value.stop()
-      } else if (typeof pagPlayer.value.pause === 'function') {
-        pagPlayer.value.pause()
-      }
-    } catch (error) {
-      // 忽略清理错误
-    }
-    pagPlayer.value = null
-    pagPlayerLoaded.value = false
-    isPlaying.value = false
+    cleanupPagPlayer()
   }
   
   try {
@@ -946,8 +942,28 @@ const onImageError = () => {
   message.error('图片加载失败')
 }
 
+// 清理PAG播放器
+const cleanupPagPlayer = () => {
+  if (pagPlayer.value) {
+    try {
+      if (typeof pagPlayer.value.stop === 'function') {
+        pagPlayer.value.stop()
+      } else if (typeof pagPlayer.value.pause === 'function') {
+        pagPlayer.value.pause()
+      }
+    } catch (error) {
+      // 忽略清理错误
+    }
+    pagPlayer.value = null
+  }
+  isPlaying.value = false
+}
+
 // 清除图片
 const clearImage = () => {
+  // 清理PAG播放器
+  cleanupPagPlayer()
+  
   if (currentImage.value?.url.startsWith('blob:')) {
     URL.revokeObjectURL(currentImage.value.url)
   }
@@ -1155,6 +1171,14 @@ const switchToUpload = () => {
   errorMessage.value = ''
   message.info('已切换到文件上传模式，请选择本地图片文件')
 }
+
+// 组件卸载时清理资源
+onUnmounted(() => {
+  cleanupPagPlayer()
+  if (currentImage.value?.url.startsWith('blob:')) {
+    URL.revokeObjectURL(currentImage.value.url)
+  }
+})
 </script>
 
 <style scoped>
