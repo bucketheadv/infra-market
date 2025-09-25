@@ -1,53 +1,51 @@
 <template>
   <div class="image-processor">
-    <a-card class="main-card" :bordered="false">
-      <template #title>
-        <div class="card-title">
-          <PictureOutlined class="title-icon" />
-          <span>图片处理工具</span>
-        </div>
-      </template>
+    <a-card>
+      <template #title>图片处理工具</template>
       
       <div class="content-container">
         <!-- 输入方式选择 -->
-        <div class="input-methods">
-          <a-radio-group v-model:value="inputMethod" class="method-selector">
-            <a-radio-button value="upload">
-              <UploadOutlined />
-              文件上传
-            </a-radio-button>
-            <a-radio-button value="url">
-              <LinkOutlined />
-              图片地址
-            </a-radio-button>
-          </a-radio-group>
-        </div>
+        <a-form :model="{ inputMethod }" class="input-methods">
+          <a-form-item label="输入方式">
+            <a-radio-group v-model:value="inputMethod">
+              <a-radio-button value="upload">
+                <UploadOutlined />
+                文件上传
+              </a-radio-button>
+              <a-radio-button value="url">
+                <LinkOutlined />
+                图片地址
+              </a-radio-button>
+            </a-radio-group>
+          </a-form-item>
+        </a-form>
 
         <!-- 图片地址输入 -->
         <div v-if="inputMethod === 'url'" class="url-input-section">
-          <a-input
-            v-model:value="imageUrl"
-            placeholder="请输入图片地址，支持 http/https 链接"
-            size="large"
-            class="url-input"
-            @pressEnter="loadImageFromUrl"
-          >
-            <template #addonAfter>
-              <a-button 
-                type="primary" 
-                :loading="loading"
-                @click="loadImageFromUrl"
-                :disabled="!imageUrl.trim()"
+          <a-form :model="{ imageUrl }">
+            <a-form-item label="图片地址">
+              <a-input
+                v-model:value="imageUrl"
+                placeholder="请输入图片地址，支持 http/https 链接"
+                @pressEnter="loadImageFromUrl"
               >
-                加载图片
-              </a-button>
-            </template>
-          </a-input>
+                <template #addonAfter>
+                  <a-button 
+                    type="primary" 
+                    :loading="loading"
+                    @click="loadImageFromUrl"
+                    :disabled="!imageUrl.trim()"
+                  >
+                    加载图片
+                  </a-button>
+                </template>
+              </a-input>
+            </a-form-item>
+          </a-form>
           
           <!-- 示例图片链接 -->
-          <div class="example-links">
-            <div class="example-title">示例图片链接（点击快速测试）：</div>
-            <div class="example-buttons">
+          <a-form-item label="快速测试">
+            <a-space wrap>
               <a-button 
                 size="small" 
                 @click="loadExampleImage('https://picsum.photos/800/600')"
@@ -76,76 +74,68 @@
               >
                 JPEG图片
               </a-button>
-            </div>
-          </div>
+            </a-space>
+          </a-form-item>
           
           <!-- 跨域说明 -->
-          <div class="cors-notice">
-            <a-alert
-              message="关于跨域访问的说明"
-              type="info"
-              show-icon
-              :closable="false"
-            >
-              <template #description>
-                <div class="cors-description">
-                  <p>由于浏览器的跨域安全限制和防盗链保护，某些图片链接可能无法直接加载或下载。</p>
-                  <p><strong>如果遇到跨域问题，您可以：</strong></p>
-                  <ul>
-                    <li>使用上方示例中的支持跨域的图片服务</li>
-                    <li>将图片上传到支持跨域的图床服务（如七牛云、阿里云OSS等）</li>
-                    <li>直接上传本地图片文件（最推荐的方式）</li>
-                    <li>手动复制图片链接到浏览器中打开并保存</li>
-                  </ul>
-                </div>
-              </template>
-            </a-alert>
-          </div>
+          <a-alert
+            message="提示：某些图片链接可能因跨域限制无法加载，建议使用示例链接或直接上传本地文件"
+            type="info"
+            show-icon
+            :closable="false"
+          />
         </div>
 
         <!-- 文件上传区域 -->
         <div v-if="inputMethod === 'upload'" class="upload-section">
-          <a-upload-dragger
-            v-model:fileList="fileList"
-            :beforeUpload="beforeUpload"
-            :showUploadList="false"
-            :accept="acceptedFormats"
-            class="upload-dragger"
-            @drop="handleDrop"
-            @dragover="handleDragOver"
-            @dragleave="handleDragLeave"
-          >
-            <div class="upload-content" :class="{ 'drag-over': isDragOver }">
-              <div class="upload-icon">
-                <InboxOutlined v-if="!isDragOver" />
-                <CloudUploadOutlined v-else />
-              </div>
-              <div class="upload-text">
-                <p class="upload-title">
-                  {{ isDragOver ? '释放文件以开始上传' : '点击或拖拽文件到此区域上传' }}
-                </p>
-                <p class="upload-hint">
-                  支持 JPG、PNG、GIF、WEBP、BMP、SVG、AVIF、HEIC、PAG 等格式
-                </p>
-                <div class="upload-note">
-                  <ExclamationCircleOutlined />
-                  <span>注意：PAG文件为动画格式，首次加载需要下载libpag包</span>
+          <a-form-item label="文件上传">
+            <a-upload-dragger
+              v-model:fileList="fileList"
+              :beforeUpload="beforeUpload"
+              :showUploadList="false"
+              :accept="acceptedFormats"
+              @drop="handleDrop"
+              @dragover="handleDragOver"
+              @dragleave="handleDragLeave"
+            >
+              <div class="upload-content" :class="{ 'drag-over': isDragOver }">
+                <div class="upload-icon">
+                  <InboxOutlined v-if="!isDragOver" />
+                  <CloudUploadOutlined v-else />
+                </div>
+                <div class="upload-text">
+                  <p class="upload-title">
+                    {{ isDragOver ? '释放文件以开始上传' : '点击或拖拽文件到此区域上传' }}
+                  </p>
+                  <p class="upload-hint">
+                    支持 JPG、PNG、GIF、WEBP、BMP、SVG、AVIF、HEIC、PAG 等格式
+                  </p>
+                  <div class="upload-note">
+                    <ExclamationCircleOutlined />
+                    <span>注意：PAG文件为动画格式，首次加载需要下载libpag包</span>
+                  </div>
                 </div>
               </div>
-            </div>
-          </a-upload-dragger>
+            </a-upload-dragger>
+          </a-form-item>
         </div>
 
         <!-- 图片预览区域 -->
         <div v-if="currentImage" class="preview-section">
-          <div class="preview-header">
-            <div class="image-info">
-              <span class="image-name">{{ currentImage.name }}</span>
-              <span class="image-size">{{ formatFileSize(currentImage.size) }}</span>
-              <span class="image-type">{{ currentImage.type || '未知格式' }}</span>
+          <!-- 文件信息卡片 -->
+          <div class="file-info-card">
+            <div class="file-info-content">
+              <div class="file-name">
+                <span class="file-name-text">{{ currentImage.name }}</span>
+                <span class="file-size">{{ formatFileSize(currentImage.size) }}</span>
+              </div>
+              <div class="file-details">
+                <span class="file-format">{{ currentImage.type || '未知格式' }}</span>
+                <span class="file-dimensions">{{ imageDimensions.width }} × {{ imageDimensions.height }} 像素</span>
+              </div>
             </div>
-            <div class="preview-actions">
-              <a-button @click="clearImage" danger>
+            <div class="file-actions">
+              <a-button @click="clearImage" danger size="small">
                 <DeleteOutlined />
                 清除
               </a-button>
@@ -230,23 +220,6 @@
               @error="onImageError"
             />
           </div>
-          
-          <div class="image-details">
-            <a-descriptions :column="2" size="small" bordered>
-              <a-descriptions-item label="文件名">
-                {{ currentImage.name }}
-              </a-descriptions-item>
-              <a-descriptions-item label="文件大小">
-                {{ formatFileSize(currentImage.size) }}
-              </a-descriptions-item>
-              <a-descriptions-item label="图片格式">
-                {{ currentImage.type || '未知' }}
-              </a-descriptions-item>
-              <a-descriptions-item label="图片尺寸">
-                {{ imageDimensions.width }} × {{ imageDimensions.height }} 像素
-              </a-descriptions-item>
-            </a-descriptions>
-          </div>
         </div>
 
         <!-- 错误提示 -->
@@ -286,7 +259,6 @@
 import { ref, computed, markRaw } from 'vue'
 import { message } from 'ant-design-vue'
 import {
-  PictureOutlined,
   LinkOutlined,
   UploadOutlined,
   InboxOutlined,
@@ -605,6 +577,22 @@ const initPagPlayer = async (): Promise<void> => {
   // 如果播放器已经初始化，直接返回
   if (pagPlayer.value) {
     return
+  }
+  
+  // 如果播放器已经初始化，先清理再重新初始化
+  if (pagPlayer.value) {
+    try {
+      if (typeof pagPlayer.value.stop === 'function') {
+        pagPlayer.value.stop()
+      } else if (typeof pagPlayer.value.pause === 'function') {
+        pagPlayer.value.pause()
+      }
+    } catch (error) {
+      // 忽略清理错误
+    }
+    pagPlayer.value = null
+    pagPlayerLoaded.value = false
+    isPlaying.value = false
   }
   
   try {
@@ -1171,130 +1159,37 @@ const switchToUpload = () => {
 
 <style scoped>
 .image-processor {
-  padding: 24px;
+  min-height: 100%;
   background: #f0f2f5;
-  min-height: calc(100vh - 64px);
-}
-
-.main-card {
-  max-width: 1200px;
-  margin: 0 auto;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.card-title {
-  display: flex;
-  align-items: center;
-  font-size: 18px;
-  font-weight: 600;
-  color: #1f2937;
-}
-
-.title-icon {
-  margin-right: 8px;
-  color: #1890ff;
-  font-size: 20px;
-}
-
-.content-container {
-  padding: 24px 0;
+  padding: 24px;
 }
 
 .input-methods {
   margin-bottom: 24px;
-  text-align: center;
-}
-
-.method-selector {
-  background: #f8f9fa;
-  border-radius: 8px;
-  padding: 4px;
 }
 
 .url-input-section {
   margin-bottom: 24px;
 }
 
-.url-input {
-  border-radius: 8px;
-}
-
-.example-links {
-  margin-top: 16px;
-  padding: 16px;
-  background: #f8f9fa;
-  border-radius: 8px;
-  border: 1px solid #e8e8e8;
-}
-
-.example-title {
-  font-size: 14px;
-  color: #666;
-  margin-bottom: 12px;
-  font-weight: 500;
-}
-
-.example-buttons {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.cors-notice {
-  margin-top: 16px;
-}
-
-.cors-description {
-  font-size: 13px;
-  line-height: 1.6;
-}
-
-.cors-description p {
-  margin: 0 0 8px 0;
-}
-
-.cors-description ul {
-  margin: 8px 0 0 0;
-  padding-left: 20px;
-}
-
-.cors-description li {
-  margin: 4px 0;
-}
-
 .upload-section {
   margin-bottom: 24px;
 }
 
-.upload-dragger {
-  border: 2px dashed #d9d9d9;
-  border-radius: 12px;
-  background: #fafafa;
-  transition: all 0.3s ease;
-}
-
-.upload-dragger:hover {
-  border-color: #1890ff;
-  background: #f0f8ff;
-}
-
 .upload-content {
-  padding: 48px 24px;
+  padding: 32px 16px;
   text-align: center;
   transition: all 0.3s ease;
 }
 
 .upload-content.drag-over {
   background: #e6f7ff;
-  border-color: #1890ff;
 }
 
 .upload-icon {
-  font-size: 48px;
+  font-size: 40px;
   color: #1890ff;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .upload-text {
@@ -1302,84 +1197,120 @@ const switchToUpload = () => {
 }
 
 .upload-title {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 500;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   color: #333;
 }
 
 .upload-hint {
-  font-size: 14px;
+  font-size: 12px;
   color: #999;
-  margin: 0 0 8px 0;
+  margin: 0 0 6px 0;
 }
 
 .upload-note {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  font-size: 12px;
+  gap: 4px;
+  font-size: 11px;
   color: #ff7875;
   margin: 0;
   font-weight: 500;
-  padding: 8px 12px;
+  padding: 6px 8px;
   background: rgba(255, 120, 117, 0.1);
-  border-radius: 6px;
+  border-radius: 4px;
   border: 1px solid rgba(255, 120, 117, 0.2);
 }
 
 .upload-note .anticon {
-  font-size: 14px;
+  font-size: 12px;
 }
 
 .preview-section {
   margin-top: 24px;
   border: 1px solid #e8e8e8;
-  border-radius: 12px;
+  border-radius: 8px;
   overflow: hidden;
   background: #fff;
 }
 
-.preview-header {
+.file-info-card {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   padding: 16px 20px;
-  background: #f8f9fa;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
   border-bottom: 1px solid #e8e8e8;
+  gap: 16px;
 }
 
-.image-info {
+.file-info-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.file-name {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+
+.file-name-text {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  word-break: break-all;
+  line-height: 1.4;
+  flex: 1;
+  min-width: 0;
+}
+
+.file-size {
+  font-size: 12px;
+  color: #666;
+  background: #e8e8e8;
+  padding: 2px 8px;
+  border-radius: 12px;
+  white-space: nowrap;
+}
+
+.file-details {
   display: flex;
   align-items: center;
   gap: 16px;
 }
 
-.image-name {
-  font-weight: 600;
-  color: #333;
+.file-format {
+  font-size: 12px;
+  color: #1890ff;
+  background: rgba(24, 144, 255, 0.1);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 500;
 }
 
-.image-size,
-.image-type {
+.file-dimensions {
   font-size: 12px;
   color: #666;
-  background: #e8e8e8;
+  background: #f0f0f0;
   padding: 2px 8px;
-  border-radius: 4px;
+  border-radius: 12px;
 }
 
-.preview-actions {
-  display: flex;
-  gap: 8px;
+.file-actions {
+  flex-shrink: 0;
+  align-self: flex-start;
 }
 
 .image-preview {
-  padding: 24px;
+  padding: 16px;
   text-align: center;
   background: #fafafa;
-  min-height: 200px;
+  min-height: 150px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1387,9 +1318,9 @@ const switchToUpload = () => {
 
 .preview-image {
   max-width: 100%;
-  max-height: 500px;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  max-height: 400px;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s ease;
 }
 
@@ -1402,33 +1333,33 @@ const switchToUpload = () => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 40px 20px;
+  padding: 24px 16px;
   text-align: center;
   background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  border-radius: 12px;
+  border-radius: 8px;
   border: 2px dashed #dee2e6;
 }
 
 .pag-icon {
-  font-size: 64px;
+  font-size: 48px;
   color: #6c757d;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   opacity: 0.8;
 }
 
 .pag-info h3 {
   color: #495057;
-  margin-bottom: 12px;
-  font-size: 18px;
+  margin-bottom: 8px;
+  font-size: 16px;
   font-weight: 600;
 }
 
 .pag-info p {
   color: #6c757d;
-  margin-bottom: 16px;
-  font-size: 14px;
-  line-height: 1.6;
-  max-width: 300px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  line-height: 1.5;
+  max-width: 280px;
 }
 
 .pag-warning {
@@ -1491,42 +1422,44 @@ const switchToUpload = () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
-  padding: 0 4px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .pag-player-header h3 {
   margin: 0;
   color: #333;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
 }
 
 .pag-controls {
   display: flex;
-  gap: 8px;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
 .pag-canvas-container {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 200px;
+  min-height: 150px;
   background: 
     linear-gradient(45deg, #f0f0f0 25%, transparent 25%), 
     linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), 
     linear-gradient(45deg, transparent 75%, #f0f0f0 75%), 
     linear-gradient(-45deg, transparent 75%, #f0f0f0 75%);
-  background-size: 20px 20px;
-  background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
-  border-radius: 8px;
+  background-size: 16px 16px;
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+  border-radius: 6px;
   border: 1px solid #e9ecef;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .pag-canvas {
   max-width: 100%;
-  max-height: 400px;
+  max-height: 300px;
   border-radius: 4px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   display: block;
@@ -1542,10 +1475,6 @@ const switchToUpload = () => {
   }
 }
 
-.image-details {
-  padding: 20px;
-  background: #fff;
-}
 
 .error-section {
   margin-top: 16px;
@@ -1553,40 +1482,6 @@ const switchToUpload = () => {
 
 /* 响应式设计 */
 @media (max-width: 768px) {
-  .image-processor {
-    padding: 16px;
-  }
-  
-  .content-container {
-    padding: 16px 0;
-  }
-  
-  .preview-header {
-    flex-direction: column;
-    gap: 12px;
-    align-items: flex-start;
-  }
-  
-  .image-info {
-    flex-direction: column;
-    gap: 8px;
-    align-items: flex-start;
-  }
-  
-  .upload-content {
-    padding: 32px 16px;
-  }
-  
-  .upload-icon {
-    font-size: 36px;
-  }
-}
-
-@media (max-width: 480px) {
-  .image-processor {
-    padding: 12px;
-  }
-  
   .upload-content {
     padding: 24px 12px;
   }
@@ -1596,11 +1491,78 @@ const switchToUpload = () => {
   }
   
   .upload-title {
-    font-size: 14px;
+    font-size: 13px;
   }
   
   .upload-hint {
+    font-size: 11px;
+  }
+  
+  .pag-player-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .pag-controls {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  
+  .file-info-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 16px;
+  }
+  
+  .file-actions {
+    margin-left: 0;
+    align-self: flex-end;
+  }
+  
+  .file-name {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    width: 100%;
+  }
+  
+  .file-name-text {
+    width: 100%;
+    word-break: break-all;
+  }
+  
+  .file-details {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+}
+
+@media (max-width: 480px) {
+  .upload-content {
+    padding: 20px 8px;
+  }
+  
+  .upload-icon {
+    font-size: 28px;
+  }
+  
+  .upload-title {
     font-size: 12px;
+  }
+  
+  .upload-hint {
+    font-size: 10px;
+  }
+  
+  .pag-canvas-container {
+    min-height: 120px;
+  }
+  
+  .pag-canvas {
+    max-height: 200px;
   }
 }
 </style>
