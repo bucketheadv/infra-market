@@ -108,6 +108,12 @@ const routes: RouteRecordRaw[] = [
         name: 'InterfaceExecute',
         component: () => import('@/views/interface/InterfaceExecutePage.vue'),
         meta: { title: '接口执行', permission: 'interface:execute' }
+      },
+      {
+        path: '/tools/image',
+        name: 'ImageProcessor',
+        component: () => import('@/views/tools/ImageProcessor.vue'),
+        meta: { title: '图片处理', permission: 'image:manage' }
       }
     ]
   }

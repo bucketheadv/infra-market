@@ -38,9 +38,13 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
     },
+    fs: {
+      allow: ['..']
+    }
   },
   build: {
     outDir: 'dist',
     sourcemap: false,
   },
+  assetsInclude: ['**/*.wasm'],
 })

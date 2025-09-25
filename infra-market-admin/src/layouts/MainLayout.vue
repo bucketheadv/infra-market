@@ -170,6 +170,7 @@ import {
   KeyOutlined,
   DownOutlined,
   ToolOutlined,
+  PictureOutlined,
 } from '@ant-design/icons-vue'
 
 const router = useRouter()
@@ -220,6 +221,7 @@ const getIconComponent = (iconName: string) => {
     AppstoreOutlined,
     FileTextOutlined,
     ToolOutlined,
+    PictureOutlined,
   }
   return iconMap[iconName] || QuestionOutlined
 }

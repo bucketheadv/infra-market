@@ -2,7 +2,6 @@ package io.infra.market.repository.entity
 
 import com.mybatisflex.annotation.Table
 import io.infra.structure.db.model.activerecord.BaseActiveRecordEntity
-import java.util.Date
 
 /**
  * 用户实体类

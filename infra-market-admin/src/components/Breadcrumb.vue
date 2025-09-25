@@ -165,6 +165,11 @@ const breadcrumbItems = computed((): BreadcrumbItem[] => {
             path: undefined
           })
         }
+      } else if (pathSegments[1] === 'image') {
+        items.push({
+          title: '图片处理',
+          path: '/tools/image'
+        })
       }
     } else if (pathSegments[0] === 'system') {
       // 系统管理模块的备选处理

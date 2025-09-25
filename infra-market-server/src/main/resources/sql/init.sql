@@ -186,6 +186,10 @@ SET @tool_manage_id = (SELECT id FROM `permission_info` WHERE code = 'tool:manag
 INSERT INTO `permission_info` (`name`, `code`, `type`, `parent_id`, `path`, `icon`, `sort`, `status`, `create_time`, `update_time`) VALUES
 ('接口管理', 'interface:manage', 'menu', @tool_manage_id, '/tools/interface', 'ApiOutlined', 1, 'active', UNIX_TIMESTAMP() * 1000, UNIX_TIMESTAMP() * 1000);
 
+-- 插入图片处理菜单（作为工具的子菜单）
+INSERT INTO `permission_info` (`name`, `code`, `type`, `parent_id`, `path`, `icon`, `sort`, `status`, `create_time`, `update_time`) VALUES
+('图片处理', 'image:manage', 'menu', @tool_manage_id, '/tools/image', 'PictureOutlined', 2, 'active', UNIX_TIMESTAMP() * 1000, UNIX_TIMESTAMP() * 1000);
+
 -- 插入接口管理相关的按钮权限
 SET @interface_manage_id = (SELECT id FROM `permission_info` WHERE code = 'interface:manage');
 INSERT INTO `permission_info` (`name`, `code`, `type`, `parent_id`, `path`, `icon`, `sort`, `status`, `create_time`, `update_time`) VALUES
@@ -198,15 +202,15 @@ INSERT INTO `permission_info` (`name`, `code`, `type`, `parent_id`, `path`, `ico
 
 -- 更新角色权限关联，为超级管理员和管理员添加工具权限
 INSERT INTO `role_permission` (`role_id`, `permission_id`, `create_time`, `update_time`) 
-SELECT 1, id, UNIX_TIMESTAMP() * 1000, UNIX_TIMESTAMP() * 1000 FROM `permission_info` WHERE status = 'active' AND (code LIKE 'tool:%' OR code LIKE 'interface:%');
+SELECT 1, id, UNIX_TIMESTAMP() * 1000, UNIX_TIMESTAMP() * 1000 FROM `permission_info` WHERE status = 'active' AND (code LIKE 'tool:%' OR code LIKE 'interface:%' OR code LIKE 'image:%');
 
 INSERT INTO `role_permission` (`role_id`, `permission_id`, `create_time`, `update_time`) 
-SELECT 2, id, UNIX_TIMESTAMP() * 1000, UNIX_TIMESTAMP() * 1000 FROM `permission_info` WHERE status = 'active' AND (code LIKE 'tool:%' OR code LIKE 'interface:%');
+SELECT 2, id, UNIX_TIMESTAMP() * 1000, UNIX_TIMESTAMP() * 1000 FROM `permission_info` WHERE status = 'active' AND (code LIKE 'tool:%' OR code LIKE 'interface:%' OR code LIKE 'image:%');
 
--- 为普通用户添加接口查看权限
+-- 为普通用户添加接口查看权限和图片处理权限
 INSERT INTO `role_permission` (`role_id`, `permission_id`, `create_time`, `update_time`) 
 SELECT 3, id, UNIX_TIMESTAMP() * 1000, UNIX_TIMESTAMP() * 1000 FROM `permission_info` WHERE status = 'active' AND code IN (
-    'tool:manage', 'interface:manage', 'interface:list', 'interface:view'
+    'tool:manage', 'interface:manage', 'interface:list', 'interface:view', 'image:manage'
 );
 
 -- 为访客添加接口查看权限
