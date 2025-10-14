@@ -601,50 +601,140 @@
         <a-tabs v-model:activeKey="detailActiveTab" class="detail-tabs">
           <a-tab-pane key="request" tab="请求参数">
             <div class="detail-content">
-              <div v-if="selectedRecord.requestParams" class="param-section">
+              <!-- URL参数 -->
+              <div v-if="urlParams.length > 0" class="param-section">
                 <h4>URL参数</h4>
-                <CodeEditor
-                  :model-value="formatJson(selectedRecord.requestParams)"
-                  :readonly="true"
-                  :height="200"
-                  language="json"
-                  :options="{
-                    fontSize: 12,
-                    fontFamily: 'Monaco, Menlo, Ubuntu Mono, monospace',
-                    lineHeight: 18
-                  }"
-                />
+                <div class="record-params-container">
+                  <a-row v-for="param in urlParams" :key="param.name" class="record-param-row" :gutter="[6, 0]">
+                    <a-col :span="6">
+                      <label class="record-param-label">
+                        {{ getParamDisplayName(param) }}
+                        <span v-if="param.required" class="required">*</span>
+                        <a-tooltip v-if="param.description" :title="param.description" placement="top">
+                          <QuestionCircleOutlined class="help-icon" />
+                        </a-tooltip>
+                      </label>
+                    </a-col>
+                    <a-col :span="18">
+                      <div class="record-param-value">
+                        <div v-if="param.inputType === 'CODE'" class="code-value-display">
+                          <CodeEditor
+                            :model-value="getRecordParamValue(selectedRecord?.requestParams, param.name)"
+                            :readonly="true"
+                            :height="150"
+                            :language="getCodeLanguageForParam(param)"
+                            :options="{
+                              fontSize: 12,
+                              fontFamily: 'Monaco, Menlo, Ubuntu Mono, monospace',
+                              lineHeight: 18,
+                              minimap: { enabled: false },
+                              readOnly: true
+                            }"
+                          />
+                        </div>
+                        <a-input
+                          v-else
+                          :value="getRecordParamDisplayValue(selectedRecord?.requestParams, param)"
+                          readonly
+                          :placeholder="`无${getParamDisplayName(param)}`"
+                          class="readonly-input"
+                        />
+                      </div>
+                    </a-col>
+                  </a-row>
+                </div>
               </div>
-              <div v-if="selectedRecord.requestHeaders" class="param-section">
+              
+              <!-- Header参数 -->
+              <div v-if="headerParams.length > 0" class="param-section">
                 <h4>请求头</h4>
-                <CodeEditor
-                  :model-value="formatJson(selectedRecord.requestHeaders)"
-                  :readonly="true"
-                  :height="200"
-                  language="json"
-                  :options="{
-                    fontSize: 12,
-                    fontFamily: 'Monaco, Menlo, Ubuntu Mono, monospace',
-                    lineHeight: 18
-                  }"
-                />
+                <div class="record-params-container">
+                  <a-row v-for="param in headerParams" :key="param.name" class="record-param-row" :gutter="[6, 0]">
+                    <a-col :span="6">
+                      <label class="record-param-label">
+                        {{ getParamDisplayName(param) }}
+                        <span v-if="param.required" class="required">*</span>
+                        <a-tooltip v-if="param.description" :title="param.description" placement="top">
+                          <QuestionCircleOutlined class="help-icon" />
+                        </a-tooltip>
+                      </label>
+                    </a-col>
+                    <a-col :span="18">
+                      <div class="record-param-value">
+                        <div v-if="param.inputType === 'CODE'" class="code-value-display">
+                          <CodeEditor
+                            :model-value="getRecordParamValue(selectedRecord?.requestHeaders, param.name)"
+                            :readonly="true"
+                            :height="150"
+                            :language="getCodeLanguageForParam(param)"
+                            :options="{
+                              fontSize: 12,
+                              fontFamily: 'Monaco, Menlo, Ubuntu Mono, monospace',
+                              lineHeight: 18,
+                              minimap: { enabled: false },
+                              readOnly: true
+                            }"
+                          />
+                        </div>
+                        <a-input
+                          v-else
+                          :value="getRecordParamDisplayValue(selectedRecord?.requestHeaders, param)"
+                          readonly
+                          :placeholder="`无${getParamDisplayName(param)}`"
+                          class="readonly-input"
+                        />
+                      </div>
+                    </a-col>
+                  </a-row>
+                </div>
               </div>
-              <div v-if="selectedRecord.requestBody" class="param-section">
+              
+              <!-- Body参数 -->
+              <div v-if="bodyParams.length > 0 && interfaceData?.method !== 'GET'" class="param-section">
                 <h4>请求体</h4>
-                <CodeEditor
-                  :model-value="formatJson(selectedRecord.requestBody)"
-                  :readonly="true"
-                  :height="200"
-                  language="json"
-                  :options="{
-                    fontSize: 12,
-                    fontFamily: 'Monaco, Menlo, Ubuntu Mono, monospace',
-                    lineHeight: 18
-                  }"
-                />
+                <div class="record-params-container">
+                  <a-row v-for="param in bodyParams" :key="param.name" class="record-param-row" :gutter="[6, 0]">
+                    <a-col :span="6">
+                      <label class="record-param-label">
+                        {{ getParamDisplayName(param) }}
+                        <span v-if="param.required" class="required">*</span>
+                        <a-tooltip v-if="param.description" :title="param.description" placement="top">
+                          <QuestionCircleOutlined class="help-icon" />
+                        </a-tooltip>
+                      </label>
+                    </a-col>
+                    <a-col :span="18">
+                      <div class="record-param-value">
+                        <div v-if="param.inputType === 'CODE'" class="code-value-display">
+                          <CodeEditor
+                            :model-value="getRecordParamValue(selectedRecord?.requestBody, param.name)"
+                            :readonly="true"
+                            :height="150"
+                            :language="getCodeLanguageForParam(param)"
+                            :options="{
+                              fontSize: 12,
+                              fontFamily: 'Monaco, Menlo, Ubuntu Mono, monospace',
+                              lineHeight: 18,
+                              minimap: { enabled: false },
+                              readOnly: true
+                            }"
+                          />
+                        </div>
+                        <a-input
+                          v-else
+                          :value="getRecordParamDisplayValue(selectedRecord?.requestBody, param)"
+                          readonly
+                          :placeholder="`无${getParamDisplayName(param)}`"
+                          class="readonly-input"
+                        />
+                      </div>
+                    </a-col>
+                  </a-row>
+                </div>
               </div>
-              <div v-if="!selectedRecord.requestParams && !selectedRecord.requestHeaders && !selectedRecord.requestBody" class="no-content">
-                <a-empty description="无请求参数" />
+              
+              <div v-if="urlParams.length === 0 && headerParams.length === 0 && bodyParams.length === 0" class="no-content">
+                <a-empty description="该接口未定义任何参数" />
               </div>
             </div>
           </a-tab-pane>
@@ -1524,6 +1614,79 @@ const getStatusColor = (status: number): string => {
   if (status >= 500) return 'red'
   return 'default'
 }
+
+// 从JSON字符串中获取参数值
+const getRecordParamValue = (jsonString: string | undefined, paramName: string): string => {
+  if (!jsonString) return ''
+  
+  try {
+    const params = JSON.parse(jsonString)
+    const value = params[paramName]
+    
+    if (value === undefined || value === null) {
+      return ''
+    }
+    
+    // 如果是对象或数组,格式化为JSON字符串
+    if (typeof value === 'object') {
+      return JSON.stringify(value, null, 2)
+    }
+    
+    return String(value)
+  } catch (error) {
+    console.error('解析参数JSON失败:', error)
+    return ''
+  }
+}
+
+// 获取参数的显示值(用于只读输入框)
+const getRecordParamDisplayValue = (jsonString: string | undefined, param: ApiParam): string => {
+  if (!jsonString) return ''
+  
+  try {
+    const params = JSON.parse(jsonString)
+    const value = params[param.name]
+    
+    if (value === undefined || value === null) {
+      return ''
+    }
+    
+    // 多选下拉框显示
+    if (param.inputType === 'MULTI_SELECT' && Array.isArray(value)) {
+      // 尝试从选项中获取标签
+      if (param.options && param.options.length > 0) {
+        const labels = value.map(v => {
+          const option = param.options?.find(opt => opt.value === v)
+          return option?.label || v
+        })
+        return labels.join(', ')
+      }
+      return value.join(', ')
+    }
+    
+    // 单选下拉框显示
+    if (param.inputType === 'SELECT' && param.options && param.options.length > 0) {
+      const option = param.options.find(opt => opt.value === value)
+      return option?.label || String(value)
+    }
+    
+    // 对象或数组显示为JSON字符串
+    if (typeof value === 'object') {
+      return JSON.stringify(value)
+    }
+    
+    return String(value)
+  } catch (error) {
+    console.error('解析参数JSON失败:', error)
+    return ''
+  }
+}
+
+// 根据参数的dataType获取代码编辑器的语言
+const getCodeLanguageForParam = (param: ApiParam): string => {
+  const languageMapping = getDataTypeToLanguageMapping()
+  return languageMapping[param.dataType] || 'text'
+}
 </script>
 
 <style scoped>
@@ -2332,5 +2495,66 @@ const getStatusColor = (status: number): string => {
 .edit-btn :deep(.theme-button__icon) {
   font-size: 12px !important;
   margin-right: 4px !important;
+}
+
+/* 执行记录参数显示样式 */
+.record-params-container {
+  background: #fafafa;
+  border-radius: 8px;
+  padding: 16px;
+  border: 1px solid #e8e8e8;
+}
+
+.record-param-row {
+  margin-bottom: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.record-param-row:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.record-param-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 500;
+  font-size: 12px;
+  color: #333;
+  padding-top: 4px;
+}
+
+.record-param-value {
+  width: 100%;
+}
+
+.readonly-input {
+  background: #fff !important;
+  border: 1px solid #d9d9d9 !important;
+  border-radius: 4px;
+  color: #595959 !important;
+  font-size: 13px;
+  cursor: default;
+}
+
+.readonly-input:hover,
+.readonly-input:focus {
+  border-color: #d9d9d9 !important;
+  box-shadow: none !important;
+}
+
+.readonly-input :deep(.ant-input) {
+  background: #fff !important;
+  color: #595959 !important;
+  cursor: default;
+}
+
+.code-value-display {
+  background: #fff;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  overflow: hidden;
 }
 </style>

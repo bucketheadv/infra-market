@@ -10,7 +10,6 @@ import com.mybatisflex.kotlin.extensions.condition.and
 import com.mybatisflex.kotlin.extensions.kproperty.ne
 import com.mybatisflex.spring.service.impl.ServiceImpl
 import io.infra.market.dto.PermissionQueryDto
-import io.infra.market.enums.PermissionTypeEnum
 import io.infra.market.enums.StatusEnum
 import io.infra.market.repository.entity.Permission
 import io.infra.market.repository.mapper.PermissionMapper
@@ -48,7 +47,7 @@ class PermissionDao : ServiceImpl<PermissionMapper, Permission>() {
         }
         return mapper.selectListByQuery(query)
     }
-    
+
     fun findByParentId(parentId: Long): List<Permission> {
         val query = query().whereWith {
             Permission::parentId.eq(parentId) and Permission::status.ne(StatusEnum.DELETED.code)
