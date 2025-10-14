@@ -1,6 +1,6 @@
 <template>
   <a-modal
-    v-model:visible="visible"
+    v-model:open="visible"
     title="代码编辑器"
     width="90%"
     :footer="null"
@@ -103,7 +103,7 @@ import xmlFormatter from 'xml-formatter'
 
 // Props
 interface Props {
-  visible: boolean
+  open: boolean
   value: string
   language?: string
   placeholder?: string
@@ -116,7 +116,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 // Emits
 const emit = defineEmits<{
-  'update:visible': [value: boolean]
+  'update:open': [value: boolean]
   'update:value': [value: string]
   'confirm': [value: string]
   'cancel': []
@@ -124,7 +124,7 @@ const emit = defineEmits<{
 }>()
 
 // 响应式数据
-const visible = ref(props.visible)
+const visible = ref(props.open)
 const editorValue = ref(props.value)
 const selectedLanguage = ref(props.language)
 const editorRef = ref()
@@ -232,7 +232,7 @@ const detectCodeType = (code: string): string => {
 }
 
 // 监听props变化
-watch(() => props.visible, (newVal) => {
+watch(() => props.open, (newVal) => {
   visible.value = newVal
   if (newVal) {
     // 弹窗打开时，保存原始值并设置编辑器值
@@ -251,7 +251,7 @@ watch(() => props.visible, (newVal) => {
       setTimeout(() => {
         const editor = editorRef.value?.getEditor()
         if (editor) {
-          editor.layout()
+          editor.requestMeasure()
         }
       }, 100)
     })
@@ -259,7 +259,7 @@ watch(() => props.visible, (newVal) => {
 })
 
 watch(visible, (newVal) => {
-  emit('update:visible', newVal)
+  emit('update:open', newVal)
 })
 
 // 只在弹窗关闭时才响应外部value的变化

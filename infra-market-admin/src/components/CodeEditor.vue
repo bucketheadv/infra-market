@@ -20,7 +20,7 @@ import { java } from '@codemirror/lang-java'
 import { oneDark } from '@codemirror/theme-one-dark'
 import { keymap, lineNumbers, highlightActiveLineGutter, highlightSpecialChars, drawSelection, rectangularSelection, highlightActiveLine } from '@codemirror/view'
 import { indentWithTab, defaultKeymap, history, historyKeymap } from '@codemirror/commands'
-import { indentOnInput, bracketMatching, syntaxHighlighting, HighlightStyle } from '@codemirror/language'
+import { indentOnInput, indentUnit, bracketMatching, syntaxHighlighting, HighlightStyle } from '@codemirror/language'
 import { tags as t } from '@lezer/highlight'
 import { searchKeymap, highlightSelectionMatches } from '@codemirror/search'
 import { closeBrackets, closeBracketsKeymap } from '@codemirror/autocomplete'
@@ -140,6 +140,7 @@ const getBasicExtensions = (): Extension[] => {
     history(),
     drawSelection(),
     EditorState.allowMultipleSelections.of(true),
+    indentUnit.of('    '), // 设置缩进单位为4个空格
     indentOnInput(),
     bracketMatching(),
     closeBrackets(),

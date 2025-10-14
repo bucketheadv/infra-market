@@ -231,7 +231,7 @@
     
     <!-- 代码编辑器弹窗 -->
     <CodeEditorModal
-      v-model:visible="codeEditorVisible"
+      v-model:open="codeEditorVisible"
       v-model:value="tempCodeValue"
       :language="getCodeLanguage()"
       :placeholder="getDefaultValuePlaceholder()"
