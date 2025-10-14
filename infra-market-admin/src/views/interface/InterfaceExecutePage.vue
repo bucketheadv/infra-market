@@ -755,18 +755,66 @@
                 />
               </div>
               <div v-if="selectedRecord.responseBody" class="param-section">
-                <h4>响应体</h4>
-                <CodeEditor
-                  :model-value="formatJson(selectedRecord.responseBody)"
-                  :readonly="true"
-                  :height="300"
-                  :language="detectResponseLanguage(selectedRecord.responseBody)"
-                  :options="{
-                    fontSize: 12,
-                    fontFamily: 'Monaco, Menlo, Ubuntu Mono, monospace',
-                    lineHeight: 18
-                  }"
-                />
+                <!-- 如果配置了取值路径且成功提取值，则显示提取值 -->
+                <div v-if="interfaceData?.valuePath && recordExtractedValue" class="extracted-value-section-record">
+                  <h4>
+                    提取的值
+                    <span class="value-path-badge">{{ interfaceData.valuePath }}</span>
+                  </h4>
+                  <div class="extracted-value-content-record">
+                    <CodeEditor
+                      :model-value="recordExtractedValue"
+                      :readonly="true"
+                      :height="300"
+                      :language="detectResponseLanguage(recordExtractedValue)"
+                      :options="{
+                        fontSize: 12,
+                        fontFamily: 'Monaco, Menlo, Ubuntu Mono, monospace',
+                        lineHeight: 18,
+                        minimap: { enabled: false },
+                        readOnly: true
+                      }"
+                    />
+                  </div>
+                </div>
+                
+                <!-- 响应体 -->
+                <div class="response-body-record">
+                  <div 
+                    class="response-body-header-record" 
+                    @click="interfaceData?.valuePath && recordExtractedValue ? toggleRecordResponseBody() : null" 
+                    :class="{ 'clickable': interfaceData?.valuePath && recordExtractedValue }"
+                  >
+                    <h4>原始响应体</h4>
+                    <div class="response-header-right-record">
+                      <span class="response-size-record">{{ selectedRecord.responseBody?.length || 0 }} 字符</span>
+                      <a-button 
+                        v-if="interfaceData?.valuePath && recordExtractedValue"
+                        type="text" 
+                        size="small" 
+                        class="collapse-btn-record"
+                        :icon="recordResponseBodyCollapsed ? h(DownOutlined) : h(UpOutlined)"
+                      >
+                        {{ recordResponseBodyCollapsed ? '展开' : '收起' }}
+                      </a-button>
+                    </div>
+                  </div>
+                  <div v-show="!interfaceData?.valuePath || !recordExtractedValue || !recordResponseBodyCollapsed" class="response-body-content-record">
+                    <CodeEditor
+                      :model-value="formatJson(selectedRecord.responseBody)"
+                      :readonly="true"
+                      :height="300"
+                      :language="detectResponseLanguage(selectedRecord.responseBody)"
+                      :options="{
+                        fontSize: 12,
+                        fontFamily: 'Monaco, Menlo, Ubuntu Mono, monospace',
+                        lineHeight: 18,
+                        minimap: { enabled: true },
+                        readOnly: true
+                      }"
+                    />
+                  </div>
+                </div>
               </div>
               <div v-if="!selectedRecord.responseHeaders && !selectedRecord.responseBody" class="no-content">
                 <a-empty description="无响应内容" />
@@ -814,6 +862,7 @@ const executionRecords = ref<ApiInterfaceExecutionRecord[]>([])
 const recordDetailVisible = ref(false)
 const selectedRecord = ref<ApiInterfaceExecutionRecord | null>(null)
 const detailActiveTab = ref('request')
+const recordResponseBodyCollapsed = ref(true) // 执行记录响应体默认收起
 
 // 代码编辑器弹窗相关
 const codeEditorVisible = ref(false)
@@ -1592,7 +1641,119 @@ const viewRecordDetail = (record: ApiInterfaceExecutionRecord) => {
   selectedRecord.value = record
   recordDetailVisible.value = true
   detailActiveTab.value = 'request'
+  recordResponseBodyCollapsed.value = true // 重置为默认收起状态
 }
+
+// 切换执行记录响应体展开/收起状态
+const toggleRecordResponseBody = () => {
+  recordResponseBodyCollapsed.value = !recordResponseBodyCollapsed.value
+}
+
+// 从响应体中提取值（根据valuePath）
+const extractValueFromResponse = (responseBody: string | undefined): string => {
+  if (!responseBody || !interfaceData.value?.valuePath) {
+    return ''
+  }
+  
+  try {
+    const jsonData = JSON.parse(responseBody)
+    let valuePath = interfaceData.value.valuePath.trim()
+    
+    if (!valuePath) {
+      return ''
+    }
+    
+    // 处理JSONPath格式，去掉开头的 $ 或 $.
+    if (valuePath.startsWith('$.')) {
+      valuePath = valuePath.substring(2)
+    } else if (valuePath.startsWith('$')) {
+      valuePath = valuePath.substring(1)
+      if (valuePath.startsWith('.')) {
+        valuePath = valuePath.substring(1)
+      }
+    }
+    
+    // 手动解析路径，支持点号和方括号
+    let result: any = jsonData
+    let currentPath = valuePath
+    
+    // 处理路径，支持 data.result、data[0]、data.items[0].name 等格式
+    while (currentPath.length > 0) {
+      // 尝试匹配 [数字]
+      const arrayIndexMatch = currentPath.match(/^\[(\d+)\](.*)/)
+      if (arrayIndexMatch) {
+        const index = parseInt(arrayIndexMatch[1])
+        result = result[index]
+        currentPath = arrayIndexMatch[2]
+        if (currentPath.startsWith('.')) {
+          currentPath = currentPath.substring(1)
+        }
+        continue
+      }
+      
+      // 尝试匹配 .属性 或 属性[数字]
+      const propertyMatch = currentPath.match(/^([^.[]+)(\[(\d+)\])?(.*)/)
+      if (propertyMatch) {
+        const property = propertyMatch[1]
+        const arrayIndex = propertyMatch[3]
+        
+        // 访问属性
+        if (result === undefined || result === null) {
+          return ''
+        }
+        result = result[property]
+        
+        // 如果有数组索引，继续访问
+        if (arrayIndex !== undefined) {
+          const index = parseInt(arrayIndex)
+          result = result[index]
+        }
+        
+        currentPath = propertyMatch[4]
+        if (currentPath.startsWith('.')) {
+          currentPath = currentPath.substring(1)
+        }
+        continue
+      }
+      
+      // 如果没有匹配到任何模式，退出
+      break
+    }
+    
+    if (result === undefined || result === null) {
+      return ''
+    }
+    
+    // 如果提取的值是对象或数组，格式化为JSON
+    if (typeof result === 'object') {
+      return JSON.stringify(result, null, 2)
+    }
+    
+    // 如果是字符串，尝试解析为JSON并格式化
+    if (typeof result === 'string') {
+      try {
+        const parsed = JSON.parse(result)
+        return JSON.stringify(parsed, null, 2)
+      } catch {
+        // 不是有效的JSON，返回原始字符串
+        return result
+      }
+    }
+    
+    return String(result)
+  } catch (error) {
+    console.error('提取值失败:', error)
+    return ''
+  }
+}
+
+// 计算属性：执行记录的提取值
+const recordExtractedValue = computed(() => {
+  if (!selectedRecord.value?.responseBody) {
+    return ''
+  }
+  return extractValueFromResponse(selectedRecord.value.responseBody)
+})
 
 // 格式化JSON
 const formatJson = (jsonString: string | undefined): string => {
@@ -2556,5 +2717,165 @@ const getCodeLanguageForParam = (param: ApiParam): string => {
   border: 1px solid #d9d9d9;
   border-radius: 4px;
   overflow: hidden;
+}
+
+/* 执行记录响应体样式 */
+.extracted-value-section-record {
+  margin-bottom: 16px;
+  background: linear-gradient(135deg, #f6ffed 0%, #d9f7be 100%);
+  border: 2px solid #52c41a;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(82, 196, 26, 0.15);
+  overflow: hidden;
+  position: relative;
+}
+
+.extracted-value-section-record::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #52c41a 0%, #73d13d 50%, #52c41a 100%);
+}
+
+.extracted-value-section-record h4 {
+  margin: 0;
+  padding: 16px 16px 8px 16px;
+  color: #389e0d;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.value-path-badge {
+  background: rgba(255, 255, 255, 0.9);
+  color: #52c41a;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid #b7eb8f;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  letter-spacing: 0.5px;
+}
+
+.extracted-value-section-record h4::before {
+  content: '✨';
+  font-size: 15px;
+}
+
+.extracted-value-content-record {
+  background: #fff;
+  margin: 0 12px 12px 12px;
+  border-radius: 8px;
+  border: 1px solid #b7eb8f;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.response-body-record {
+  margin-top: 16px;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border: 2px solid #1890ff;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(24, 144, 255, 0.15);
+  overflow: hidden;
+  position: relative;
+}
+
+.response-body-record::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #1890ff 0%, #40a9ff 50%, #1890ff 100%);
+}
+
+.response-body-header-record {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 16px 8px 16px;
+  background: transparent;
+  border-bottom: 1px solid rgba(24, 144, 255, 0.1);
+  transition: background-color 0.2s ease;
+}
+
+.response-body-header-record.clickable {
+  cursor: pointer;
+}
+
+.response-body-header-record.clickable:hover {
+  background: rgba(24, 144, 255, 0.05);
+}
+
+.response-header-right-record {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.response-body-header-record h4 {
+  margin: 0;
+  color: #0050b3;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.response-body-header-record h4::before {
+  content: '📄';
+  font-size: 15px;
+}
+
+.response-size-record {
+  font-size: 12px;
+  color: #1890ff;
+  background: rgba(24, 144, 255, 0.1);
+  padding: 4px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(24, 144, 255, 0.2);
+  font-weight: 500;
+}
+
+.response-body-content-record {
+  background: #fff;
+  margin: 0 12px 12px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(24, 144, 255, 0.1);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.collapse-btn-record {
+  color: #1890ff !important;
+  border: 1px solid #91d5ff !important;
+  background: rgba(255, 255, 255, 0.8) !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+  padding: 4px 12px !important;
+  min-width: 60px !important;
+  height: 28px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
+  border-radius: 4px !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  transition: all 0.2s ease !important;
+}
+
+.collapse-btn-record:hover {
+  background: rgba(24, 144, 255, 0.1) !important;
+  color: #0050b3 !important;
+  border-color: #40a9ff !important;
+  box-shadow: 0 2px 4px rgba(24, 144, 255, 0.2) !important;
 }
 </style>
