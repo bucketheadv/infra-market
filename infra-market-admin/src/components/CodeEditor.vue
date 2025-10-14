@@ -1,28 +1,45 @@
 <template>
-  <div class="code-editor-container" :style="{ height: typeof props.height === 'number' ? props.height + 'px' : props.height }">
-    <div ref="editorContainer" class="monaco-editor"></div>
-  </div>
+  <div 
+    ref="editorContainer" 
+    class="code-editor-container" 
+    :style="{ height: typeof props.height === 'number' ? props.height + 'px' : props.height }"
+  ></div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
-import * as monaco from 'monaco-editor'
+import { ref, onMounted, onUnmounted, watch, nextTick, shallowRef } from 'vue'
+import { EditorView } from 'codemirror'
+import { EditorState, type Extension } from '@codemirror/state'
+import { javascript } from '@codemirror/lang-javascript'
+import { json } from '@codemirror/lang-json'
+import { xml } from '@codemirror/lang-xml'
+import { sql } from '@codemirror/lang-sql'
+import { html } from '@codemirror/lang-html'
+import { css } from '@codemirror/lang-css'
+import { java } from '@codemirror/lang-java'
+import { oneDark } from '@codemirror/theme-one-dark'
+import { keymap, lineNumbers, highlightActiveLineGutter, highlightSpecialChars, drawSelection, rectangularSelection, highlightActiveLine } from '@codemirror/view'
+import { indentWithTab, defaultKeymap, history, historyKeymap } from '@codemirror/commands'
+import { indentOnInput, bracketMatching, syntaxHighlighting, HighlightStyle } from '@codemirror/language'
+import { tags as t } from '@lezer/highlight'
+import { searchKeymap, highlightSelectionMatches } from '@codemirror/search'
+import { closeBrackets, closeBracketsKeymap } from '@codemirror/autocomplete'
 
 // Props
 interface Props {
   modelValue: string
   language?: string
-  theme?: 'vs' | 'vs-dark' | 'hc-black' | 'auto'
+  theme?: 'light' | 'dark' | 'auto'
   height?: string | number
   width?: string | number
   readonly?: boolean
   placeholder?: string
-  options?: monaco.editor.IStandaloneEditorConstructionOptions
+  options?: any
 }
 
 const props = withDefaults(defineProps<Props>(), {
   language: 'json',
-  theme: 'auto',
+  theme: 'light',
   height: 200,
   width: '100%',
   readonly: false,
@@ -40,201 +57,217 @@ const emit = defineEmits<{
 
 // 响应式数据
 const editorContainer = ref<HTMLElement>()
-let editor: monaco.editor.IStandaloneCodeEditor | null = null
+const editorView = shallowRef<EditorView>()
 
-// 获取当前主题
-const getCurrentTheme = (): string => {
-  if (props.theme === 'auto') {
-    // 检测系统主题
+// 自定义语法高亮配色方案（类似 GitHub/Atom 风格，优化JSON显示）
+const customHighlightStyle = HighlightStyle.define([
+  // JSON 专用配色
+  { tag: t.propertyName, color: '#0451a5' },                          // JSON 键名：深蓝色
+  { tag: [t.string], color: '#a31515' },                              // 字符串值：红色
+  { tag: [t.number], color: '#098658' },                              // 数字：绿色
+  { tag: [t.bool, t.null], color: '#0000ff' },                        // 布尔值/null：蓝色
+  { tag: [t.bracket, t.brace, t.squareBracket], color: '#000000' },   // 括号：黑色
+  { tag: [t.separator], color: '#000000' },                           // 分隔符（逗号冒号）：黑色
+  
+  // 代码通用配色
+  { tag: t.keyword, color: '#d73a49' },                              // 关键字：玫瑰红
+  { tag: [t.name, t.deleted, t.character, t.macroName], color: '#24292e' }, // 变量名：深灰
+  { tag: [t.function(t.variableName)], color: '#6f42c1' },           // 函数名：紫色
+  { tag: [t.labelName], color: '#22863a' },                          // 标签：绿色
+  { tag: [t.color, t.constant(t.name), t.standard(t.name)], color: '#005cc5' }, // 常量：蓝色
+  { tag: [t.definition(t.name)], color: '#24292e' },                 // 定义：深灰
+  { tag: [t.typeName, t.className], color: '#6f42c1' },              // 类型/类名：紫色
+  { tag: [t.changed, t.annotation], color: '#005cc5' },              // 注解：蓝色
+  { tag: [t.modifier, t.self, t.namespace], color: '#d73a49' },      // 修饰符：玫瑰红
+  { tag: [t.operator, t.operatorKeyword], color: '#d73a49' },        // 操作符：玫瑰红
+  { tag: [t.url, t.escape, t.regexp, t.link], color: '#032f62' },    // URL/正则：深蓝
+  { tag: [t.meta, t.comment], color: '#6a737d', fontStyle: 'italic' }, // 注释：灰色斜体
+  { tag: t.strong, fontWeight: 'bold', color: '#24292e' },            // 加粗
+  { tag: t.emphasis, fontStyle: 'italic' },                          // 斜体
+  { tag: t.strikethrough, textDecoration: 'line-through' },           // 删除线
+  { tag: t.heading, fontWeight: 'bold', color: '#005cc5' },           // 标题：蓝色加粗
+  { tag: [t.atom, t.special(t.variableName)], color: '#005cc5' },    // 特殊变量：蓝色
+  { tag: [t.processingInstruction, t.inserted], color: '#032f62' },  // 处理指令：深蓝
+  { tag: [t.special(t.string)], color: '#22863a' },                   // 特殊字符串：绿色
+  { tag: t.invalid, color: '#cb2431' }                                // 无效：红色
+])
+
+// 获取语言扩展
+const getLanguageExtension = (lang: string): Extension => {
+  const langMap: Record<string, () => Extension> = {
+    javascript: () => javascript(),
+    typescript: () => javascript({ typescript: true }),
+    json: () => json(),
+    xml: () => xml(),
+    sql: () => sql(),
+    html: () => html(),
+    css: () => css(),
+    java: () => java(),
+    kotlin: () => java(), // 暂时使用Java高亮
+    text: () => [],
+    yaml: () => []
+  }
+  
+  const extension = langMap[lang.toLowerCase()]
+  return extension ? extension() : json()
+}
+
+// 获取主题
+const getTheme = (): Extension => {
+  if (props.theme === 'dark') {
+    return oneDark
+  } else if (props.theme === 'auto') {
     const isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
-    return isDark ? 'vs-dark' : 'vs'
+    return isDark ? oneDark : []
   }
-  return props.theme
+  return []
 }
 
-// 自动检测语言
-const detectLanguage = (value: string): string => {
-  if (!value || value.trim() === '') {
-    return props.language
+// 获取只读扩展
+const getReadOnlyExtension = (): Extension => {
+  if (props.readonly) {
+    return EditorView.editable.of(false)
   }
-
-  const trimmedValue = value.trim()
-  
-  // JSON检测
-  if ((trimmedValue.startsWith('{') && trimmedValue.endsWith('}')) ||
-      (trimmedValue.startsWith('[') && trimmedValue.endsWith(']'))) {
-    try {
-      JSON.parse(trimmedValue)
-      return 'json'
-    } catch {
-      // 可能是格式错误的JSON，但仍然使用json语言
-      return 'json'
-    }
-  }
-  
-  // XML检测
-  if (trimmedValue.startsWith('<') && trimmedValue.includes('>')) {
-    return 'xml'
-  }
-  
-  // SQL检测
-  if (trimmedValue.match(/^\s*(SELECT|INSERT|UPDATE|DELETE|CREATE|ALTER|DROP)\s+/i)) {
-    return 'sql'
-  }
-  
-  // Java检测
-  if (trimmedValue.includes('public class') || trimmedValue.includes('private ') || 
-      trimmedValue.includes('public static void main') || trimmedValue.includes('import java.')) {
-    return 'java'
-  }
-  
-  // Kotlin检测
-  if (trimmedValue.includes('fun ') || trimmedValue.includes('val ') || 
-      trimmedValue.includes('var ') || trimmedValue.includes('class ') && trimmedValue.includes(':')) {
-    return 'kotlin'
-  }
-  
-  // JavaScript检测
-  if (trimmedValue.includes('function') || trimmedValue.includes('=>') || 
-      trimmedValue.includes('const ') || trimmedValue.includes('let ') || 
-      trimmedValue.includes('var ')) {
-    return 'javascript'
-  }
-  
-  // HTML检测
-  if (trimmedValue.includes('<html') || trimmedValue.includes('<!DOCTYPE')) {
-    return 'html'
-  }
-  
-  // CSS检测
-  if (trimmedValue.includes('{') && trimmedValue.includes('}') && 
-      (trimmedValue.includes(':') || trimmedValue.includes(';'))) {
-    return 'css'
-  }
-  
-  // YAML检测
-  if (trimmedValue.includes(':') && (trimmedValue.includes('-') || trimmedValue.includes('|'))) {
-    return 'yaml'
-  }
-  
-  // 默认返回原始语言
-  return props.language
+  return []
 }
 
-// 初始化编辑器
-const initEditor = async () => {
+// 获取基础编辑器扩展（不包括语言扩展）
+const getBasicExtensions = (): Extension[] => {
+  return [
+    lineNumbers(),
+    highlightActiveLineGutter(),
+    highlightSpecialChars(),
+    history(),
+    drawSelection(),
+    EditorState.allowMultipleSelections.of(true),
+    indentOnInput(),
+    bracketMatching(),
+    closeBrackets(),
+    rectangularSelection(),
+    highlightActiveLine(),
+    highlightSelectionMatches(),
+    syntaxHighlighting(customHighlightStyle, { fallback: true }), // 使用自定义语法高亮
+    keymap.of([
+      ...closeBracketsKeymap,
+      ...defaultKeymap,
+      ...searchKeymap,
+      ...historyKeymap,
+      indentWithTab
+    ])
+  ]
+}
+
+// 创建编辑器
+const createEditor = () => {
   if (!editorContainer.value) return
 
-  const currentTheme = getCurrentTheme()
+  const languageExt = getLanguageExtension(props.language)
   
-  // 设置Monaco Editor主题
-  monaco.editor.setTheme(currentTheme)
-
-  // 创建编辑器实例
-  editor = monaco.editor.create(editorContainer.value, {
-    value: props.modelValue || '',
-    language: detectLanguage(props.modelValue || ''),
-    theme: currentTheme,
-    readOnly: props.readonly,
-    automaticLayout: true,
-    minimap: { enabled: true },
-    scrollBeyondLastLine: false,
-    wordWrap: 'on',
-    lineNumbers: 'on',
-    folding: true,
-    lineDecorationsWidth: 10,
-    lineNumbersMinChars: 3,
-    renderLineHighlight: 'line',
-    selectOnLineNumbers: true,
-    roundedSelection: false,
-    cursorStyle: 'line',
-    cursorBlinking: 'blink',
-    cursorWidth: 1,
-    fontSize: 18,
-    fontFamily: 'Monaco, Menlo, "Ubuntu Mono", monospace',
-    lineHeight: 28,
-    tabSize: 2,
-    insertSpaces: true,
-    detectIndentation: true,
-    renderWhitespace: 'selection',
-    renderControlCharacters: false,
-    fontLigatures: true,
-    bracketPairColorization: { enabled: true },
-    guides: {
-      bracketPairs: true,
-      indentation: true
-    },
-    ...props.options
-  })
-
-  // 监听内容变化
-  editor.onDidChangeModelContent(() => {
-    const value = editor?.getValue() || ''
-    emit('update:modelValue', value)
-    emit('change', value)
-  })
-
-  // 监听焦点事件
-  editor.onDidFocusEditorText(() => {
-    emit('focus')
-  })
-
-  editor.onDidBlurEditorText(() => {
-    emit('blur')
-  })
-
-  // 监听语言变化
-  editor.onDidChangeModelLanguage(() => {
-    const model = editor?.getModel()
-    if (model) {
-      const detectedLanguage = detectLanguage(model.getValue())
-      if (detectedLanguage !== model.getLanguageId()) {
-        monaco.editor.setModelLanguage(model, detectedLanguage)
+  const extensions: Extension[] = [
+    ...getBasicExtensions(),
+    languageExt, // 语言扩展，提供语法高亮
+    getTheme(),
+    getReadOnlyExtension(),
+    EditorView.lineWrapping,
+    EditorView.updateListener.of((update) => {
+      if (update.docChanged) {
+        const value = update.state.doc.toString()
+        emit('update:modelValue', value)
+        emit('change', value)
       }
+    }),
+    EditorView.domEventHandlers({
+      focus: () => {
+        emit('focus')
+      },
+      blur: () => {
+        emit('blur')
+      }
+    })
+  ]
+
+  // 应用自定义选项和字体样式
+  const fontSize = props.options.fontSize || 12 // 默认12px
+  const fontFamily = props.options.fontFamily || '"Ubuntu Mono", "Courier New", Courier, Monaco, Consolas, monospace'
+  
+  extensions.push(EditorView.theme({
+    '&': { 
+      fontSize: `${fontSize}px`,
+      lineHeight: '1.6'
+    },
+    '.cm-content, .cm-line': { 
+      fontFamily: fontFamily,
+      fontSize: `${fontSize}px`,
+      lineHeight: '1.6'
+    },
+    '.cm-gutters': {
+      fontSize: `${fontSize}px`,
+      backgroundColor: '#fafafa',
+      borderRight: '1px solid #e8e8e8'
+    },
+    // 改进配色
+    '.cm-activeLine': {
+      backgroundColor: '#f0f9ff'
+    },
+    '.cm-activeLineGutter': {
+      backgroundColor: '#e6f4ff'
+    },
+    '.cm-selectionBackground, ::selection': {
+      backgroundColor: '#b3d9ff !important'
+    },
+    '.cm-focused .cm-selectionBackground, .cm-focused ::selection': {
+      backgroundColor: '#b3d9ff !important'
     }
+  }))
+
+  const state = EditorState.create({
+    doc: props.modelValue || '',
+    extensions
   })
 
-  // 设置占位符
-  if (props.placeholder && !props.modelValue) {
-    editor.setValue(props.placeholder)
-    const model = editor.getModel()
-    if (model) {
-      const range = model.getFullModelRange()
-      editor.setSelection(range)
-    }
-  }
+  editorView.value = new EditorView({
+    state,
+    parent: editorContainer.value
+  })
 }
 
-// 更新编辑器值
+// 更新编辑器内容
 const updateEditorValue = (newValue: string) => {
-  if (editor && editor.getValue() !== newValue) {
-    editor.setValue(newValue || '')
+  if (!editorView.value) return
+  
+  const currentValue = editorView.value.state.doc.toString()
+  if (currentValue !== newValue) {
+    editorView.value.dispatch({
+      changes: {
+        from: 0,
+        to: currentValue.length,
+        insert: newValue || ''
+      }
+    })
+  }
+}
+
+// 重新配置编辑器（通过重新创建）
+const reconfigureEditor = () => {
+  if (!editorView.value) return
+  
+  // 保存当前值
+  const currentValue = editorView.value.state.doc.toString()
+  
+  // 销毁旧编辑器
+  editorView.value.destroy()
+  
+  // 创建新编辑器（这会重新设置editorView.value）
+  nextTick(() => {
+    createEditor()
     
-    // 自动检测并设置语言
-    const detectedLanguage = detectLanguage(newValue)
-    const model = editor.getModel()
-    if (model && detectedLanguage !== model.getLanguageId()) {
-      monaco.editor.setModelLanguage(model, detectedLanguage)
-    }
-  }
-}
-
-// 更新编辑器主题
-const updateEditorTheme = (newTheme: string) => {
-  if (editor) {
-    const actualTheme = newTheme === 'auto' ? getCurrentTheme() : newTheme
-    monaco.editor.setTheme(actualTheme)
-  }
-}
-
-// 更新编辑器语言
-const updateEditorLanguage = (newLanguage: string) => {
-  if (editor) {
-    const model = editor.getModel()
-    if (model) {
-      monaco.editor.setModelLanguage(model, newLanguage)
-    }
-  }
+    // 恢复值
+    nextTick(() => {
+      if (currentValue && editorView.value) {
+        updateEditorValue(currentValue)
+      }
+    })
+  })
 }
 
 // 监听props变化
@@ -242,83 +275,34 @@ watch(() => props.modelValue, (newValue) => {
   updateEditorValue(newValue)
 })
 
-watch(() => props.theme, (newTheme) => {
-  updateEditorTheme(newTheme)
-})
-
-watch(() => props.language, (newLanguage) => {
-  updateEditorLanguage(newLanguage)
-})
-
-watch(() => props.readonly, (newReadonly) => {
-  if (editor) {
-    editor.updateOptions({ readOnly: newReadonly })
-  }
-})
+watch(() => [props.language, props.theme, props.readonly, props.options], () => {
+  reconfigureEditor()
+}, { deep: true })
 
 watch(() => props.height, () => {
-  if (editor) {
-    // 延迟执行布局更新，确保DOM已经更新
-    nextTick(() => {
-      editor?.layout()
-    })
-  }
+  nextTick(() => {
+    editorView.value?.requestMeasure()
+  })
 })
-
-// 监听窗口大小变化
-const handleResize = () => {
-  if (editor) {
-    nextTick(() => {
-      editor?.layout()
-    })
-  }
-}
-
-// 系统主题变化监听
-let mediaQuery: MediaQueryList | null = null
 
 // 生命周期
 onMounted(async () => {
   await nextTick()
-  initEditor()
-  
-  // 监听系统主题变化（仅在auto模式下）
-  if (props.theme === 'auto') {
-    mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
-    mediaQuery.addEventListener('change', () => {
-      updateEditorTheme('auto')
-    })
-  }
-  
-  // 监听窗口大小变化
-  window.addEventListener('resize', handleResize)
+  createEditor()
 })
 
 onUnmounted(() => {
-  if (editor) {
-    editor.dispose()
-    editor = null
-  }
-  
-  // 清理主题监听器
-  if (mediaQuery) {
-    mediaQuery.removeEventListener('change', () => {
-      updateEditorTheme('auto')
-    })
-    mediaQuery = null
-  }
-  
-  // 清理窗口大小变化监听器
-  window.removeEventListener('resize', handleResize)
+  editorView.value?.destroy()
+  editorView.value = undefined
 })
 
 // 暴露方法给父组件
 defineExpose({
-  getEditor: () => editor,
-  getValue: () => editor?.getValue() || '',
+  getEditor: () => editorView.value,
+  getValue: () => editorView.value?.state.doc.toString() || '',
   setValue: (value: string) => updateEditorValue(value),
-  focus: () => editor?.focus(),
-  blur: () => editor?.getAction('editor.action.blur')?.run()
+  focus: () => editorView.value?.focus(),
+  blur: () => editorView.value?.contentDOM.blur()
 })
 </script>
 
@@ -332,8 +316,6 @@ defineExpose({
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   min-height: 200px;
   height: 100%;
-  display: flex;
-  flex-direction: column;
 }
 
 .code-editor-container:hover {
@@ -346,44 +328,68 @@ defineExpose({
   box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
 }
 
-.monaco-editor {
-  width: 100%;
+/* CodeMirror样式覆盖 */
+.code-editor-container :deep(.cm-editor) {
   height: 100%;
-  flex: 1;
+  font-size: 12px;
+}
+
+.code-editor-container :deep(.cm-scroller) {
+  overflow: auto;
+  font-family: "Ubuntu Mono", "Courier New", Courier, Monaco, Consolas, monospace;
+  font-size: 12px;
+}
+
+.code-editor-container :deep(.cm-content) {
+  padding: 8px 0;
+  font-size: 12px;
+  line-height: 1.6;
+  font-family: "Ubuntu Mono", "Courier New", Courier, Monaco, Consolas, monospace;
+}
+
+.code-editor-container :deep(.cm-line) {
+  padding: 0 8px;
+  line-height: 1.6;
+  font-size: 12px;
+  font-family: "Ubuntu Mono", "Courier New", Courier, Monaco, Consolas, monospace;
+}
+
+.code-editor-container :deep(.cm-gutters) {
+  background-color: #fafafa;
+  border-right: 1px solid #e8e8e8;
+  font-size: 12px;
+  font-family: "Ubuntu Mono", "Courier New", Courier, Monaco, Consolas, monospace;
+}
+
+/* 改进的配色方案 */
+.code-editor-container :deep(.cm-activeLine) {
+  background-color: #f0f9ff;
+}
+
+.code-editor-container :deep(.cm-activeLineGutter) {
+  background-color: #e6f4ff;
+}
+
+.code-editor-container :deep(.cm-selectionBackground) {
+  background-color: #b3d9ff !important;
+}
+
+.code-editor-container :deep(.cm-focused .cm-selectionBackground) {
+  background-color: #b3d9ff !important;
+}
+
+.code-editor-container :deep(.cm-cursor) {
+  border-left: 2px solid #1890ff;
 }
 
 /* 暗色主题样式 */
-:global(.vs-dark) .code-editor-container {
-  border-color: #434343;
+.code-editor-container:has(.cm-theme-dark) {
   background: #1e1e1e;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  border-color: #434343;
 }
 
-:global(.vs-dark) .code-editor-container:hover {
+.code-editor-container:has(.cm-theme-dark):hover {
   border-color: #40a9ff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-}
-
-:global(.vs-dark) .code-editor-container:focus-within {
-  border-color: #1890ff;
-  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
-}
-
-/* 高对比度主题样式 */
-:global(.hc-black) .code-editor-container {
-  border-color: #ffffff;
-  background: #000000;
-  box-shadow: 0 1px 3px rgba(255, 255, 255, 0.1);
-}
-
-:global(.hc-black) .code-editor-container:hover {
-  border-color: #40a9ff;
-  box-shadow: 0 2px 8px rgba(255, 255, 255, 0.2);
-}
-
-:global(.hc-black) .code-editor-container:focus-within {
-  border-color: #1890ff;
-  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
 }
 
 /* 响应式设计 */
