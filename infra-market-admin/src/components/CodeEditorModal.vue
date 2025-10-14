@@ -58,17 +58,7 @@
           v-model="editorValue"
           :language="selectedLanguage"
           :height="'100%'"
-          :options="{
-            minimap: { enabled: true },
-            scrollBeyondLastLine: false,
-            wordWrap: 'on',
-            lineNumbers: 'on',
-            folding: true,
-            fontSize: 10,
-            fontFamily: 'Monaco, Menlo, Ubuntu Mono, monospace',
-            lineHeight: 16,
-            automaticLayout: true
-          }"
+          :options="editorOptions"
         />
       </div>
       
@@ -138,6 +128,7 @@ const visible = ref(props.visible)
 const editorValue = ref(props.value)
 const selectedLanguage = ref(props.language)
 const editorRef = ref()
+const originalValue = ref(props.value) // 保存原始值，用于取消时恢复
 
 // 计算属性
 const lineCount = computed(() => {
@@ -151,6 +142,19 @@ const characterCount = computed(() => {
 const canFormat = computed(() => {
   return ['json', 'java', 'javascript', 'typescript', 'kotlin', 'html', 'css', 'xml', 'yaml', 'sql'].includes(selectedLanguage.value)
 })
+
+// 编辑器配置（避免每次渲染都创建新对象）
+const editorOptions = {
+  minimap: { enabled: true },
+  scrollBeyondLastLine: false,
+  wordWrap: 'on',
+  lineNumbers: 'on',
+  folding: true,
+  fontSize: 10,
+  fontFamily: 'Monaco, Menlo, Ubuntu Mono, monospace',
+  lineHeight: 16,
+  automaticLayout: true
+}
 
 // 代码类型检测函数
 const detectCodeType = (code: string): string => {
@@ -231,6 +235,8 @@ const detectCodeType = (code: string): string => {
 watch(() => props.visible, (newVal) => {
   visible.value = newVal
   if (newVal) {
+    // 弹窗打开时，保存原始值并设置编辑器值
+    originalValue.value = props.value
     editorValue.value = props.value
     // 优先使用传入的语言，如果没有则自动检测代码类型
     if (props.language) {
@@ -256,8 +262,9 @@ watch(visible, (newVal) => {
   emit('update:visible', newVal)
 })
 
+// 只在弹窗关闭时才响应外部value的变化
 watch(() => props.value, (newVal) => {
-  if (visible.value) {
+  if (!visible.value) {
     editorValue.value = newVal
   }
 })
@@ -495,6 +502,7 @@ const handleConfirm = () => {
 }
 
 const handleCancel = () => {
+  // 取消时只关闭弹窗，不更新值（下次打开时会自动从props.value恢复）
   emit('cancel')
   visible.value = false
 }

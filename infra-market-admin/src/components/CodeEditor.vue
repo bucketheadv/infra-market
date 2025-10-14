@@ -275,9 +275,14 @@ watch(() => props.modelValue, (newValue) => {
   updateEditorValue(newValue)
 })
 
-watch(() => [props.language, props.theme, props.readonly, props.options], () => {
+watch(() => [props.language, props.theme, props.readonly], () => {
   reconfigureEditor()
-}, { deep: true })
+})
+
+// 单独监听 options 中的关键属性，避免深度监听导致频繁重建
+watch(() => [props.options?.fontSize, props.options?.fontFamily], () => {
+  reconfigureEditor()
+})
 
 watch(() => props.height, () => {
   nextTick(() => {
