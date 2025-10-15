@@ -214,10 +214,36 @@ const createEditor = () => {
       backgroundColor: '#e6f4ff'
     },
     '.cm-selectionBackground, ::selection': {
-      backgroundColor: '#b3d9ff !important'
+      backgroundColor: '#BED4F0 !important',
+      boxShadow: '0 0 0 2px #1890ff',
+      borderRadius: '2px'
     },
     '.cm-focused .cm-selectionBackground, .cm-focused ::selection': {
-      backgroundColor: '#b3d9ff !important'
+      backgroundColor: '#BED4F0 !important',
+      boxShadow: '0 0 0 2px #1890ff',
+      borderRadius: '2px'
+    },
+    '.cm-selectionMatch': {
+      backgroundColor: '#FFF8E1 !important',
+      boxShadow: '0 0 0 1px #FFC107',
+      borderRadius: '2px'
+    },
+    '.cm-searchMatch': {
+      backgroundColor: '#FFF8E1',
+      boxShadow: '0 0 0 1px #FFC107',
+      borderRadius: '2px'
+    },
+    '.cm-searchMatch.cm-searchMatch-selected': {
+      backgroundColor: '#FFECB3',
+      boxShadow: '0 0 0 1px #F57C00',
+      borderRadius: '2px'
+    },
+    '.cm-matchingBracket': {
+      backgroundColor: '#E5F2FF',
+      outline: '1px solid #C8E1FF'
+    },
+    '.cm-cursor': {
+      borderLeftColor: '#1890ff'
     }
   }))
 
@@ -377,11 +403,38 @@ defineExpose({
 }
 
 .code-editor-container :deep(.cm-selectionBackground) {
-  background-color: #b3d9ff !important;
+  background-color: #BED4F0 !important;
+  box-shadow: 0 0 0 2px #1890ff !important;
+  border-radius: 2px;
 }
 
 .code-editor-container :deep(.cm-focused .cm-selectionBackground) {
-  background-color: #b3d9ff !important;
+  background-color: #BED4F0 !important;
+  box-shadow: 0 0 0 2px #1890ff !important;
+  border-radius: 2px;
+}
+
+.code-editor-container :deep(.cm-selectionMatch) {
+  background-color: #FFF8E1 !important;
+  box-shadow: 0 0 0 1px #FFC107 !important;
+  border-radius: 2px;
+}
+
+.code-editor-container :deep(.cm-searchMatch) {
+  background-color: #FFF8E1 !important;
+  box-shadow: 0 0 0 1px #FFC107 !important;
+  border-radius: 2px;
+}
+
+.code-editor-container :deep(.cm-searchMatch.cm-searchMatch-selected) {
+  background-color: #FFECB3 !important;
+  box-shadow: 0 0 0 1px #F57C00 !important;
+  border-radius: 2px;
+}
+
+.code-editor-container :deep(.cm-matchingBracket) {
+  background-color: #E5F2FF;
+  outline: 1px solid #C8E1FF;
 }
 
 .code-editor-container :deep(.cm-cursor) {
