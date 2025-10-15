@@ -189,7 +189,7 @@ const createEditor = () => {
 
   // 应用自定义选项和字体样式
   const fontSize = props.options.fontSize || 12 // 默认12px
-  const fontFamily = props.options.fontFamily || '"Ubuntu Mono", "Courier New", Courier, Monaco, Consolas, monospace'
+  const fontFamily = props.options.fontFamily || '"Intel One Mono", "Ubuntu Mono", "Courier New", Courier, Monaco, Consolas, monospace'
   
   extensions.push(EditorView.theme({
     '&': { 
@@ -342,7 +342,7 @@ defineExpose({
 
 .code-editor-container :deep(.cm-scroller) {
   overflow: auto;
-  font-family: "Ubuntu Mono", "Courier New", Courier, Monaco, Consolas, monospace;
+  font-family: "Intel One Mono", "Ubuntu Mono", "Courier New", Courier, Monaco, Consolas, monospace;
   font-size: 12px;
 }
 
@@ -350,21 +350,21 @@ defineExpose({
   padding: 8px 0;
   font-size: 12px;
   line-height: 1.6;
-  font-family: "Ubuntu Mono", "Courier New", Courier, Monaco, Consolas, monospace;
+  font-family: "Intel One Mono", "Ubuntu Mono", "Courier New", Courier, Monaco, Consolas, monospace;
 }
 
 .code-editor-container :deep(.cm-line) {
   padding: 0 8px;
   line-height: 1.6;
   font-size: 12px;
-  font-family: "Ubuntu Mono", "Courier New", Courier, Monaco, Consolas, monospace;
+  font-family: "Intel One Mono", "Ubuntu Mono", "Courier New", Courier, Monaco, Consolas, monospace;
 }
 
 .code-editor-container :deep(.cm-gutters) {
   background-color: #fafafa;
   border-right: 1px solid #e8e8e8;
   font-size: 12px;
-  font-family: "Ubuntu Mono", "Courier New", Courier, Monaco, Consolas, monospace;
+  font-family: "Intel One Mono", "Ubuntu Mono", "Courier New", Courier, Monaco, Consolas, monospace;
 }
 
 /* 改进的配色方案 */
