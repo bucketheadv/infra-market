@@ -251,7 +251,7 @@ watch(() => props.open, (newVal) => {
       setTimeout(() => {
         const editor = editorRef.value?.getEditor()
         if (editor) {
-          editor.requestMeasure()
+          editor.layout()
         }
       }, 100)
     })
@@ -525,7 +525,8 @@ defineExpose({
 .modal-content {
   display: flex;
   flex-direction: column;
-  height: 75vh;
+  height: 80vh;
+  min-height: 400px; /* 确保有足够的最小高度 */
 }
 
 .toolbar {
@@ -553,7 +554,7 @@ defineExpose({
   padding: 20px 24px;
   background: #ffffff;
   border-radius: 0 0 8px 8px;
-  min-height: 0; /* 确保flex子元素可以收缩 */
+  min-height: 200px; /* 与CodeEditor的最小高度保持一致 */
   display: flex;
   flex-direction: column;
 }

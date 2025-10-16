@@ -317,13 +317,29 @@ watch(() => [props.options?.fontSize, props.options?.fontFamily], () => {
   })
 })
 
+// 处理窗口大小变化
+const handleResize = () => {
+  if (editorInstance.value) {
+    // 延迟执行以确保DOM更新完成
+    setTimeout(() => {
+      editorInstance.value?.layout()
+    }, 100)
+  }
+}
+
 // 生命周期
 onMounted(async () => {
   await nextTick()
   await createEditor()
+  
+  // 添加窗口大小变化监听器
+  window.addEventListener('resize', handleResize)
 })
 
 onUnmounted(() => {
+  // 移除事件监听器
+  window.removeEventListener('resize', handleResize)
+  
   editorInstance.value?.dispose()
   editorInstance.value = undefined
 })
