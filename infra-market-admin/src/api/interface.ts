@@ -125,6 +125,14 @@ export const interfaceApi = {
     }
     // 否则使用默认请求实例
     return request.post<ApiExecuteResponse>('/api/interface/execute', data)
+  },
+
+  // 获取最近最热门的接口
+  getMostUsed: (params?: {
+    days?: number
+    limit?: number
+  }) => {
+    return request.get<ApiInterface[]>('/api/interface/most/used', { params })
   }
 }
 

@@ -186,4 +186,19 @@ class ApiInterfaceExecutionRecordDao : ServiceImpl<ApiInterfaceExecutionRecordMa
 
         return mapper.deleteByQuery(query)
     }
+
+    /**
+     * 查询最近最热门的接口ID列表
+     * 
+     * 根据最近一定时间内的执行次数，统计使用最频繁的接口。
+     * 使用Mapper接口中定义的自定义SQL查询方法。
+     * 
+     * @param days 统计最近多少天的数据，默认30天
+     * @param limit 返回的接口数量，默认5个
+     * @return 接口ID列表，按执行次数倒序排列
+     */
+    fun findMostUsedInterfaceIds(days: Int = 30, limit: Int = 5): List<Long> {
+        val startTime = DateTime.now().minusDays(days).millis
+        return mapper.findMostUsedInterfaceIds(startTime, limit)
+    }
 }

@@ -66,6 +66,26 @@ class ApiInterfaceController(
     }
 
     /**
+     * 获取最近最热门的接口
+     * 
+     * 根据最近一段时间内的执行次数，返回使用频率最高的接口列表。
+     * 用于在接口管理页面展示"您可能想要找"的推荐内容。
+     * 
+     * @param days 统计最近多少天的数据，默认30天
+     * @param limit 返回的接口数量，默认5个
+     * @return 热门接口列表
+     */
+    @GetMapping("/most/used")
+    @RequiresPermission("interface:list")
+    fun getMostUsedInterfaces(
+        @RequestParam(defaultValue = "30") days: Int,
+        @RequestParam(defaultValue = "5") limit: Int
+    ): ApiData<List<ApiInterfaceDto>> {
+        val interfaces = apiInterfaceService.findMostUsedInterfaces(days, limit)
+        return ApiData.success(interfaces)
+    }
+
+    /**
      * 根据ID获取接口详情
      * 
      * 通过接口ID获取单个接口的详细信息，包括接口的基本信息和完整的参数配置。

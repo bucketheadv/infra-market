@@ -74,4 +74,24 @@ class ApiInterfaceDao : ServiceImpl<ApiInterfaceMapper, ApiInterface>() {
         
         return mapper.selectCountByQuery(queryWrapper)
     }
+
+    /**
+     * 根据接口ID列表查询接口
+     * 
+     * @param ids 接口ID列表
+     * @return 接口列表
+     */
+    fun findByIds(ids: List<Long>): List<ApiInterface> {
+        if (ids.isEmpty()) {
+            return emptyList()
+        }
+        
+        val queryWrapper = QueryWrapper.create()
+            .select()
+            .from(ApiInterface::class.java)
+            .where("id IN (${ids.joinToString(",")})")
+            .and(ApiInterface::status.eq(1))
+        
+        return mapper.selectListByQuery(queryWrapper)
+    }
 }

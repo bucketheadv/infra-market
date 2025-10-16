@@ -66,6 +66,31 @@ class ApiInterfaceService(
         return apiInterface?.let { convertToDto(it) }
     }
 
+    /**
+     * 获取最近最热门的接口
+     * 
+     * @param days 统计最近多少天的数据
+     * @param limit 返回的接口数量
+     * @return 热门接口列表
+     */
+    fun findMostUsedInterfaces(days: Int = 30, limit: Int = 5): List<ApiInterfaceDto> {
+        // 查询最近使用最多的接口ID
+        val interfaceIds = apiInterfaceExecutionRecordDao.findMostUsedInterfaceIds(days, limit)
+        
+        if (interfaceIds.isEmpty()) {
+            return emptyList()
+        }
+        
+        // 根据ID列表查询接口详情
+        val interfaces = apiInterfaceDao.findByIds(interfaceIds)
+        
+        // 按照interfaceIds的顺序排序结果
+        val interfaceMap = interfaces.associateBy { it.id }
+        return interfaceIds.mapNotNull { id -> 
+            interfaceMap[id]?.let { convertToDto(it) }
+        }
+    }
+
     @Transactional
     fun save(form: ApiInterfaceFormDto): ApiInterfaceDto {
         // 验证POST类型字段

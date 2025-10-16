@@ -1,5 +1,39 @@
 <template>
   <div class="interface-list">
+    <!-- 您可能想要找 -->
+    <a-card v-if="mostUsedInterfaces.length > 0" class="recommend-card">
+      <template #title>
+        <span class="recommend-title">
+          <FireOutlined style="color: #ff4d4f; margin-right: 8px;" />
+          您可能想要找
+        </span>
+      </template>
+      <div class="recommend-content">
+        <div 
+          v-for="item in mostUsedInterfaces" 
+          :key="item.id" 
+          class="recommend-item"
+          @click="handleExecute(item)"
+        >
+          <div class="recommend-item-header">
+            <a-tag :color="getMethodColor(item.method)" style="margin-right: 8px;">
+              {{ item.method }}
+            </a-tag>
+            <span class="recommend-item-name">{{ item.name }}</span>
+            <a-tag 
+              v-if="item.environment"
+              :color="item.environment === 'PRODUCTION' ? 'red' : 'blue'"
+              style="margin-left: 8px; font-size: 11px;"
+            >
+              {{ getTagLabel(item.environment) }}
+            </a-tag>
+          </div>
+          <div class="recommend-item-url">{{ item.url }}</div>
+          <div v-if="item.description" class="recommend-item-desc">{{ item.description }}</div>
+        </div>
+      </div>
+    </a-card>
+
     <a-card>
       <template #title>接口管理</template>
       <template #extra>
@@ -217,7 +251,7 @@
 import { ref, reactive, onMounted, h } from 'vue'
 import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
-import { PlusOutlined, SearchOutlined, ReloadOutlined, EditOutlined, PlayCircleOutlined, DeleteOutlined, CheckCircleOutlined, StopOutlined, CopyOutlined, EnvironmentOutlined } from '@ant-design/icons-vue'
+import { PlusOutlined, SearchOutlined, ReloadOutlined, EditOutlined, PlayCircleOutlined, DeleteOutlined, CheckCircleOutlined, StopOutlined, CopyOutlined, EnvironmentOutlined, FireOutlined } from '@ant-design/icons-vue'
 import { interfaceApi, HTTP_METHODS, TAGS, type ApiInterface } from '@/api/interface'
 import ThemeButton from '@/components/ThemeButton.vue'
 
@@ -226,6 +260,7 @@ const router = useRouter()
 // 响应式数据
 const loading = ref(false)
 const dataSource = ref<ApiInterface[]>([])
+const mostUsedInterfaces = ref<ApiInterface[]>([])
 
 // 搜索表单
 const searchForm = reactive({
@@ -372,6 +407,19 @@ const loadData = async () => {
   }
 }
 
+const loadMostUsedInterfaces = async () => {
+  try {
+    const response = await interfaceApi.getMostUsed({
+      days: 30,
+      limit: 6
+    })
+    mostUsedInterfaces.value = response.data || []
+  } catch (error) {
+    // 静默失败，不影响主页面
+    console.error('加载热门接口失败', error)
+  }
+}
+
 const handleSearch = () => {
   pagination.current = 1
   loadData()
@@ -474,6 +522,7 @@ const getTagLabel = (tag: string) => {
 // 生命周期
 onMounted(() => {
   loadData()
+  loadMostUsedInterfaces()
 })
 </script>
 
@@ -482,6 +531,88 @@ onMounted(() => {
   min-height: 100%;
   background: #f0f2f5;
   padding: 24px;
+}
+
+/* 推荐卡片样式 */
+.recommend-card {
+  margin-bottom: 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  background: linear-gradient(135deg, #fff9e6 0%, #ffffff 100%);
+  border: 1px solid #ffd666;
+}
+
+.recommend-card :deep(.ant-card-head) {
+  border-bottom: 1px solid #ffe58f;
+  background: linear-gradient(135deg, #fffbe6 0%, #ffffff 100%);
+}
+
+.recommend-title {
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+  font-size: 16px;
+  color: #333;
+}
+
+.recommend-content {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.recommend-item {
+  padding: 12px;
+  border-radius: 6px;
+  background: white;
+  border: 1px solid #f0f0f0;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.recommend-item:hover {
+  border-color: #ffd666;
+  box-shadow: 0 4px 12px rgba(255, 214, 102, 0.3);
+  transform: translateY(-2px);
+}
+
+.recommend-item-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.recommend-item-name {
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recommend-item-url {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recommend-item-desc {
+  font-size: 12px;
+  color: #999;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .recommend-content {
+    grid-template-columns: 1fr;
+  }
 }
 
 .search-form {
