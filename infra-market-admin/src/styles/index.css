@@ -1,3 +1,26 @@
+/* 导入 Intel One Mono 字体 */
+@font-face {
+  font-family: 'Intel One Mono';
+  src: url('https://cdn.jsdelivr.net/gh/intel/intel-one-mono@1.3.0/fonts/webfonts/IntelOneMono-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Intel One Mono';
+  src: url('https://cdn.jsdelivr.net/gh/intel/intel-one-mono@1.3.0/fonts/webfonts/IntelOneMono-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Intel One Mono';
+  src: url('https://cdn.jsdelivr.net/gh/intel/intel-one-mono@1.3.0/fonts/webfonts/IntelOneMono-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --primary-color: #1890ff;
   --secondary-color: #40a9ff;
@@ -20,6 +43,13 @@ html, body {
 
 #app {
   height: 100%;
+}
+
+/* Monaco Editor Hover 提示框字体 */
+.monaco-hover,
+.monaco-hover-content,
+.monaco-editor-hover {
+  font-family: "Intel One Mono", "SF Mono", Monaco, Menlo, "Courier New", Courier, Consolas, monospace !important;
 }
 
 .login-container {

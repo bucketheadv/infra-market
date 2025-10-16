@@ -1316,6 +1316,10 @@ const handleCodeCancel = () => {
   width: 100%;
 }
 
+.code-editor-input :deep(.ant-input) {
+  font-family: Intel One Mono, SF Mono, Monaco, Menlo, monospace;
+}
+
 .code-preview-input {
   cursor: pointer;
 }
@@ -1325,7 +1329,7 @@ const handleCodeCancel = () => {
   border: 1px solid #d9d9d9;
   border-radius: 4px;
   color: #666;
-  font-family: Monaco, Consolas, monospace;
+  font-family: Intel One Mono, SF Mono, Monaco, Menlo, monospace;
   font-size: 12px;
   cursor: pointer;
   transition: border-color 0.2s ease;

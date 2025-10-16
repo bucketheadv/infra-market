@@ -342,7 +342,7 @@
                                   lineNumbers: 'on',
                                   folding: false,
                                   fontSize: 10,
-                                  fontFamily: 'Monaco, Menlo, Ubuntu Mono, monospace',
+                                  fontFamily: 'Intel One Mono, SF Mono, Monaco, Menlo, monospace',
                                   lineHeight: 16,
                                   readOnly: true
                                 }"
@@ -376,7 +376,7 @@
                                   lineNumbers: 'on',
                                   folding: true,
                                   fontSize: 10,
-                                  fontFamily: 'Monaco, Menlo, Ubuntu Mono, monospace',
+                                  fontFamily: 'Intel One Mono, SF Mono, Monaco, Menlo, monospace',
                                   lineHeight: 16,
                                   readOnly: true,
                                   theme: 'vs-light',
@@ -625,7 +625,7 @@
                             :language="getCodeLanguageForParam(param)"
                             :options="{
                               fontSize: 12,
-                              fontFamily: 'Monaco, Menlo, Ubuntu Mono, monospace',
+                              fontFamily: 'Intel One Mono, SF Mono, Monaco, Menlo, monospace',
                               lineHeight: 18,
                               minimap: { enabled: false },
                               readOnly: true
@@ -669,7 +669,7 @@
                             :language="getCodeLanguageForParam(param)"
                             :options="{
                               fontSize: 12,
-                              fontFamily: 'Monaco, Menlo, Ubuntu Mono, monospace',
+                              fontFamily: 'Intel One Mono, SF Mono, Monaco, Menlo, monospace',
                               lineHeight: 18,
                               minimap: { enabled: false },
                               readOnly: true
@@ -713,7 +713,7 @@
                             :language="getCodeLanguageForParam(param)"
                             :options="{
                               fontSize: 12,
-                              fontFamily: 'Monaco, Menlo, Ubuntu Mono, monospace',
+                              fontFamily: 'Intel One Mono, SF Mono, Monaco, Menlo, monospace',
                               lineHeight: 18,
                               minimap: { enabled: false },
                               readOnly: true
@@ -749,7 +749,7 @@
                   language="json"
                   :options="{
                     fontSize: 12,
-                    fontFamily: 'Monaco, Menlo, Ubuntu Mono, monospace',
+                    fontFamily: 'Intel One Mono, SF Mono, Monaco, Menlo, monospace',
                     lineHeight: 18
                   }"
                 />
@@ -769,7 +769,7 @@
                       :language="detectResponseLanguage(recordExtractedValue)"
                       :options="{
                         fontSize: 12,
-                        fontFamily: 'Monaco, Menlo, Ubuntu Mono, monospace',
+                        fontFamily: 'Intel One Mono, SF Mono, Monaco, Menlo, monospace',
                         lineHeight: 18,
                         minimap: { enabled: false },
                         readOnly: true
@@ -807,7 +807,7 @@
                       :language="detectResponseLanguage(selectedRecord.responseBody)"
                       :options="{
                         fontSize: 12,
-                        fontFamily: 'Monaco, Menlo, Ubuntu Mono, monospace',
+                        fontFamily: 'Intel One Mono, SF Mono, Monaco, Menlo, monospace',
                         lineHeight: 18,
                         minimap: { enabled: true },
                         readOnly: true
@@ -1347,7 +1347,7 @@ const getCodeEditorProps = (param: ApiParam) => {
         lineNumbers: 'on' as const,
         folding: true,
         fontSize: 16,
-        fontFamily: 'Monaco, Menlo, Ubuntu Mono, monospace',
+        fontFamily: 'Intel One Mono, SF Mono, Monaco, Menlo, monospace',
         lineHeight: 24,
         readOnly: false
       }
@@ -2308,6 +2308,10 @@ const getCodeLanguageForParam = (param: ApiParam): string => {
   width: 100%;
 }
 
+.code-editor-input :deep(.ant-input) {
+  font-family: Intel One Mono, SF Mono, Monaco, Menlo, monospace;
+}
+
 .code-preview-input {
   cursor: pointer;
 }
@@ -2317,7 +2321,7 @@ const getCodeLanguageForParam = (param: ApiParam): string => {
   border: 1px solid #d9d9d9;
   border-radius: 4px;
   color: #666;
-  font-family: Monaco, Consolas, monospace;
+  font-family: Intel One Mono, SF Mono, Monaco, Menlo, monospace;
   font-size: 12px;
   cursor: pointer;
   transition: border-color 0.2s ease;

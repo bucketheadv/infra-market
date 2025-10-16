@@ -344,29 +344,6 @@ defineExpose({
 </script>
 
 <style scoped>
-/* 导入 Intel One Mono 字体 */
-@font-face {
-  font-family: 'Intel One Mono';
-  src: url('https://cdn.jsdelivr.net/gh/intel/intel-one-mono@1.3.0/fonts/webfonts/IntelOneMono-Regular.woff2') format('woff2');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Intel One Mono';
-  src: url('https://cdn.jsdelivr.net/gh/intel/intel-one-mono@1.3.0/fonts/webfonts/IntelOneMono-Medium.woff2') format('woff2');
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Intel One Mono';
-  src: url('https://cdn.jsdelivr.net/gh/intel/intel-one-mono@1.3.0/fonts/webfonts/IntelOneMono-Bold.woff2') format('woff2');
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-
 .code-editor-container {
   border: 1px solid #d9d9d9;
   border-radius: 8px;
@@ -402,6 +379,15 @@ defineExpose({
 .code-editor-container :deep(.monaco-editor .view-lines),
 .code-editor-container :deep(.monaco-editor .view-line),
 .code-editor-container :deep(.monaco-editor .monaco-mouse-cursor-text) {
+  font-family: "Intel One Mono", "SF Mono", Monaco, Menlo, "Courier New", Courier, Consolas, monospace !important;
+}
+
+/* Hover 提示框字体 */
+:deep(.monaco-hover) {
+  font-family: "Intel One Mono", "SF Mono", Monaco, Menlo, "Courier New", Courier, Consolas, monospace !important;
+}
+
+:deep(.monaco-hover .monaco-hover-content) {
   font-family: "Intel One Mono", "SF Mono", Monaco, Menlo, "Courier New", Courier, Consolas, monospace !important;
 }
 
