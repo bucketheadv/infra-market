@@ -52,8 +52,8 @@ const defineCustomTheme = () => {
     inherit: true,
     rules: [
       // JSON 专用配色
-      { token: 'key', foreground: '0451a5' },
-      { token: 'string.key.json', foreground: '0451a5' },
+      { token: 'key', foreground: '0451a5', fontStyle: 'bold' },
+      { token: 'string.key.json', foreground: '0451a5', fontStyle: 'bold' },
       { token: 'string', foreground: 'a31515' },
       { token: 'string.value.json', foreground: 'a31515' },
       { token: 'number', foreground: '098658' },
@@ -104,8 +104,8 @@ const defineCustomTheme = () => {
     base: 'vs-dark',
     inherit: true,
     rules: [
-      { token: 'key', foreground: '79b8ff' },
-      { token: 'string.key.json', foreground: '79b8ff' },
+      { token: 'key', foreground: '79b8ff', fontStyle: 'bold' },
+      { token: 'string.key.json', foreground: '79b8ff', fontStyle: 'bold' },
       { token: 'string', foreground: '9ecbff' },
       { token: 'string.value.json', foreground: '9ecbff' },
       { token: 'number', foreground: '79c0ff' },
