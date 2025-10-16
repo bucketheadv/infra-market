@@ -91,7 +91,7 @@
                 v-model:value="form.url"
                 placeholder="请输入请求URL"
                 size="middle"
-                class="form-input"
+                class="form-input url-input"
               >
                 <template #prefix>
                   <LinkOutlined class="input-icon" />
@@ -946,6 +946,11 @@ const validateParamNames = (): boolean => {
   transition: all 0.2s ease;
   font-size: 13px;
   width: 100%;
+}
+
+/* URL 输入框样式 - 使用 Intel One Mono 字体 */
+.url-input :deep(input) {
+  font-family: "Intel One Mono", "SF Mono", Monaco, Menlo, "Courier New", Courier, Consolas, monospace !important;
 }
 
 /* 文本域样式 */

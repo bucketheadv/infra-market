@@ -2456,7 +2456,7 @@ const getCodeLanguageForParam = (param: ApiParam): string => {
   background: linear-gradient(135deg, #e6f7ff 0%, #f0f9ff 100%);
   padding: 6px 12px;
   border-radius: 6px;
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-family: "Intel One Mono", "SF Mono", Monaco, Menlo, "Courier New", Courier, Consolas, monospace;
   font-size: 13px;
   color: #1890ff;
   word-break: break-all;

@@ -8,22 +8,8 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, nextTick, shallowRef } from 'vue'
-import { EditorView } from 'codemirror'
-import { EditorState, type Extension } from '@codemirror/state'
-import { javascript } from '@codemirror/lang-javascript'
-import { json } from '@codemirror/lang-json'
-import { xml } from '@codemirror/lang-xml'
-import { sql } from '@codemirror/lang-sql'
-import { html } from '@codemirror/lang-html'
-import { css } from '@codemirror/lang-css'
-import { java } from '@codemirror/lang-java'
-import { oneDark } from '@codemirror/theme-one-dark'
-import { keymap, lineNumbers, highlightActiveLineGutter, highlightSpecialChars, drawSelection, rectangularSelection, highlightActiveLine } from '@codemirror/view'
-import { indentWithTab, defaultKeymap, history, historyKeymap } from '@codemirror/commands'
-import { indentOnInput, indentUnit, bracketMatching, syntaxHighlighting, HighlightStyle } from '@codemirror/language'
-import { tags as t } from '@lezer/highlight'
-import { searchKeymap, highlightSelectionMatches } from '@codemirror/search'
-import { closeBrackets, closeBracketsKeymap } from '@codemirror/autocomplete'
+import * as monaco from 'monaco-editor'
+import type { editor } from 'monaco-editor'
 
 // Props
 interface Props {
@@ -57,244 +43,247 @@ const emit = defineEmits<{
 
 // 响应式数据
 const editorContainer = ref<HTMLElement>()
-const editorView = shallowRef<EditorView>()
+const editorInstance = shallowRef<editor.IStandaloneCodeEditor>()
 
-// 自定义语法高亮配色方案（类似 GitHub/Atom 风格，优化JSON显示）
-const customHighlightStyle = HighlightStyle.define([
-  // JSON 专用配色
-  { tag: t.propertyName, color: '#0451a5' },                          // JSON 键名：深蓝色
-  { tag: [t.string], color: '#a31515' },                              // 字符串值：红色
-  { tag: [t.number], color: '#098658' },                              // 数字：绿色
-  { tag: [t.bool, t.null], color: '#0000ff' },                        // 布尔值/null：蓝色
-  { tag: [t.bracket, t.brace, t.squareBracket], color: '#000000' },   // 括号：黑色
-  { tag: [t.separator], color: '#000000' },                           // 分隔符（逗号冒号）：黑色
-  
-  // 代码通用配色
-  { tag: t.keyword, color: '#d73a49' },                              // 关键字：玫瑰红
-  { tag: [t.name, t.deleted, t.character, t.macroName], color: '#24292e' }, // 变量名：深灰
-  { tag: [t.function(t.variableName)], color: '#6f42c1' },           // 函数名：紫色
-  { tag: [t.labelName], color: '#22863a' },                          // 标签：绿色
-  { tag: [t.color, t.constant(t.name), t.standard(t.name)], color: '#005cc5' }, // 常量：蓝色
-  { tag: [t.definition(t.name)], color: '#24292e' },                 // 定义：深灰
-  { tag: [t.typeName, t.className], color: '#6f42c1' },              // 类型/类名：紫色
-  { tag: [t.changed, t.annotation], color: '#005cc5' },              // 注解：蓝色
-  { tag: [t.modifier, t.self, t.namespace], color: '#d73a49' },      // 修饰符：玫瑰红
-  { tag: [t.operator, t.operatorKeyword], color: '#d73a49' },        // 操作符：玫瑰红
-  { tag: [t.url, t.escape, t.regexp, t.link], color: '#032f62' },    // URL/正则：深蓝
-  { tag: [t.meta, t.comment], color: '#6a737d', fontStyle: 'italic' }, // 注释：灰色斜体
-  { tag: t.strong, fontWeight: 'bold', color: '#24292e' },            // 加粗
-  { tag: t.emphasis, fontStyle: 'italic' },                          // 斜体
-  { tag: t.strikethrough, textDecoration: 'line-through' },           // 删除线
-  { tag: t.heading, fontWeight: 'bold', color: '#005cc5' },           // 标题：蓝色加粗
-  { tag: [t.atom, t.special(t.variableName)], color: '#005cc5' },    // 特殊变量：蓝色
-  { tag: [t.processingInstruction, t.inserted], color: '#032f62' },  // 处理指令：深蓝
-  { tag: [t.special(t.string)], color: '#22863a' },                   // 特殊字符串：绿色
-  { tag: t.invalid, color: '#cb2431' }                                // 无效：红色
-])
+// 定义自定义主题（类似 GitHub/Atom 风格）
+const defineCustomTheme = () => {
+  monaco.editor.defineTheme('github-light', {
+    base: 'vs',
+    inherit: true,
+    rules: [
+      // JSON 专用配色
+      { token: 'key', foreground: '0451a5' },
+      { token: 'string.key.json', foreground: '0451a5' },
+      { token: 'string', foreground: 'a31515' },
+      { token: 'string.value.json', foreground: 'a31515' },
+      { token: 'number', foreground: '098658' },
+      { token: 'number.json', foreground: '098658' },
+      { token: 'keyword.json', foreground: '0000ff' },
+      { token: 'delimiter.bracket', foreground: '000000' },
+      { token: 'delimiter.square', foreground: '000000' },
+      { token: 'delimiter.brace', foreground: '000000' },
+      { token: 'delimiter.comma', foreground: '000000' },
+      { token: 'delimiter.colon', foreground: '000000' },
+      
+      // 代码通用配色
+      { token: 'keyword', foreground: 'd73a49' },
+      { token: 'identifier', foreground: '24292e' },
+      { token: 'variable', foreground: '24292e' },
+      { token: 'variable.name', foreground: '24292e' },
+      { token: 'type.identifier', foreground: '6f42c1' },
+      { token: 'function', foreground: '6f42c1' },
+      { token: 'constant', foreground: '005cc5' },
+      { token: 'annotation', foreground: '005cc5' },
+      { token: 'operator', foreground: 'd73a49' },
+      { token: 'regexp', foreground: '032f62' },
+      { token: 'comment', foreground: '6a737d', fontStyle: 'italic' },
+      { token: 'tag', foreground: '22863a' },
+      { token: 'attribute.name', foreground: '6f42c1' },
+      { token: 'attribute.value', foreground: 'a31515' },
+    ],
+    colors: {
+      'editor.background': '#ffffff',
+      'editor.foreground': '#24292e',
+      'editor.lineHighlightBackground': '#f6f8fa',
+      'editorLineNumber.foreground': '#959da5',
+      'editorLineNumber.activeForeground': '#24292e',
+      'editor.selectionBackground': '#add6ff88',
+      'editor.inactiveSelectionBackground': '#add6ff44',
+      'editor.selectionHighlightBackground': '#fff59d44',
+      'editor.findMatchBackground': '#fff59d88',
+      'editor.findMatchHighlightBackground': '#fff59d44',
+      'editorCursor.foreground': '#0969da',
+      'editorBracketMatch.background': '#c8e1ff44',
+      'editorBracketMatch.border': '#54aeff66',
+      'editorGutter.background': '#fafafa',
+      'editorGutter.border': '#e8e8e8'
+    }
+  })
 
-// 获取语言扩展
-const getLanguageExtension = (lang: string): Extension => {
-  const langMap: Record<string, () => Extension> = {
-    javascript: () => javascript(),
-    typescript: () => javascript({ typescript: true }),
-    json: () => json(),
-    xml: () => xml(),
-    sql: () => sql(),
-    html: () => html(),
-    css: () => css(),
-    java: () => java(),
-    kotlin: () => java(), // 暂时使用Java高亮
-    text: () => [],
-    yaml: () => []
+  monaco.editor.defineTheme('github-dark', {
+    base: 'vs-dark',
+    inherit: true,
+    rules: [
+      { token: 'key', foreground: '79b8ff' },
+      { token: 'string.key.json', foreground: '79b8ff' },
+      { token: 'string', foreground: '9ecbff' },
+      { token: 'string.value.json', foreground: '9ecbff' },
+      { token: 'number', foreground: '79c0ff' },
+      { token: 'number.json', foreground: '79c0ff' },
+      { token: 'keyword.json', foreground: '79c0ff' },
+      { token: 'keyword', foreground: 'ff7b72' },
+      { token: 'comment', foreground: '8b949e', fontStyle: 'italic' },
+      { token: 'function', foreground: 'd2a8ff' },
+      { token: 'type.identifier', foreground: 'd2a8ff' },
+      { token: 'constant', foreground: '79c0ff' },
+    ],
+    colors: {
+      'editor.background': '#1e1e1e',
+      'editor.foreground': '#e6edf3',
+      'editor.lineHighlightBackground': '#1f2937',
+      'editorLineNumber.foreground': '#6e7681',
+      'editorLineNumber.activeForeground': '#e6edf3',
+      'editor.selectionBackground': '#3b5070',
+      'editorCursor.foreground': '#58a6ff',
+    }
+  })
+}
+
+// 获取语言映射
+const getMonacoLanguage = (lang: string): string => {
+  const langMap: Record<string, string> = {
+    javascript: 'javascript',
+    typescript: 'typescript',
+    json: 'json',
+    xml: 'xml',
+    sql: 'sql',
+    html: 'html',
+    css: 'css',
+    java: 'java',
+    kotlin: 'kotlin',
+    text: 'plaintext',
+    yaml: 'yaml'
   }
   
-  const extension = langMap[lang.toLowerCase()]
-  return extension ? extension() : json()
+  return langMap[lang.toLowerCase()] || 'json'
 }
 
 // 获取主题
-const getTheme = (): Extension => {
+const getTheme = (): string => {
   if (props.theme === 'dark') {
-    return oneDark
+    return 'github-dark'
   } else if (props.theme === 'auto') {
     const isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
-    return isDark ? oneDark : []
+    return isDark ? 'github-dark' : 'github-light'
   }
-  return []
+  return 'github-light'
 }
 
-// 获取只读扩展
-const getReadOnlyExtension = (): Extension => {
-  if (props.readonly) {
-    return EditorView.editable.of(false)
+// 等待字体加载完成
+const waitForFonts = async (): Promise<void> => {
+  try {
+    // 等待所有字体加载完成
+    await document.fonts.ready
+    
+    // 额外检查 Intel One Mono 字体是否可用
+    const fonts = document.fonts
+    let intelOneMonoLoaded = false
+    fonts.forEach((font) => {
+      if (font.family.includes('Intel One Mono')) {
+        intelOneMonoLoaded = true
+      }
+    })
+    
+    // 如果字体还没加载，等待一下
+    if (!intelOneMonoLoaded) {
+      await new Promise(resolve => setTimeout(resolve, 200))
+    }
+  } catch (error) {
+    console.warn('Failed to load Intel One Mono font:', error)
   }
-  return []
-}
-
-// 获取基础编辑器扩展（不包括语言扩展）
-const getBasicExtensions = (): Extension[] => {
-  return [
-    lineNumbers(),
-    highlightActiveLineGutter(),
-    highlightSpecialChars(),
-    history(),
-    drawSelection(),
-    EditorState.allowMultipleSelections.of(true),
-    indentUnit.of('    '), // 设置缩进单位为4个空格
-    indentOnInput(),
-    bracketMatching(),
-    closeBrackets(),
-    rectangularSelection(),
-    highlightActiveLine(),
-    highlightSelectionMatches(),
-    syntaxHighlighting(customHighlightStyle, { fallback: true }), // 使用自定义语法高亮
-    keymap.of([
-      ...closeBracketsKeymap,
-      ...defaultKeymap,
-      ...searchKeymap,
-      ...historyKeymap,
-      indentWithTab
-    ])
-  ]
 }
 
 // 创建编辑器
-const createEditor = () => {
+const createEditor = async () => {
   if (!editorContainer.value) return
 
-  const languageExt = getLanguageExtension(props.language)
-  
-  const extensions: Extension[] = [
-    ...getBasicExtensions(),
-    languageExt, // 语言扩展，提供语法高亮
-    getTheme(),
-    getReadOnlyExtension(),
-    EditorView.lineWrapping,
-    EditorView.updateListener.of((update) => {
-      if (update.docChanged) {
-        const value = update.state.doc.toString()
-        emit('update:modelValue', value)
-        emit('change', value)
-      }
-    }),
-    EditorView.domEventHandlers({
-      focus: () => {
-        emit('focus')
-      },
-      blur: () => {
-        emit('blur')
-      }
-    })
-  ]
+  // 等待字体加载完成
+  await waitForFonts()
 
-  // 应用自定义选项和字体样式
-  const fontSize = props.options.fontSize || 12 // 默认12px
-  const fontFamily = props.options.fontFamily || '"Intel One Mono", "Ubuntu Mono", "Courier New", Courier, Monaco, Consolas, monospace'
-  
-  extensions.push(EditorView.theme({
-    '&': { 
-      fontSize: `${fontSize}px`,
-      lineHeight: '1.6'
-    },
-    '.cm-content, .cm-line': { 
-      fontFamily: fontFamily,
-      fontSize: `${fontSize}px`,
-      lineHeight: '1.6'
-    },
-    '.cm-gutters': {
-      fontSize: `${fontSize}px`,
-      backgroundColor: '#fafafa',
-      borderRight: '1px solid #e8e8e8'
-    },
-    // 改进配色
-    '.cm-activeLine': {
-      backgroundColor: '#f0f9ff'
-    },
-    '.cm-activeLineGutter': {
-      backgroundColor: '#e6f4ff'
-    },
-    '.cm-selectionBackground, ::selection': {
-      backgroundColor: '#BED4F0 !important',
-      boxShadow: '0 0 0 2px #1890ff',
-      borderRadius: '2px'
-    },
-    '.cm-focused .cm-selectionBackground, .cm-focused ::selection': {
-      backgroundColor: '#BED4F0 !important',
-      boxShadow: '0 0 0 2px #1890ff',
-      borderRadius: '2px'
-    },
-    '.cm-selectionMatch': {
-      backgroundColor: '#FFF8E1 !important',
-      boxShadow: '0 0 0 1px #FFC107',
-      borderRadius: '2px'
-    },
-    '.cm-searchMatch': {
-      backgroundColor: '#FFF8E1',
-      boxShadow: '0 0 0 1px #FFC107',
-      borderRadius: '2px'
-    },
-    '.cm-searchMatch.cm-searchMatch-selected': {
-      backgroundColor: '#FFECB3',
-      boxShadow: '0 0 0 1px #F57C00',
-      borderRadius: '2px'
-    },
-    '.cm-matchingBracket': {
-      backgroundColor: '#E5F2FF',
-      outline: '1px solid #C8E1FF'
-    },
-    '.cm-cursor': {
-      borderLeftColor: '#1890ff'
-    }
-  }))
+  // 定义自定义主题
+  defineCustomTheme()
 
-  const state = EditorState.create({
-    doc: props.modelValue || '',
-    extensions
+  // 应用自定义选项和字体样式 - 使用 Intel One Mono 作为默认字体
+  const fontSize = props.options.fontSize || 12
+  const fontFamily = props.options.fontFamily || '"Intel One Mono", "SF Mono", Monaco, Menlo, "Courier New", Courier, Consolas, monospace'
+
+  const editorOptions: editor.IStandaloneEditorConstructionOptions = {
+    value: props.modelValue || '',
+    language: getMonacoLanguage(props.language),
+    theme: getTheme(),
+    readOnly: props.readonly,
+    fontSize: fontSize,
+    fontFamily: fontFamily,
+    fontLigatures: false,
+    lineHeight: 1.6 * fontSize,
+    tabSize: 4,
+    insertSpaces: true,
+    automaticLayout: true,
+    disableMonospaceOptimizations: true, // 禁用等宽字体优化，强制重新测量非等宽字体
+    minimap: { enabled: false },
+    scrollBeyondLastLine: false,
+    wordWrap: 'on',
+    lineNumbers: 'on',
+    glyphMargin: false,
+    folding: true,
+    renderLineHighlight: 'all',
+    selectOnLineNumbers: true,
+    matchBrackets: 'always',
+    autoClosingBrackets: 'always',
+    autoClosingQuotes: 'always',
+    formatOnPaste: true,
+    formatOnType: true,
+    smoothScrolling: true,
+    cursorBlinking: 'smooth',
+    cursorSmoothCaretAnimation: 'on',
+    bracketPairColorization: {
+      enabled: true
+    },
+    ...props.options
+  }
+
+  editorInstance.value = monaco.editor.create(editorContainer.value, editorOptions)
+
+  // 字体加载完成后，强制重新测量布局
+  await nextTick()
+  editorInstance.value.layout()
+
+  // 监听内容变化
+  editorInstance.value.onDidChangeModelContent(() => {
+    const value = editorInstance.value?.getValue() || ''
+    emit('update:modelValue', value)
+    emit('change', value)
   })
 
-  editorView.value = new EditorView({
-    state,
-    parent: editorContainer.value
+  // 监听焦点事件
+  editorInstance.value.onDidFocusEditorText(() => {
+    emit('focus')
+  })
+
+  editorInstance.value.onDidBlurEditorText(() => {
+    emit('blur')
   })
 }
 
 // 更新编辑器内容
 const updateEditorValue = (newValue: string) => {
-  if (!editorView.value) return
+  if (!editorInstance.value) return
   
-  const currentValue = editorView.value.state.doc.toString()
+  const currentValue = editorInstance.value.getValue()
   if (currentValue !== newValue) {
-    editorView.value.dispatch({
-      changes: {
-        from: 0,
-        to: currentValue.length,
-        insert: newValue || ''
-      }
-    })
+    editorInstance.value.setValue(newValue || '')
   }
 }
 
-// 重新配置编辑器（通过重新创建）
-const reconfigureEditor = () => {
-  if (!editorView.value) return
+// 更新语言
+const updateLanguage = (lang: string) => {
+  if (!editorInstance.value) return
   
-  // 保存当前值
-  const currentValue = editorView.value.state.doc.toString()
-  
-  // 销毁旧编辑器
-  editorView.value.destroy()
-  
-  // 创建新编辑器（这会重新设置editorView.value）
-  nextTick(() => {
-    createEditor()
-    
-    // 恢复值
-    nextTick(() => {
-      if (currentValue && editorView.value) {
-        updateEditorValue(currentValue)
-      }
-    })
-  })
+  const model = editorInstance.value.getModel()
+  if (model) {
+    monaco.editor.setModelLanguage(model, getMonacoLanguage(lang))
+  }
+}
+
+// 更新主题
+const updateTheme = () => {
+  monaco.editor.setTheme(getTheme())
+}
+
+// 更新只读状态
+const updateReadOnly = (readonly: boolean) => {
+  if (!editorInstance.value) return
+  editorInstance.value.updateOptions({ readOnly: readonly })
 }
 
 // 监听props变化
@@ -302,43 +291,82 @@ watch(() => props.modelValue, (newValue) => {
   updateEditorValue(newValue)
 })
 
-watch(() => [props.language, props.theme, props.readonly], () => {
-  reconfigureEditor()
+watch(() => props.language, (newLang) => {
+  updateLanguage(newLang)
 })
 
-// 单独监听 options 中的关键属性，避免深度监听导致频繁重建
+watch(() => props.theme, () => {
+  updateTheme()
+})
+
+watch(() => props.readonly, (newReadOnly) => {
+  updateReadOnly(newReadOnly)
+})
+
 watch(() => [props.options?.fontSize, props.options?.fontFamily], () => {
-  reconfigureEditor()
-})
-
-watch(() => props.height, () => {
-  nextTick(() => {
-    editorView.value?.requestMeasure()
+  if (!editorInstance.value) return
+  
+  const fontSize = props.options.fontSize || 12
+  const fontFamily = props.options.fontFamily || '"Intel One Mono", "SF Mono", Monaco, Menlo, "Courier New", Courier, Consolas, monospace'
+  
+  editorInstance.value.updateOptions({
+    fontSize: fontSize,
+    fontFamily: fontFamily,
+    fontLigatures: false,
+    lineHeight: 1.6 * fontSize
   })
 })
 
 // 生命周期
 onMounted(async () => {
   await nextTick()
-  createEditor()
+  await createEditor()
 })
 
 onUnmounted(() => {
-  editorView.value?.destroy()
-  editorView.value = undefined
+  editorInstance.value?.dispose()
+  editorInstance.value = undefined
 })
 
 // 暴露方法给父组件
 defineExpose({
-  getEditor: () => editorView.value,
-  getValue: () => editorView.value?.state.doc.toString() || '',
+  getEditor: () => editorInstance.value,
+  getValue: () => editorInstance.value?.getValue() || '',
   setValue: (value: string) => updateEditorValue(value),
-  focus: () => editorView.value?.focus(),
-  blur: () => editorView.value?.contentDOM.blur()
+  focus: () => editorInstance.value?.focus(),
+  blur: () => {
+    const domNode = editorInstance.value?.getDomNode()
+    if (domNode) {
+      domNode.blur()
+    }
+  }
 })
 </script>
 
 <style scoped>
+/* 导入 Intel One Mono 字体 */
+@font-face {
+  font-family: 'Intel One Mono';
+  src: url('https://cdn.jsdelivr.net/gh/intel/intel-one-mono@1.3.0/fonts/webfonts/IntelOneMono-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Intel One Mono';
+  src: url('https://cdn.jsdelivr.net/gh/intel/intel-one-mono@1.3.0/fonts/webfonts/IntelOneMono-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Intel One Mono';
+  src: url('https://cdn.jsdelivr.net/gh/intel/intel-one-mono@1.3.0/fonts/webfonts/IntelOneMono-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 .code-editor-container {
   border: 1px solid #d9d9d9;
   border-radius: 8px;
@@ -360,95 +388,21 @@ defineExpose({
   box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
 }
 
-/* CodeMirror样式覆盖 */
-.code-editor-container :deep(.cm-editor) {
+/* Monaco Editor 样式覆盖 - 确保字体应用 */
+.code-editor-container :deep(.monaco-editor) {
   height: 100%;
-  font-size: 12px;
 }
 
-.code-editor-container :deep(.cm-scroller) {
-  overflow: auto;
-  font-family: "Intel One Mono", "Ubuntu Mono", "Courier New", Courier, Monaco, Consolas, monospace;
-  font-size: 12px;
-}
-
-.code-editor-container :deep(.cm-content) {
-  padding: 8px 0;
-  font-size: 12px;
-  line-height: 1.6;
-  font-family: "Intel One Mono", "Ubuntu Mono", "Courier New", Courier, Monaco, Consolas, monospace;
-}
-
-.code-editor-container :deep(.cm-line) {
-  padding: 0 8px;
-  line-height: 1.6;
-  font-size: 12px;
-  font-family: "Intel One Mono", "Ubuntu Mono", "Courier New", Courier, Monaco, Consolas, monospace;
-}
-
-.code-editor-container :deep(.cm-gutters) {
+.code-editor-container :deep(.monaco-editor .margin) {
   background-color: #fafafa;
-  border-right: 1px solid #e8e8e8;
-  font-size: 12px;
-  font-family: "Intel One Mono", "Ubuntu Mono", "Courier New", Courier, Monaco, Consolas, monospace;
 }
 
-/* 改进的配色方案 */
-.code-editor-container :deep(.cm-activeLine) {
-  background-color: #f0f9ff;
-}
-
-.code-editor-container :deep(.cm-activeLineGutter) {
-  background-color: #e6f4ff;
-}
-
-.code-editor-container :deep(.cm-selectionBackground) {
-  background-color: #BED4F0 !important;
-  box-shadow: 0 0 0 2px #1890ff !important;
-  border-radius: 2px;
-}
-
-.code-editor-container :deep(.cm-focused .cm-selectionBackground) {
-  background-color: #BED4F0 !important;
-  box-shadow: 0 0 0 2px #1890ff !important;
-  border-radius: 2px;
-}
-
-.code-editor-container :deep(.cm-selectionMatch) {
-  background-color: #FFF8E1 !important;
-  box-shadow: 0 0 0 1px #FFC107 !important;
-  border-radius: 2px;
-}
-
-.code-editor-container :deep(.cm-searchMatch) {
-  background-color: #FFF8E1 !important;
-  box-shadow: 0 0 0 1px #FFC107 !important;
-  border-radius: 2px;
-}
-
-.code-editor-container :deep(.cm-searchMatch.cm-searchMatch-selected) {
-  background-color: #FFECB3 !important;
-  box-shadow: 0 0 0 1px #F57C00 !important;
-  border-radius: 2px;
-}
-
-.code-editor-container :deep(.cm-matchingBracket) {
-  background-color: #E5F2FF;
-  outline: 1px solid #C8E1FF;
-}
-
-.code-editor-container :deep(.cm-cursor) {
-  border-left: 2px solid #1890ff;
-}
-
-/* 暗色主题样式 */
-.code-editor-container:has(.cm-theme-dark) {
-  background: #1e1e1e;
-  border-color: #434343;
-}
-
-.code-editor-container:has(.cm-theme-dark):hover {
-  border-color: #40a9ff;
+/* 强制应用 Intel One Mono 字体到所有编辑器文本 */
+.code-editor-container :deep(.monaco-editor .lines-content),
+.code-editor-container :deep(.monaco-editor .view-lines),
+.code-editor-container :deep(.monaco-editor .view-line),
+.code-editor-container :deep(.monaco-editor .monaco-mouse-cursor-text) {
+  font-family: "Intel One Mono", "SF Mono", Monaco, Menlo, "Courier New", Courier, Consolas, monospace !important;
 }
 
 /* 响应式设计 */

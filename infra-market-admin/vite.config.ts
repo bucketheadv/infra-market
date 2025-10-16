@@ -4,6 +4,7 @@ import { resolve } from 'path'
 import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
 import { AntDesignVueResolver } from 'unplugin-vue-components/resolvers'
+import monacoEditorPlugin from 'vite-plugin-monaco-editor'
 
 export default defineConfig({
   plugins: [
@@ -22,6 +23,9 @@ export default defineConfig({
         }),
       ],
       dts: true,
+    }),
+    monacoEditorPlugin({
+      languageWorkers: ['editorWorkerService', 'json', 'html', 'css', 'typescript']
     }),
   ],
   resolve: {

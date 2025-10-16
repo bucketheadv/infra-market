@@ -150,9 +150,9 @@ const editorOptions = {
   wordWrap: 'on',
   lineNumbers: 'on',
   folding: true,
-  fontSize: 10,
-  fontFamily: 'Monaco, Menlo, Ubuntu Mono, monospace',
-  lineHeight: 16,
+  fontSize: 12,
+  fontFamily: '"Intel One Mono", "SF Mono", Monaco, Menlo, monospace',
+  lineHeight: 19,
   automaticLayout: true
 }
 
