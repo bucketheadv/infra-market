@@ -11,7 +11,7 @@ import javax.crypto.SecretKey
 object JwtUtil {
     
     private const val SECRET_KEY = "infra-market-jwt-secret-key-2024-very-long-secret-key-for-security"
-    private const val EXPIRATION_TIME = 24 * 60 * 60 * 1000L // 24小时
+    private const val EXPIRATION_TIME = 3 * 24 * 60 * 60 * 1000L // 3天
     
     // 生成密钥
     private val key: SecretKey = Keys.hmacShaKeyFor(SECRET_KEY.toByteArray())

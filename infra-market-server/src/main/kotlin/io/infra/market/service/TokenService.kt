@@ -10,7 +10,7 @@ class TokenService(
 ) {
     
     private val tokenPrefix = "token:"
-    private val tokenExpireTime: Long = 24 * 60 * 60 // 24小时（秒）
+    private val tokenExpireTime: Long = 3 * 24 * 60 * 60 // 3天（秒）
     
     /**
      * 保存token到Redis

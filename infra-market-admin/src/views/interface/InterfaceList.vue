@@ -45,21 +45,43 @@
       <!-- 搜索表单 -->
       <a-form :model="searchForm" class="search-form">
         <a-row :gutter="16">
-          <a-col :xs="24" :sm="12" :md="8" :lg="6">
+          <a-col :xs="24" :sm="12" :md="10" :lg="10">
             <a-form-item label="接口名称">
-              <a-input
+              <a-auto-complete
                 v-model:value="searchForm.name"
+                :options="interfaceNameOptions"
                 placeholder="请输入接口名称"
                 allow-clear
-              />
+                :filter-option="false"
+                class="interface-name-autocomplete"
+                popup-class-name="interface-name-dropdown"
+                @search="handleSearchInterfaceName"
+                @select="handleSelectInterfaceName"
+                @change="handleNameChange"
+              >
+                <template #option="{ label, environment }">
+                  <div class="interface-option">
+                    <span class="interface-option-name">{{ label }}</span>
+                    <a-tag 
+                      v-if="environment"
+                      :color="environment === 'PRODUCTION' ? 'red' : 'blue'"
+                      size="small"
+                      class="interface-option-env-tag"
+                    >
+                      {{ environment === 'PRODUCTION' ? '🚨 正式' : '🧪 测试' }}
+                    </a-tag>
+                  </div>
+                </template>
+              </a-auto-complete>
             </a-form-item>
           </a-col>
-          <a-col :xs="24" :sm="12" :md="8" :lg="6">
+          <a-col :xs="24" :sm="12" :md="5" :lg="5">
             <a-form-item label="请求方法">
               <a-select
                 v-model:value="searchForm.method"
-                placeholder="请选择请求方法"
+                placeholder="请选择"
                 allow-clear
+                @change="handleConditionChange"
               >
                 <a-select-option
                   v-for="method in HTTP_METHODS"
@@ -71,24 +93,26 @@
               </a-select>
             </a-form-item>
           </a-col>
-          <a-col :xs="24" :sm="12" :md="8" :lg="6">
+          <a-col :xs="24" :sm="12" :md="4" :lg="4">
             <a-form-item label="状态">
               <a-select
                 v-model:value="searchForm.status"
-                placeholder="请选择状态"
+                placeholder="请选择"
                 allow-clear
+                @change="handleConditionChange"
               >
                 <a-select-option :value="1">启用</a-select-option>
                 <a-select-option :value="0">禁用</a-select-option>
               </a-select>
             </a-form-item>
           </a-col>
-          <a-col :xs="24" :sm="12" :md="8" :lg="6">
+          <a-col :xs="24" :sm="12" :md="5" :lg="5">
             <a-form-item label="环境">
               <a-select
                 v-model:value="searchForm.environment"
-                placeholder="请选择环境"
+                placeholder="请选择"
                 allow-clear
+                @change="handleConditionChange"
               >
                 <template #suffixIcon>
                   <EnvironmentOutlined />
@@ -106,7 +130,7 @@
               </a-select>
             </a-form-item>
           </a-col>
-          <a-col :xs="24" :sm="12" :md="8" :lg="6">
+          <a-col :xs="24" :sm="24" :md="24" :lg="24">
             <a-form-item>
               <a-space>
                 <ThemeButton variant="primary" size="medium" :icon="SearchOutlined" @click="handleSearch">
@@ -248,7 +272,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, h } from 'vue'
+import { ref, reactive, onMounted, nextTick, h } from 'vue'
 import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import { PlusOutlined, SearchOutlined, ReloadOutlined, EditOutlined, PlayCircleOutlined, DeleteOutlined, CheckCircleOutlined, StopOutlined, CopyOutlined, EnvironmentOutlined, FireOutlined } from '@ant-design/icons-vue'
@@ -261,13 +285,15 @@ const router = useRouter()
 const loading = ref(false)
 const dataSource = ref<ApiInterface[]>([])
 const mostUsedInterfaces = ref<ApiInterface[]>([])
+const interfaceNameOptions = ref<Array<{ value: string, label: string, method: string, environment?: string, interfaceId: number }>>([])
 
 // 搜索表单
 const searchForm = reactive({
   name: '',
   method: undefined,
   status: undefined,
-  environment: undefined
+  environment: undefined,
+  selectedId: undefined as number | undefined
 })
 
 // 分页配置
@@ -308,7 +334,7 @@ const columns = [
     title: '接口名称',
     dataIndex: 'name',
     key: 'name',
-    width: 120,
+    width: 200,
     ellipsis: true
   },
   {
@@ -370,13 +396,13 @@ const columns = [
     title: '创建时间',
     dataIndex: 'createTime',
     key: 'createTime',
-    width: 150
+    width: 180
   },
   {
     title: '更新时间',
     dataIndex: 'updateTime',
     key: 'updateTime',
-    width: 150
+    width: 180
   },
   {
     title: '操作',
@@ -390,16 +416,24 @@ const columns = [
 const loadData = async () => {
   loading.value = true
   try {
-    const response = await interfaceApi.getList({
-      name: searchForm.name || undefined,
-      method: searchForm.method || undefined,
-      status: searchForm.status,
-      environment: searchForm.environment || undefined,
-      page: pagination.current,
-      size: pagination.pageSize
-    })
-    dataSource.value = response.data?.records || []
-    pagination.total = response.data?.total || 0
+    // 如果选择了下拉框中的接口，则根据ID精确查询
+    if (searchForm.selectedId) {
+      const response = await interfaceApi.getById(searchForm.selectedId)
+      dataSource.value = response.data ? [response.data] : []
+      pagination.total = response.data ? 1 : 0
+    } else {
+      // 否则按条件模糊查询
+      const response = await interfaceApi.getList({
+        name: searchForm.name || undefined,
+        method: searchForm.method || undefined,
+        status: searchForm.status,
+        environment: searchForm.environment || undefined,
+        page: pagination.current,
+        size: pagination.pageSize
+      })
+      dataSource.value = response.data?.records || []
+      pagination.total = response.data?.total || 0
+    }
   } catch (error) {
     message.error('加载数据失败')
   } finally {
@@ -421,6 +455,10 @@ const loadMostUsedInterfaces = async () => {
 }
 
 const handleSearch = () => {
+  // 如果有其他搜索条件，清空selectedId使用条件搜索（双重保险）
+  if (searchForm.method || searchForm.status !== undefined || searchForm.environment) {
+    searchForm.selectedId = undefined
+  }
   pagination.current = 1
   loadData()
 }
@@ -430,6 +468,7 @@ const handleReset = () => {
   searchForm.method = undefined
   searchForm.status = undefined
   searchForm.environment = undefined
+  searchForm.selectedId = undefined
   handleSearch()
 }
 
@@ -480,6 +519,69 @@ const handleToggleStatus = async (record: ApiInterface) => {
     loadData()
   } catch (error) {
     message.error('状态更新失败')
+  }
+}
+
+const handleSearchInterfaceName = async (searchText: string) => {
+  if (!searchText || searchText.trim() === '') {
+    interfaceNameOptions.value = []
+    // 清空选中的ID，恢复模糊搜索
+    searchForm.selectedId = undefined
+    return
+  }
+  
+  try {
+    const response = await interfaceApi.getList({
+      name: searchText,
+      page: 1,
+      size: 10
+    })
+    interfaceNameOptions.value = response.data?.records?.map((item: ApiInterface) => {
+      const envTag = item.environment === 'PRODUCTION' ? '🚨正式' : '🧪测试'
+      // value 使用格式: "接口名称 [环境 #ID]" 确保唯一且用户友好
+      const displayValue = `${item.name} [${envTag} #${item.id}]`
+      return {
+        value: displayValue,
+        label: item.name,
+        method: item.method,
+        environment: item.environment,
+        interfaceId: item.id!
+      }
+    }) || []
+  } catch (error) {
+    console.error('搜索接口名称失败', error)
+  }
+}
+
+const handleSelectInterfaceName = async (_value: string, option: any) => {
+  // 从 option 中直接获取 interfaceId
+  searchForm.selectedId = option.interfaceId
+  // 使用 nextTick 确保在 DOM 更新后设置显示的名称
+  await nextTick()
+  // 设置显示的名称（仅显示接口名称，不带环境和ID）
+  searchForm.name = option.label
+  // 立即触发查询
+  handleSearch()
+}
+
+const handleNameChange = (value: string) => {
+  // 当用户手动修改输入内容时，清空选中的ID
+  if (!value) {
+    searchForm.selectedId = undefined
+  } else {
+    // 如果值不包含方括号，说明是手动输入
+    // 清空选中的ID，使用名称模糊搜索
+    if (!value.includes('[')) {
+      searchForm.selectedId = undefined
+    }
+  }
+}
+
+const handleConditionChange = () => {
+  // 当用户修改其他搜索条件时，清空选中的接口ID
+  // 这样就会使用条件搜索而不是ID精确查询
+  if (searchForm.selectedId) {
+    searchForm.selectedId = undefined
   }
 }
 
@@ -918,6 +1020,30 @@ onMounted(() => {
   border-color: #1890ff;
 }
 
+/* 接口名称下拉选项样式 */
+.interface-option {
+  display: flex;
+  align-items: center;
+  padding: 4px 0;
+}
+
+.interface-option-name {
+  flex: 1;
+  font-size: 13px;
+  color: #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 280px;
+  min-width: 0;
+}
+
+.interface-option-env-tag {
+  flex-shrink: 0;
+  font-size: 11px !important;
+  margin-left: 8px;
+}
+
 @media (max-width: 768px) {
   .interface-list {
     padding: 16px;
@@ -957,5 +1083,23 @@ onMounted(() => {
     gap: 1px;
     min-width: 100px;
   }
+}
+</style>
+
+<style>
+/* 接口名称下拉框全局样式 */
+.interface-name-dropdown {
+  min-width: 400px !important;
+}
+
+.interface-name-dropdown .ant-select-item {
+  padding: 8px 12px;
+}
+
+.interface-name-dropdown .interface-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 </style>
