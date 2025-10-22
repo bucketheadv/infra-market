@@ -328,11 +328,51 @@
                           </div>
                           <!-- 提取值显示 -->
                           <div v-if="executeResult.extractedValue" class="extracted-value-section">
-                            <h4>提取的值</h4>
+                            <div class="extracted-value-header">
+                              <h4>提取的值</h4>
+                              <div class="action-buttons">
+                                <ThemeButton
+                                  variant="secondary"
+                                  size="small"
+                                  @click="extractedValueReadonly = !extractedValueReadonly"
+                                  class="readonly-toggle-btn"
+                                  :class="{ 'readonly-active': extractedValueReadonly }"
+                                >
+                                  <template #icon>
+                                    <span>{{ extractedValueReadonly ? '🔒' : '🔓' }}</span>
+                                  </template>
+                                  {{ extractedValueReadonly ? '只读' : '编辑' }}
+                                </ThemeButton>
+                                <div class="copy-buttons">
+                                  <ThemeButton
+                                    variant="secondary"
+                                    size="small"
+                                    @click="copyToClipboard(extractedValueContent, '提取的值')"
+                                    class="copy-btn"
+                                  >
+                                    <template #icon>
+                                      <span>📋</span>
+                                    </template>
+                                    拷贝
+                                  </ThemeButton>
+                                  <ThemeButton
+                                    variant="secondary"
+                                    size="small"
+                                    @click="copyToClipboard(compressJson(extractedValueContent), '压缩的提取值')"
+                                    class="copy-btn"
+                                  >
+                                    <template #icon>
+                                      <span>🗜️</span>
+                                    </template>
+                                    拷贝压缩
+                                  </ThemeButton>
+                                </div>
+                              </div>
+                            </div>
                             <div class="extracted-value-content">
                               <CodeEditor
-                                :model-value="formatResponseBody(executeResult.extractedValue)"
-                                :readonly="true"
+                                v-model="extractedValueContent"
+                                :readonly="extractedValueReadonly"
                                 :height="400"
                                 :language="detectResponseLanguage(executeResult.extractedValue)"
                                 :options="{
@@ -344,7 +384,7 @@
                                   fontSize: 10,
                                   fontFamily: 'Intel One Mono, SF Mono, Monaco, Menlo, monospace',
                                   lineHeight: 16,
-                                  readOnly: true
+                                  readOnly: extractedValueReadonly
                                 }"
                               />
                             </div>
@@ -353,6 +393,44 @@
                             <div class="response-body-header" @click="executeResult.extractedValue ? toggleResponseBody() : null" :class="{ 'clickable': executeResult.extractedValue }">
                               <h4>响应体</h4>
                               <div class="response-header-right">
+                                <div class="action-buttons">
+                                  <ThemeButton
+                                    variant="secondary"
+                                    size="small"
+                                    @click.stop="responseBodyReadonly = !responseBodyReadonly"
+                                    class="readonly-toggle-btn"
+                                    :class="{ 'readonly-active': responseBodyReadonly }"
+                                  >
+                                    <template #icon>
+                                      <span>{{ responseBodyReadonly ? '🔒' : '🔓' }}</span>
+                                    </template>
+                                    {{ responseBodyReadonly ? '只读' : '编辑' }}
+                                  </ThemeButton>
+                                  <div class="copy-buttons">
+                                    <ThemeButton
+                                      variant="secondary"
+                                      size="small"
+                                      @click.stop="copyToClipboard(responseBodyContent, '响应体')"
+                                      class="copy-btn"
+                                    >
+                                      <template #icon>
+                                        <span>📋</span>
+                                      </template>
+                                      拷贝
+                                    </ThemeButton>
+                                    <ThemeButton
+                                      variant="secondary"
+                                      size="small"
+                                      @click.stop="copyToClipboard(compressJson(responseBodyContent), '压缩的响应体')"
+                                      class="copy-btn"
+                                    >
+                                      <template #icon>
+                                        <span>🗜️</span>
+                                      </template>
+                                      拷贝压缩
+                                    </ThemeButton>
+                                  </div>
+                                </div>
                                 <span class="response-size">{{ executeResult.body?.length || 0 }} 字符</span>
                                 <a-button 
                                   v-if="executeResult.extractedValue"
@@ -365,8 +443,8 @@
                             </div>
                             <div v-show="!executeResult.extractedValue || !responseBodyCollapsed" class="response-body-content">
                               <CodeEditor
-                                :model-value="formatResponseBody(executeResult.body)"
-                                :readonly="true"
+                                v-model="responseBodyContent"
+                                :readonly="responseBodyReadonly"
                                 :height="400"
                                 :language="detectResponseLanguage(executeResult.body)"
                                 :options="{
@@ -378,8 +456,7 @@
                                   fontSize: 10,
                                   fontFamily: 'Intel One Mono, SF Mono, Monaco, Menlo, monospace',
                                   lineHeight: 16,
-                                  readOnly: true,
-                                  theme: 'vs-light',
+                                  readOnly: responseBodyReadonly,
                                   renderLineHighlight: 'gutter',
                                   cursorStyle: 'line',
                                   selectOnLineNumbers: true,
@@ -757,14 +834,54 @@
               <div v-if="selectedRecord.responseBody" class="param-section">
                 <!-- 如果配置了取值路径且成功提取值，则显示提取值 -->
                 <div v-if="interfaceData?.valuePath && recordExtractedValue" class="extracted-value-section-record">
-                  <h4>
-                    提取的值
-                    <span class="value-path-badge">{{ interfaceData.valuePath }}</span>
-                  </h4>
+                  <div class="extracted-value-header-record">
+                    <h4>
+                      提取的值
+                      <span class="value-path-badge">{{ interfaceData.valuePath }}</span>
+                    </h4>
+                    <div class="action-buttons">
+                      <ThemeButton
+                        variant="secondary"
+                        size="small"
+                        @click="recordExtractedValueReadonly = !recordExtractedValueReadonly"
+                        class="readonly-toggle-btn"
+                        :class="{ 'readonly-active': recordExtractedValueReadonly }"
+                      >
+                        <template #icon>
+                          <span>{{ recordExtractedValueReadonly ? '🔒' : '🔓' }}</span>
+                        </template>
+                        {{ recordExtractedValueReadonly ? '只读' : '编辑' }}
+                      </ThemeButton>
+                      <div class="copy-buttons">
+                        <ThemeButton
+                          variant="secondary"
+                          size="small"
+                          @click="copyToClipboard(recordExtractedValueContent, '提取的值')"
+                          class="copy-btn"
+                        >
+                          <template #icon>
+                            <span>📋</span>
+                          </template>
+                          拷贝
+                        </ThemeButton>
+                        <ThemeButton
+                          variant="secondary"
+                          size="small"
+                          @click="copyToClipboard(compressJson(recordExtractedValueContent), '压缩的提取值')"
+                          class="copy-btn"
+                        >
+                          <template #icon>
+                            <span>🗜️</span>
+                          </template>
+                          拷贝压缩
+                        </ThemeButton>
+                      </div>
+                    </div>
+                  </div>
                   <div class="extracted-value-content-record">
                     <CodeEditor
-                      :model-value="recordExtractedValue"
-                      :readonly="true"
+                      v-model="recordExtractedValueContent"
+                      :readonly="recordExtractedValueReadonly"
                       :height="300"
                       :language="detectResponseLanguage(recordExtractedValue)"
                       :options="{
@@ -772,7 +889,7 @@
                         fontFamily: 'Intel One Mono, SF Mono, Monaco, Menlo, monospace',
                         lineHeight: 18,
                         minimap: { enabled: false },
-                        readOnly: true
+                        readOnly: recordExtractedValueReadonly
                       }"
                     />
                   </div>
@@ -787,6 +904,44 @@
                   >
                     <h4>原始响应体</h4>
                     <div class="response-header-right-record">
+                      <div class="action-buttons">
+                        <ThemeButton
+                          variant="secondary"
+                          size="small"
+                          @click.stop="recordResponseBodyReadonly = !recordResponseBodyReadonly"
+                          class="readonly-toggle-btn"
+                          :class="{ 'readonly-active': recordResponseBodyReadonly }"
+                        >
+                          <template #icon>
+                            <span>{{ recordResponseBodyReadonly ? '🔒' : '🔓' }}</span>
+                          </template>
+                          {{ recordResponseBodyReadonly ? '只读' : '编辑' }}
+                        </ThemeButton>
+                        <div class="copy-buttons">
+                          <ThemeButton
+                            variant="secondary"
+                            size="small"
+                            @click.stop="copyToClipboard(recordResponseBodyContent, '响应体')"
+                            class="copy-btn"
+                          >
+                            <template #icon>
+                              <span>📋</span>
+                            </template>
+                            拷贝
+                          </ThemeButton>
+                          <ThemeButton
+                            variant="secondary"
+                            size="small"
+                            @click.stop="copyToClipboard(compressJson(recordResponseBodyContent), '压缩的响应体')"
+                            class="copy-btn"
+                          >
+                            <template #icon>
+                              <span>🗜️</span>
+                            </template>
+                            拷贝压缩
+                          </ThemeButton>
+                        </div>
+                      </div>
                       <span class="response-size-record">{{ selectedRecord.responseBody?.length || 0 }} 字符</span>
                       <a-button 
                         v-if="interfaceData?.valuePath && recordExtractedValue"
@@ -801,8 +956,8 @@
                   </div>
                   <div v-show="!interfaceData?.valuePath || !recordExtractedValue || !recordResponseBodyCollapsed" class="response-body-content-record">
                     <CodeEditor
-                      :model-value="formatJson(selectedRecord.responseBody)"
-                      :readonly="true"
+                      v-model="recordResponseBodyContent"
+                      :readonly="recordResponseBodyReadonly"
                       :height="300"
                       :language="detectResponseLanguage(selectedRecord.responseBody)"
                       :options="{
@@ -810,7 +965,7 @@
                         fontFamily: 'Intel One Mono, SF Mono, Monaco, Menlo, monospace',
                         lineHeight: 18,
                         minimap: { enabled: true },
-                        readOnly: true
+                        readOnly: recordResponseBodyReadonly
                       }"
                     />
                   </div>
@@ -849,6 +1004,10 @@ const executeResult = ref<ApiExecuteResponse | null>(null)
 const activeTab = ref('response')
 const mainActiveTab = ref('execute')
 const responseBodyCollapsed = ref(true) // 响应体默认收起
+const extractedValueReadonly = ref(true) // 提取值编辑器默认只读
+const responseBodyReadonly = ref(true) // 响应体编辑器默认只读
+const extractedValueContent = ref('') // 提取值编辑器内容
+const responseBodyContent = ref('') // 响应体编辑器内容
 
 // 超时倒计时相关
 const timeoutCountdown = ref(0)
@@ -863,6 +1022,10 @@ const recordDetailVisible = ref(false)
 const selectedRecord = ref<ApiInterfaceExecutionRecord | null>(null)
 const detailActiveTab = ref('request')
 const recordResponseBodyCollapsed = ref(true) // 执行记录响应体默认收起
+const recordExtractedValueReadonly = ref(true) // 执行记录提取值编辑器默认只读
+const recordResponseBodyReadonly = ref(true) // 执行记录响应体编辑器默认只读
+const recordExtractedValueContent = ref('') // 执行记录提取值编辑器内容
+const recordResponseBodyContent = ref('') // 执行记录响应体编辑器内容
 
 // 代码编辑器弹窗相关
 const codeEditorVisible = ref(false)
@@ -1168,6 +1331,9 @@ const handleExecute = async () => {
   try {
     executing.value = true
     executeResult.value = null
+    // 重置只读状态
+    extractedValueReadonly.value = true
+    responseBodyReadonly.value = true
     
     // 启动倒计时
     const timeout = interfaceData.value.timeout || 60
@@ -1194,6 +1360,13 @@ const handleExecute = async () => {
       executeResult.value = response.data
       activeTab.value = 'response'
       message.success('接口执行成功')
+      // 初始化编辑器内容
+      if (response.data.extractedValue) {
+        extractedValueContent.value = formatResponseBody(response.data.extractedValue)
+      }
+      if (response.data.body) {
+        responseBodyContent.value = formatResponseBody(response.data.body)
+      }
     }
   } catch (error: any) {
     console.error('接口执行失败:', error)
@@ -1245,6 +1418,12 @@ const handleExecute = async () => {
         error: errorMessage
       }
       activeTab.value = 'error'
+      // 初始化编辑器内容（即使失败也要初始化）
+      if (error.response?.data) {
+        responseBodyContent.value = formatResponseBody(error.response.data)
+      } else {
+        responseBodyContent.value = ''
+      }
     }
   } finally {
     executing.value = false
@@ -1642,6 +1821,17 @@ const viewRecordDetail = (record: ApiInterfaceExecutionRecord) => {
   recordDetailVisible.value = true
   detailActiveTab.value = 'request'
   recordResponseBodyCollapsed.value = true // 重置为默认收起状态
+  recordExtractedValueReadonly.value = true // 重置为默认只读状态
+  recordResponseBodyReadonly.value = true // 重置为默认只读状态
+  
+  // 初始化编辑器内容
+  const extractedValue = extractValueFromResponse(record.responseBody)
+  if (extractedValue) {
+    recordExtractedValueContent.value = extractedValue
+  }
+  if (record.responseBody) {
+    recordResponseBodyContent.value = formatJson(record.responseBody)
+  }
 }
 
 // 切换执行记录响应体展开/收起状态
@@ -1847,6 +2037,30 @@ const getRecordParamDisplayValue = (jsonString: string | undefined, param: ApiPa
 const getCodeLanguageForParam = (param: ApiParam): string => {
   const languageMapping = getDataTypeToLanguageMapping()
   return languageMapping[param.dataType] || 'text'
+}
+
+// 拷贝到剪贴板
+const copyToClipboard = async (text: string, label: string = '内容') => {
+  try {
+    await navigator.clipboard.writeText(text)
+    message.success(`${label}已复制到剪贴板`)
+  } catch (error) {
+    console.error('复制失败:', error)
+    message.error('复制失败，请重试')
+  }
+}
+
+// 压缩JSON（去掉换行和缩进）
+const compressJson = (jsonString: string | undefined): string => {
+  if (!jsonString) return ''
+  
+  try {
+    const parsed = JSON.parse(jsonString)
+    return JSON.stringify(parsed)
+  } catch {
+    // 如果不是有效的JSON，直接返回去掉换行的字符串
+    return jsonString.replace(/\s+/g, ' ').trim()
+  }
 }
 </script>
 
@@ -2153,9 +2367,16 @@ const getCodeLanguageForParam = (param: ApiParam): string => {
   background: linear-gradient(90deg, #52c41a 0%, #73d13d 50%, #52c41a 100%);
 }
 
-.extracted-value-section h4 {
-  margin: 0;
+.extracted-value-header {
   padding: 16px 16px 8px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.extracted-value-header h4 {
+  margin: 0;
   color: #389e0d;
   font-size: 15px;
   font-weight: 700;
@@ -2164,7 +2385,7 @@ const getCodeLanguageForParam = (param: ApiParam): string => {
   gap: 8px;
 }
 
-.extracted-value-section h4::before {
+.extracted-value-header h4::before {
   content: '✨';
   font-size: 16px;
 }
@@ -2232,7 +2453,59 @@ const getCodeLanguageForParam = (param: ApiParam): string => {
 .response-header-right {
   display: flex;
   align-items: center;
+  gap: 12px;
+}
+
+.copy-buttons {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.copy-btn {
+  border-radius: 4px !important;
+  font-size: 11px !important;
+  padding: 2px 8px !important;
+  height: 24px !important;
+  min-width: 60px !important;
+  transition: all 0.2s ease !important;
+}
+
+.copy-btn:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12) !important;
+}
+
+.action-buttons {
+  display: flex;
+  align-items: center;
   gap: 8px;
+}
+
+.readonly-toggle-btn {
+  border-radius: 4px !important;
+  font-size: 11px !important;
+  padding: 2px 8px !important;
+  height: 24px !important;
+  min-width: 60px !important;
+  transition: all 0.2s ease !important;
+}
+
+.readonly-toggle-btn.readonly-active {
+  background: #f0f9ff !important;
+  border-color: #91d5ff !important;
+  color: #1890ff !important;
+}
+
+.readonly-toggle-btn:not(.readonly-active) {
+  background: #fff7e6 !important;
+  border-color: #ffd591 !important;
+  color: #fa8c16 !important;
+}
+
+.readonly-toggle-btn:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12) !important;
 }
 
 .response-body-header h4 {
@@ -2744,9 +3017,17 @@ const getCodeLanguageForParam = (param: ApiParam): string => {
   background: linear-gradient(90deg, #52c41a 0%, #73d13d 50%, #52c41a 100%);
 }
 
-.extracted-value-section-record h4 {
-  margin: 0;
+.extracted-value-header-record {
   padding: 16px 16px 8px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.extracted-value-header-record h4 {
+  margin: 0;
   color: #389e0d;
   font-size: 14px;
   font-weight: 700;
@@ -2768,7 +3049,7 @@ const getCodeLanguageForParam = (param: ApiParam): string => {
   letter-spacing: 0.5px;
 }
 
-.extracted-value-section-record h4::before {
+.extracted-value-header-record h4::before {
   content: '✨';
   font-size: 15px;
 }
@@ -2822,7 +3103,8 @@ const getCodeLanguageForParam = (param: ApiParam): string => {
 .response-header-right-record {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .response-body-header-record h4 {

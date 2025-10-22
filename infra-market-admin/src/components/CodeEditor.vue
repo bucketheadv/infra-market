@@ -253,6 +253,102 @@ const createEditor = async () => {
   editorInstance.value.onDidBlurEditorText(() => {
     emit('blur')
   })
+
+  // 监听粘贴事件
+  editorInstance.value.onDidPaste((e) => {
+    handlePaste(e)
+  })
+}
+
+// 转义字符串中的特殊字符
+const escapeString = (str: string): string => {
+  return str
+    .replace(/\\/g, '\\\\')  // 反斜杠
+    .replace(/"/g, '\\"')     // 双引号
+    .replace(/\n/g, '\\n')    // 换行符
+    .replace(/\r/g, '\\r')    // 回车符
+    .replace(/\t/g, '\\t')    // 制表符
+}
+
+// 检测光标是否在字符串内
+const isInsideString = (model: monaco.editor.ITextModel, position: monaco.Position): boolean => {
+  const lineContent = model.getLineContent(position.lineNumber)
+  const beforeCursor = lineContent.substring(0, position.column - 1)
+  
+  // 统计双引号数量，如果为奇数则在字符串内
+  let doubleQuoteCount = 0
+  let inEscape = false
+  
+  for (let i = 0; i < beforeCursor.length; i++) {
+    const char = beforeCursor[i]
+    
+    if (inEscape) {
+      inEscape = false
+      continue
+    }
+    
+    if (char === '\\') {
+      inEscape = true
+      continue
+    }
+    
+    if (char === '"') {
+      doubleQuoteCount++
+    }
+  }
+  
+  return doubleQuoteCount % 2 === 1
+}
+
+// 处理粘贴事件
+const handlePaste = (e: any) => {
+  if (!editorInstance.value) return
+  
+  const model = editorInstance.value.getModel()
+  if (!model) return
+  
+  const selection = editorInstance.value.getSelection()
+  if (!selection) return
+  
+  // 获取粘贴的位置
+  const position = selection.getStartPosition()
+  
+  // 检查是否在字符串内
+  if (!isInsideString(model, position)) {
+    return // 不在字符串内，不处理
+  }
+  
+  // 获取粘贴的范围
+  const range = e.range
+  if (!range) return
+  
+  // 延迟处理，让粘贴操作先完成
+  setTimeout(() => {
+    if (!editorInstance.value) return
+    const model = editorInstance.value.getModel()
+    if (!model) return
+    
+    // 获取粘贴后的内容
+    const pastedText = model.getValueInRange(range)
+    
+    // 检查是否需要转义（如果包含需要转义的字符）
+    if (/["\\\\n\r\t]/.test(pastedText)) {
+      const escapedText = escapeString(pastedText)
+      
+      // 替换粘贴的内容为转义后的内容
+      editorInstance.value.executeEdits('paste', [{
+        range: range,
+        text: escapedText
+      }])
+      
+      // 设置光标位置到转义后文本的末尾
+      const newPosition = new monaco.Position(
+        range.endLineNumber,
+        range.startColumn + escapedText.length
+      )
+      editorInstance.value.setPosition(newPosition)
+    }
+  }, 10)
 }
 
 // 更新编辑器内容
