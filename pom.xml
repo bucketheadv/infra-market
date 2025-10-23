@@ -5,7 +5,7 @@
     <parent>
         <groupId>com.github.bucketheadv</groupId>
         <artifactId>infra-pom</artifactId>
-        <version>0.4.2-RELEASE</version>
+        <version>0.5.0-RELEASE</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>io.infra</groupId>
@@ -81,15 +81,7 @@
             <groupId>com.github.bucketheadv.infra-parent</groupId>
             <artifactId>infra-redis</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.apache.poi</groupId>
-            <artifactId>poi-ooxml</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>cn.hutool</groupId>
-            <artifactId>hutool-poi</artifactId>
-        </dependency>
-        
+
         <!-- JSONPath for value extraction -->
         <dependency>
             <groupId>com.jayway.jsonpath</groupId>
