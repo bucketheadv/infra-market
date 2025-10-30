@@ -59,8 +59,8 @@ object AesUtil {
         }
     }
 
-    @JvmStatic
-    fun main(args: Array<String>) {
-        println(encrypt("123456", "InfraMarketSecretKey2024"))
-    }
+//    @JvmStatic
+//    fun main(args: Array<String>) {
+//        println(encrypt("123456", "InfraMarketSecretKey2024"))
+//    }
 }

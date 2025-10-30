@@ -258,6 +258,102 @@ const createEditor = async () => {
   editorInstance.value.onDidPaste((e) => {
     handlePaste(e)
   })
+
+  // 添加双击选中引号内字符串的功能
+  setupDoubleClickSelection()
+}
+
+// 查找引号的开始和结束位置
+const findQuoteRange = (lineContent: string, column: number): { start: number, end: number } | null => {
+  let start = -1
+  let end = -1
+  
+  // 向前查找起始引号（从双击位置向左）
+  let escapeCount = 0
+  for (let i = column - 2; i >= 0; i--) {
+    if (lineContent[i] === '\\') {
+      escapeCount++
+    } else {
+      if (lineContent[i] === '"' && escapeCount % 2 === 0) {
+        start = i
+        break
+      }
+      escapeCount = 0
+    }
+  }
+  
+  // 如果没有找到起始引号，返回null
+  if (start === -1) return null
+  
+  // 向后查找结束引号（从双击位置向右）
+  escapeCount = 0
+  for (let i = column - 1; i < lineContent.length; i++) {
+    if (lineContent[i] === '\\') {
+      escapeCount++
+    } else {
+      if (lineContent[i] === '"' && escapeCount % 2 === 0) {
+        end = i
+        break
+      }
+      escapeCount = 0
+    }
+  }
+  
+  // 如果没有找到结束引号，返回null
+  if (end === -1) return null
+  
+  return { start, end }
+}
+
+// 设置双击选中引号内字符串的功能
+const setupDoubleClickSelection = () => {
+  if (!editorInstance.value) return
+  
+  const domNode = editorInstance.value.getDomNode()
+  if (!domNode) return
+  
+  // 监听双击事件
+  domNode.addEventListener('dblclick', (e: MouseEvent) => {
+    if (!editorInstance.value) return
+    
+    const target = editorInstance.value.getTargetAtClientPoint(e.clientX, e.clientY)
+    if (!target || !target.position) return
+    
+    const model = editorInstance.value.getModel()
+    if (!model) return
+    
+    const position = target.position
+    const lineContent = model.getLineContent(position.lineNumber)
+    
+    // 检查是否在引号内或双击的是引号本身
+    const isInString = isInsideString(model, position)
+    const charAtPosition = lineContent[position.column - 1]
+    
+    // 如果不在引号内且双击的不是引号，则返回
+    if (!isInString && charAtPosition !== '"') return
+    
+    // 查找引号范围
+    const range = findQuoteRange(lineContent, position.column)
+    if (!range) return
+    
+    // 选中引号内的内容（不包括引号本身）
+    // range.start和range.end是字符串索引（从0开始）
+    // Monaco的列号从1开始，所以需要+1
+    // 再+1跳过开始引号，end不需要再+1因为我们想选到end之前（不包括结束引号）
+    const selection = new monaco.Selection(
+      position.lineNumber,
+      range.start + 2, // +1转换为列号，再+1跳过开始引号
+      position.lineNumber,
+      range.end + 1    // +1转换为列号，这样就不包括结束引号
+    )
+    
+    editorInstance.value.setSelection(selection)
+    editorInstance.value.revealPositionInCenter(position)
+    
+    // 阻止默认的双击选中行为
+    e.preventDefault()
+    e.stopPropagation()
+  })
 }
 
 // 转义字符串中的特殊字符

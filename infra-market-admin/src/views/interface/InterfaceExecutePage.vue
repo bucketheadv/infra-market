@@ -638,9 +638,31 @@
       v-model:open="recordDetailVisible"
       title="执行记录详情"
       width="80%"
-      :footer="null"
       class="record-detail-modal"
     >
+      <template #footer>
+        <div class="modal-footer-content">
+          <ThemeButton
+            variant="primary"
+            size="medium"
+            @click="handleFillParamsFromRecord"
+            class="fill-params-btn"
+          >
+            <template #icon>
+              <span>📝</span>
+            </template>
+            使用此配置填充参数
+          </ThemeButton>
+          <ThemeButton
+            variant="secondary"
+            size="medium"
+            @click="recordDetailVisible = false"
+            class="close-btn"
+          >
+            关闭
+          </ThemeButton>
+        </div>
+      </template>
       <div v-if="selectedRecord" class="record-detail-content">
         <a-descriptions :column="2" :bordered="true" size="small">
           <a-descriptions-item label="执行ID">
@@ -2062,6 +2084,49 @@ const compressJson = (jsonString: string | undefined): string => {
     return jsonString.replace(/\s+/g, ' ').trim()
   }
 }
+
+// 使用记录配置填充参数
+const handleFillParamsFromRecord = () => {
+  if (!selectedRecord.value) {
+    message.warning('无可填充的记录')
+    return
+  }
+  
+  try {
+    // 解析并填充 URL 参数
+    if (selectedRecord.value.requestParams) {
+      const params = JSON.parse(selectedRecord.value.requestParams)
+      Object.keys(params).forEach(key => {
+        executeForm.params[key] = params[key]
+      })
+    }
+    
+    // 解析并填充 Header 参数
+    if (selectedRecord.value.requestHeaders) {
+      const headers = JSON.parse(selectedRecord.value.requestHeaders)
+      Object.keys(headers).forEach(key => {
+        executeForm.headers[key] = headers[key]
+      })
+    }
+    
+    // 解析并填充 Body 参数
+    if (selectedRecord.value.requestBody) {
+      const bodyParams = JSON.parse(selectedRecord.value.requestBody)
+      Object.keys(bodyParams).forEach(key => {
+        executeForm.bodyParams[key] = bodyParams[key]
+      })
+    }
+    
+    // 切换到执行标签页
+    mainActiveTab.value = 'execute'
+    
+    // 提示成功
+    message.success('参数已填充到执行页，可直接执行接口')
+  } catch (error) {
+    console.error('填充参数失败:', error)
+    message.error('参数填充失败，请检查记录数据格式')
+  }
+}
 </script>
 
 <style scoped>
@@ -3163,5 +3228,41 @@ const compressJson = (jsonString: string | undefined): string => {
   color: #0050b3 !important;
   border-color: #40a9ff !important;
   box-shadow: 0 2px 4px rgba(24, 144, 255, 0.2) !important;
+}
+
+/* 弹窗底部按钮样式 */
+.modal-footer-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.fill-params-btn {
+  min-width: 160px;
+  height: 36px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.fill-params-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--shadow-color, rgba(24, 144, 255, 0.3));
+}
+
+.close-btn {
+  min-width: 100px;
+  height: 36px;
+  font-size: 14px;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.close-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 </style>
