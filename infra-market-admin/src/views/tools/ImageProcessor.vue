@@ -526,59 +526,73 @@ const isPagFile = (fileName: string): boolean => {
   return fileName.toLowerCase().endsWith('.pag')
 }
 
-// 加载libpag - 按照官方文档推荐的方式
+// 加载libpag - 使用官方推荐的ES模块方式
 const loadLibPag = async (): Promise<void> => {
   if (libpag.value) return // 已经加载过了
   
   try {
-    // 检查是否已经加载了CDN脚本
-    let script = document.querySelector('script[src*="libpag"]') as HTMLScriptElement
-    if (!script) {
-      script = document.createElement('script')
-      // 使用官方推荐的CDN地址
-      script.src = 'https://cdn.jsdelivr.net/npm/libpag@latest/lib/libpag.min.js'
-      script.crossOrigin = 'anonymous'
-      document.head.appendChild(script)
+    // 方法1: 尝试使用npm包（如果已安装）
+    try {
+      // @ts-ignore - 尝试从npm包导入
+      const libpagPackage = await import('libpag')
+      if (libpagPackage.PAGInit || libpagPackage.default?.PAGInit) {
+        const PAGInit = libpagPackage.PAGInit || libpagPackage.default.PAGInit
+        const PAG = await PAGInit({
+          locateFile: (file: string) => {
+            // 从npm包中加载WASM文件
+            return new URL(`../node_modules/libpag/lib/${file}`, import.meta.url).href
+          }
+        })
+        libpag.value = markRaw(PAG)
+        pagPlayerLoaded.value = true
+        pagPlayerError.value = false
+        return
+      }
+    } catch (npmError) {
+      // npm包未安装，继续尝试CDN方式
+      console.log('npm包未安装，使用CDN方式:', npmError)
     }
     
-    // 等待脚本加载
-    await new Promise((resolve, reject) => {
-      if (script.onload) {
-        resolve(true)
-      } else {
-        script.onload = () => resolve(true)
-        script.onerror = () => reject(new Error('CDN脚本加载失败'))
+    // 方法2: 使用CDN加载（官方推荐的ES模块版本）
+    // @ts-ignore - 动态import支持URL
+    const { PAGInit } = await import('https://cdn.jsdelivr.net/npm/libpag@latest/lib/libpag.esm.js')
+    
+    // 初始化PAG，配置WASM文件路径
+    const PAG = await PAGInit({
+      locateFile: (file: string) => {
+        // WASM文件从CDN加载
+        return `https://cdn.jsdelivr.net/npm/libpag@latest/lib/${file}`
       }
     })
     
-    // 等待一段时间让脚本完全执行
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    // 按照官方文档的方式：window.libpag.PAGInit()
-    // @ts-ignore
-    const globalLibpag = (window as any).libpag
-    if (!globalLibpag) {
-      throw new Error('全局libpag对象未找到')
-    }
-    
-    // 按照官方文档初始化PAG
-    if (globalLibpag.PAGInit) {
-      // 官方文档：const PAG = await window.libpag.PAGInit();
-      const PAG = await globalLibpag.PAGInit()
-      
-      // 使用初始化后的PAG模块，使用markRaw防止Vue响应式代理
-      libpag.value = markRaw(PAG)
-    } else {
-      throw new Error('libpag对象没有PAGInit方法')
-    }
-    
+    // 使用初始化后的PAG模块，使用markRaw防止Vue响应式代理
+    libpag.value = markRaw(PAG)
     pagPlayerLoaded.value = true
     pagPlayerError.value = false
     
   } catch (error) {
-    console.error('CDN版本libpag加载失败:', error)
+    console.error('libpag加载失败:', error)
     pagPlayerError.value = true
-    throw new Error(`无法加载libpag，请检查网络连接。错误详情: ${error instanceof Error ? error.message : String(error)}`)
+    
+    // 提供更详细的错误信息
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    
+    // 如果是网络错误，提供更友好的提示和解决方案
+    if (errorMessage.includes('Failed to fetch') || errorMessage.includes('网络') || errorMessage.includes('timeout')) {
+      const helpfulMessage = `libpag加载失败：网络连接问题。
+
+解决方案：
+1. 检查网络连接是否正常
+2. 检查是否可以访问CDN (cdn.jsdelivr.net)
+3. 检查是否被防火墙或代理拦截
+4. 如果CDN无法访问，可以安装npm包：
+   cd infra-market-admin && npm install libpag
+
+原始错误: ${errorMessage}`
+      throw new Error(helpfulMessage)
+    }
+    
+    throw new Error(`无法加载libpag，请检查网络连接。错误详情: ${errorMessage}`)
   }
 }
 
