@@ -58,6 +58,7 @@ export interface ApiExecuteRequest {
   urlParams?: Record<string, any>
   bodyParams?: Record<string, any>
   timeout?: number
+  remark?: string
 }
 
 export interface ApiExecuteResponse {
@@ -220,6 +221,7 @@ export interface ApiInterfaceExecutionRecord {
   executionTime?: number
   success: boolean
   errorMessage?: string
+  remark?: string
   clientIp?: string
   userAgent?: string
   createTime: string

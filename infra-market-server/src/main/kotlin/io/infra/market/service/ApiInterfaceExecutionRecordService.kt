@@ -112,6 +112,7 @@ class ApiInterfaceExecutionRecordService(
             executionTime = record.executionTime,
             success = record.success,
             errorMessage = record.errorMessage,
+            remark = record.remark,
             clientIp = record.clientIp,
             userAgent = record.userAgent,
             createTime = TimeUtil.format(record.createTime),

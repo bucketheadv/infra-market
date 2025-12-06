@@ -234,6 +234,7 @@ CREATE TABLE IF NOT EXISTS `api_interface_execution_record` (
     `execution_time` BIGINT NULL COMMENT '执行时间（毫秒）',
     `success` TINYINT(1) NOT NULL DEFAULT 0 COMMENT '是否成功：1-成功，0-失败',
     `error_message` TEXT NULL COMMENT '错误信息',
+    `remark` TEXT NULL COMMENT '备注',
     `client_ip` VARCHAR(50) NULL COMMENT '客户端IP',
     `user_agent` VARCHAR(500) NULL COMMENT '用户代理',
     `create_time` BIGINT NOT NULL DEFAULT (FLOOR(UNIX_TIMESTAMP(NOW(3)) * 1000)) COMMENT '创建时间（毫秒时间戳）',

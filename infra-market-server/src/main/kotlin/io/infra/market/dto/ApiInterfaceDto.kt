@@ -385,7 +385,13 @@ data class ApiExecuteRequestDto(
      * 可选字段，用于覆盖接口配置的超时时间
      * 如果未设置，则使用接口配置的超时时间或系统默认超时时间
      */
-    var timeout: Long? = null
+    var timeout: Long? = null,
+    
+    /**
+     * 备注
+     * 执行记录的备注信息，选填
+     */
+    var remark: String? = null
 )
 
 /**

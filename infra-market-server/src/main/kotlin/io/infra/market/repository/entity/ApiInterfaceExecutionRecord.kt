@@ -105,6 +105,13 @@ data class ApiInterfaceExecutionRecord(
     var errorMessage: String? = null,
 
     /**
+     * 备注
+     * 执行记录的备注信息，选填
+     */
+    @Column("remark")
+    var remark: String? = null,
+
+    /**
      * 客户端IP
      * 执行请求的客户端IP地址
      */

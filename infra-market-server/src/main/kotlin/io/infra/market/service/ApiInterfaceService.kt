@@ -287,7 +287,8 @@ class ApiInterfaceService(
                 request = request,
                 response = responseDto,
                 clientIp = clientIp,
-                userAgent = userAgent
+                userAgent = userAgent,
+                remark = request.remark
             )
 
             return responseDto
@@ -313,7 +314,8 @@ class ApiInterfaceService(
                     request = request,
                     response = responseDto,
                     clientIp = clientIp,
-                    userAgent = userAgent
+                    userAgent = userAgent,
+                    remark = request.remark
                 )
             } catch (recordException: Exception) {
                 // 记录执行记录失败不影响主流程
@@ -483,7 +485,8 @@ class ApiInterfaceService(
         request: ApiExecuteRequestDto,
         response: ApiExecuteResponseDto,
         clientIp: String,
-        userAgent: String
+        userAgent: String,
+        remark: String? = null
     ) {
         try {
             val executionRecord = ApiInterfaceExecutionRecord(
@@ -499,6 +502,7 @@ class ApiInterfaceService(
                 executionTime = response.responseTime,
                 success = response.success,
                 errorMessage = response.error,
+                remark = remark,
                 clientIp = clientIp,
                 userAgent = userAgent
             )

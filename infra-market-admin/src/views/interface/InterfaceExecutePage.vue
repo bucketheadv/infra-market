@@ -279,6 +279,20 @@
                         </a-row>
                       </div>
 
+                      <!-- 备注输入框 -->
+                      <div class="param-group">
+                        <h4>备注</h4>
+                        <a-form-item name="remark">
+                          <a-textarea
+                            v-model:value="executeForm.remark"
+                            :placeholder="'请输入备注信息（选填）'"
+                            :rows="3"
+                            :maxlength="500"
+                            show-count
+                            allow-clear
+                          />
+                        </a-form-item>
+                      </div>
 
                       <div v-if="urlParams.length === 0 && headerParams.length === 0 && bodyParams.length === 0" class="no-params">
                         <a-empty description="该接口无需配置参数" />
@@ -569,6 +583,10 @@
                       <template v-else-if="column.key === 'createTime'">
                         {{ record.createTime || '-' }}
                       </template>
+                      <template v-else-if="column.key === 'remark'">
+                        <span v-if="record.remark" :title="record.remark">{{ record.remark }}</span>
+                        <span v-else class="text-muted">-</span>
+                      </template>
                       <template v-else-if="column.key === 'action'">
                         <a-space size="small">
                           <ThemeButton 
@@ -691,6 +709,9 @@
           </a-descriptions-item>
           <a-descriptions-item label="执行时间" :span="2">
             {{ selectedRecord.createTime || '暂无' }}
+          </a-descriptions-item>
+          <a-descriptions-item v-if="selectedRecord.remark" label="备注" :span="2">
+            <div class="remark-content">{{ selectedRecord.remark }}</div>
           </a-descriptions-item>
           <a-descriptions-item v-if="selectedRecord.errorMessage" label="错误信息" :span="2">
             <div class="error-message">{{ selectedRecord.errorMessage }}</div>
@@ -1057,7 +1078,8 @@ const currentCodeParam = ref<{ param: ApiParam, type: 'params' | 'headers' | 'bo
 const executeForm = reactive({
   params: {} as Record<string, any>,
   headers: {} as Record<string, any>,
-  bodyParams: {} as Record<string, any>
+  bodyParams: {} as Record<string, any>,
+  remark: '' as string
 })
 
 // 执行记录表格配置
@@ -1100,6 +1122,13 @@ const recordColumns = [
     key: 'createTime',
     width: 160,
     sorter: true
+  },
+  {
+    title: '备注',
+    dataIndex: 'remark',
+    key: 'remark',
+    width: 150,
+    ellipsis: true
   },
   {
     title: '操作',
@@ -1366,7 +1395,8 @@ const handleExecute = async () => {
       headers: executeForm.headers,
       urlParams: executeForm.params,
       bodyParams: executeForm.bodyParams,
-      timeout: interfaceData.value.timeout
+      timeout: interfaceData.value.timeout,
+      remark: executeForm.remark || undefined
     }
     
     const response = await interfaceApi.execute(request)

@@ -84,6 +84,12 @@ data class ApiInterfaceExecutionRecordDto(
     var errorMessage: String? = null,
 
     /**
+     * 备注
+     * 执行记录的备注信息，选填
+     */
+    var remark: String? = null,
+
+    /**
      * 客户端IP
      */
     var clientIp: String? = null,
