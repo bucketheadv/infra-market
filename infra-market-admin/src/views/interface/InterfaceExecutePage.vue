@@ -860,20 +860,6 @@
           </a-tab-pane>
           <a-tab-pane key="response" tab="响应内容">
             <div class="detail-content">
-              <div v-if="selectedRecord.responseHeaders" class="param-section">
-                <h4>响应头</h4>
-                <CodeEditor
-                  :model-value="formatJson(selectedRecord.responseHeaders)"
-                  :readonly="true"
-                  :height="200"
-                  language="json"
-                  :options="{
-                    fontSize: 12,
-                    fontFamily: 'Intel One Mono, SF Mono, Monaco, Menlo, monospace',
-                    lineHeight: 18
-                  }"
-                />
-              </div>
               <div v-if="selectedRecord.responseBody" class="param-section">
                 <!-- 如果配置了取值路径且成功提取值，则显示提取值 -->
                 <div v-if="interfaceData?.valuePath && recordExtractedValue" class="extracted-value-section-record">
@@ -1013,6 +999,20 @@
                     />
                   </div>
                 </div>
+              </div>
+              <div v-if="selectedRecord.responseHeaders" class="param-section">
+                <h4>响应头</h4>
+                <CodeEditor
+                  :model-value="formatJson(selectedRecord.responseHeaders)"
+                  :readonly="true"
+                  :height="200"
+                  language="json"
+                  :options="{
+                    fontSize: 12,
+                    fontFamily: 'Intel One Mono, SF Mono, Monaco, Menlo, monospace',
+                    lineHeight: 18
+                  }"
+                />
               </div>
               <div v-if="!selectedRecord.responseHeaders && !selectedRecord.responseBody" class="no-content">
                 <a-empty description="无响应内容" />
