@@ -124,7 +124,7 @@
                               :rules="param.required ? [{ required: true, message: `请输入${getParamDisplayName(param)}` }] : []"
                             >
                               <!-- 代码编辑器弹窗按钮 -->
-                              <div v-if="param.inputType === 'CODE'" class="code-editor-input">
+                              <div v-if="param.inputType === 'CODE' || (param.inputType === 'TEXTAREA' && param.dataType === 'JSON')" class="code-editor-input">
                                 <a-input
                                   :value="getCodePreview(executeForm.params[param.name])"
                                   :placeholder="`请输入${getParamDisplayName(param)}`"
@@ -182,7 +182,7 @@
                               :rules="param.required ? [{ required: true, message: `请输入${getParamDisplayName(param)}` }] : []"
                             >
                               <!-- 代码编辑器弹窗按钮 -->
-                              <div v-if="param.inputType === 'CODE'" class="code-editor-input">
+                              <div v-if="param.inputType === 'CODE' || (param.inputType === 'TEXTAREA' && param.dataType === 'JSON')" class="code-editor-input">
                                 <a-input
                                   :value="getCodePreview(executeForm.headers[param.name])"
                                   :placeholder="`请输入${getParamDisplayName(param)}`"
@@ -240,7 +240,7 @@
                               :rules="param.required ? [{ required: true, message: `请输入${getParamDisplayName(param)}` }] : []"
                             >
                               <!-- 代码编辑器弹窗按钮 -->
-                              <div v-if="param.inputType === 'CODE'" class="code-editor-input">
+                              <div v-if="param.inputType === 'CODE' || (param.inputType === 'TEXTAREA' && param.dataType === 'JSON')" class="code-editor-input">
                                 <a-input
                                   :value="getCodePreview(executeForm.bodyParams[param.name])"
                                   :placeholder="`请输入${getParamDisplayName(param)}`"
@@ -737,7 +737,7 @@
                     </a-col>
                     <a-col :span="18">
                       <div class="record-param-value">
-                        <div v-if="param.inputType === 'CODE'" class="code-value-display">
+                        <div v-if="param.inputType === 'CODE' || (param.inputType === 'TEXTAREA' && param.dataType === 'JSON')" class="code-value-display">
                           <CodeEditor
                             :model-value="getRecordParamValue(selectedRecord?.requestParams, param.name)"
                             :readonly="true"
@@ -781,7 +781,7 @@
                     </a-col>
                     <a-col :span="18">
                       <div class="record-param-value">
-                        <div v-if="param.inputType === 'CODE'" class="code-value-display">
+                        <div v-if="param.inputType === 'CODE' || (param.inputType === 'TEXTAREA' && param.dataType === 'JSON')" class="code-value-display">
                           <CodeEditor
                             :model-value="getRecordParamValue(selectedRecord?.requestHeaders, param.name)"
                             :readonly="true"
@@ -825,7 +825,7 @@
                     </a-col>
                     <a-col :span="18">
                       <div class="record-param-value">
-                        <div v-if="param.inputType === 'CODE'" class="code-value-display">
+                        <div v-if="param.inputType === 'CODE' || (param.inputType === 'TEXTAREA' && param.dataType === 'JSON')" class="code-value-display">
                           <CodeEditor
                             :model-value="getRecordParamValue(selectedRecord?.requestBody, param.name)"
                             :readonly="true"
@@ -1528,7 +1528,7 @@ const getInputBindings = (param: ApiParam, type: 'params' | 'headers' | 'bodyPar
   }
   
   // 根据组件类型选择不同的 v-model 绑定方式
-  if (param.inputType === 'CODE') {
+  if (param.inputType === 'CODE' || (param.inputType === 'TEXTAREA' && param.dataType === 'JSON')) {
     return {
       ...baseProps,
       ...selectProps,
@@ -1568,7 +1568,7 @@ const getDatePickerProps = (param: ApiParam) => {
 
 // 获取代码编辑器属性
 const getCodeEditorProps = (param: ApiParam) => {
-  if (param.inputType === 'CODE') {
+  if (param.inputType === 'CODE' || (param.inputType === 'TEXTAREA' && param.dataType === 'JSON')) {
     return {
       height: 200,
       options: {
