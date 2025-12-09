@@ -2147,6 +2147,11 @@ const handleFillParamsFromRecord = () => {
       })
     }
     
+    // 填充备注
+    if (selectedRecord.value.remark) {
+      executeForm.remark = selectedRecord.value.remark
+    }
+    
     // 切换到执行标签页
     mainActiveTab.value = 'execute'
     
