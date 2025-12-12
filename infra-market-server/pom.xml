@@ -4,7 +4,7 @@
     <parent>
         <groupId>io.infra</groupId>
         <artifactId>infra-market</artifactId>
-        <version>0.6.2-RELEASE</version>
+        <version>0.8.3-RELEASE</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <artifactId>infra-market-server</artifactId>
