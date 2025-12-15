@@ -1390,11 +1390,25 @@ const handleExecute = async () => {
     const timeout = interfaceData.value.timeout || 60
     startCountdown(timeout)
     
+    // 处理参数值：JSON_OBJECT 类型需要解析为对象
+    const processedUrlParams = processParams(
+      executeForm.params,
+      interfaceData.value.urlParams || []
+    )
+    const processedHeaders = processParams(
+      executeForm.headers,
+      interfaceData.value.headerParams || []
+    )
+    const processedBodyParams = processParams(
+      executeForm.bodyParams,
+      interfaceData.value.bodyParams || []
+    )
+    
     const request: ApiExecuteRequest = {
       interfaceId: interfaceData.value.id!,
-      headers: executeForm.headers,
-      urlParams: executeForm.params,
-      bodyParams: executeForm.bodyParams,
+      headers: processedHeaders,
+      urlParams: processedUrlParams,
+      bodyParams: processedBodyParams,
       timeout: interfaceData.value.timeout,
       remark: executeForm.remark || undefined
     }
@@ -1703,6 +1717,7 @@ const getDataTypeToLanguageMapping = (): Record<string, string> => {
     'DATE': 'text',
     'DATETIME': 'text',
     'JSON': 'json',
+    'JSON_OBJECT': 'json',
     'ARRAY': 'json',
     // 编程语言类型
     'TEXT': 'text',
@@ -1716,6 +1731,42 @@ const getDataTypeToLanguageMapping = (): Record<string, string> => {
     'SQL': 'sql',
     'YAML': 'yaml'
   }
+}
+
+// 处理参数值：根据数据类型转换
+const processParamValue = (value: any, param: ApiParam): any => {
+  if (value === null || value === undefined || value === '') {
+    return value
+  }
+  
+  // 如果数据类型是 JSON_OBJECT，且值是字符串，则解析为对象
+  if (param.dataType === 'JSON_OBJECT' && typeof value === 'string') {
+    try {
+      return JSON.parse(value)
+    } catch (error) {
+      console.warn(`参数 ${param.name} 的 JSON_OBJECT 值解析失败，将作为字符串传递:`, error)
+      return value
+    }
+  }
+  
+  // JSON 类型保持为字符串
+  return value
+}
+
+// 处理参数对象：根据参数配置转换值
+const processParams = (params: Record<string, any>, paramConfigs: ApiParam[]): Record<string, any> => {
+  const processed: Record<string, any> = {}
+  
+  Object.keys(params).forEach(key => {
+    const param = paramConfigs.find(p => p.name === key)
+    if (param) {
+      processed[key] = processParamValue(params[key], param)
+    } else {
+      processed[key] = params[key]
+    }
+  })
+  
+  return processed
 }
 
 const getCodeLanguage = (): string => {

@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit
 import com.jayway.jsonpath.JsonPath
 import com.jayway.jsonpath.PathNotFoundException
 import io.infra.market.enums.ParamTypeEnum
+import org.springframework.web.client.exchange
 
 /**
  * 接口管理服务
@@ -249,11 +250,10 @@ class ApiInterfaceService(
             // 创建带超时配置的RestTemplate
             val timeoutRestTemplate = createRestTemplateWithTimeout(timeoutMillis)
 
-            val response: ResponseEntity<String> = timeoutRestTemplate.exchange(
+            val response: ResponseEntity<String> = timeoutRestTemplate.exchange<String>(
                 finalUrl,
                 httpMethod,
-                httpEntity,
-                String::class.java
+                httpEntity
             )
 
             val endTime = System.currentTimeMillis()

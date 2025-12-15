@@ -177,14 +177,16 @@ export const DATA_TYPES = [
   { value: 'BOOLEAN', label: '布尔值' },
   { value: 'DATE', label: '日期' },
   { value: 'DATETIME', label: '日期时间' },
-  { value: 'JSON', label: 'JSON对象' },
+  { value: 'JSON', label: 'JSON字符串' },
+  { value: 'JSON_OBJECT', label: 'JSON对象' },
   { value: 'ARRAY', label: '数组' }
 ]
 
 // 代码编辑器支持的编程语言类型
 export const CODE_EDITOR_LANGUAGES = [
   { value: 'TEXT', label: 'Text' },
-  { value: 'JSON', label: 'JSON' },
+  { value: 'JSON', label: 'JSON字符串' },
+  { value: 'JSON_OBJECT', label: 'JSON对象' },
   { value: 'XML', label: 'XML' },
   { value: 'HTML', label: 'HTML' },
   { value: 'CSS', label: 'CSS' },

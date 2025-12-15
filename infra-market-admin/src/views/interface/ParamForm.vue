@@ -288,7 +288,7 @@ const handleInputTypeChange = () => {
   } else if (inputType === 'TEXTAREA') {
     newDataType = 'STRING'
   } else if (inputType === 'CODE') {
-    newDataType = 'JSON' // 代码编辑器默认为JSON语言类型
+    newDataType = 'JSON' // 代码编辑器默认为JSON字符串类型
   } else if (inputType === 'PASSWORD') {
     newDataType = 'STRING'
   } else if (inputType === 'EMAIL') {
@@ -335,7 +335,7 @@ const getAvailableDataTypes = () => {
     case 'DATETIME':
       return DATA_TYPES.filter(type => type.value === 'DATETIME')
     case 'TEXTAREA':
-      return DATA_TYPES.filter(type => ['STRING', 'JSON'].includes(type.value))
+      return DATA_TYPES.filter(type => ['STRING', 'JSON', 'JSON_OBJECT'].includes(type.value))
     case 'CODE':
       // 代码编辑器显示编程语言类型
       return CODE_EDITOR_LANGUAGES
@@ -636,6 +636,7 @@ const getCodeLanguage = (): string => {
     case 'TEXT':
       return 'text'
     case 'JSON':
+    case 'JSON_OBJECT':
       return 'json'
     case 'XML':
       return 'xml'

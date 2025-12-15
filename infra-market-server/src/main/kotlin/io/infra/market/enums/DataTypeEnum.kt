@@ -12,7 +12,8 @@ enum class DataTypeEnum(val code: String, val description: String) {
     BOOLEAN("BOOLEAN", "布尔值"),
     DATE("DATE", "日期"),
     DATETIME("DATETIME", "日期时间"),
-    JSON("JSON", "JSON对象"),
+    JSON("JSON", "JSON字符串"),
+    JSON_OBJECT("JSON_OBJECT", "JSON对象"),
     ARRAY("ARRAY", "数组"),
     
     // 编程语言类型（用于代码编辑器）
