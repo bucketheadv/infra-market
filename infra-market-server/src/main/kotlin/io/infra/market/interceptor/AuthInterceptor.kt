@@ -27,7 +27,7 @@ class AuthInterceptor(
             handleUnauthorized(response, ErrorMessageEnum.LOGIN_EXPIRED.message)
             return false
         }
-        
+
         // 验证token
         if (!tokenService.validateToken(token)) {
             handleUnauthorized(response, ErrorMessageEnum.LOGIN_EXPIRED.message)
@@ -35,9 +35,9 @@ class AuthInterceptor(
         }
         
         // 从token中解析用户ID并保存到ThreadLocal
-        val userId = JwtUtil.getUidFromToken(token)
-        if (userId != null) {
-            AuthHolder.setUid(userId)
+        val uid = JwtUtil.getUidFromToken(token)
+        if (uid != null) {
+            AuthHolder.setUid(uid)
         }
         
         return true

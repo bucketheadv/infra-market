@@ -27,8 +27,8 @@ class UserService(
         
         // 批量获取所有用户的角色ID，避免N+1查询
         val uids = page.records.mapNotNull { it.id }
-        val userRoles = userRoleDao.findByUserIds(uids)
-        val userRoleMap = userRoles.groupBy { it.userId }
+        val userRoles = userRoleDao.findByUids(uids)
+        val userRoleMap = userRoles.groupBy { it.uid }
             .mapValues { (_, roles) -> roles.mapNotNull { it.roleId } }
             .mapKeys { (key, _) -> key ?: 0L }
         
@@ -48,7 +48,7 @@ class UserService(
         val user = userDao.findByUid(id) ?: return ApiData.error("用户不存在")
         
         // 获取用户的角色ID列表
-        val roleIds = userRoleDao.findByUserId(id).mapNotNull { it.roleId }
+        val roleIds = userRoleDao.findByUid(id).mapNotNull { it.roleId }
         
         val userDto = UserDto.fromEntity(user, roleIds)
         
@@ -88,7 +88,7 @@ class UserService(
         // 保存用户角色关联
         for (roleId in form.roleIds) {
             val userRole = UserRole(
-                userId = user.id,
+                uid = user.id,
                 roleId = roleId
             )
             userRoleDao.save(userRole)
@@ -137,10 +137,10 @@ class UserService(
         userDao.updateById(user)
         
         // 更新用户角色关联
-        userRoleDao.deleteByUserId(id)
+        userRoleDao.deleteByUid(id)
         for (roleId in form.roleIds) {
             val userRole = UserRole(
-                userId = id,
+                uid = id,
                 roleId = roleId
             )
             userRoleDao.save(userRole)

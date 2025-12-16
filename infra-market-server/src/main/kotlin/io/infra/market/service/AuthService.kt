@@ -62,16 +62,16 @@ class AuthService(
         return ApiData.success(response)
     }
     
-    fun logout(userId: Long): ApiData<Unit> {
+    fun logout(uid: Long): ApiData<Unit> {
         // 从Redis中删除token
-        tokenService.deleteToken(userId)
+        tokenService.deleteToken(uid)
         
         return ApiData.success()
     }
     
-    fun getCurrentUser(userId: Long): ApiData<LoginResponse> {
+    fun getCurrentUser(uid: Long): ApiData<LoginResponse> {
         
-        val user = userDao.findByUid(userId) ?: return ApiData.error("用户不存在")
+        val user = userDao.findByUid(uid) ?: return ApiData.error("用户不存在")
         
         // 检查用户状态
         if (user.status != StatusEnum.ACTIVE.code) {
@@ -91,9 +91,9 @@ class AuthService(
         return ApiData.success(response)
     }
     
-    fun getUserMenus(userId: Long): ApiData<List<PermissionDto>> {
+    fun getUserMenus(uid: Long): ApiData<List<PermissionDto>> {
         
-        val user = userDao.findByUid(userId) ?: return ApiData.error("用户不存在")
+        val user = userDao.findByUid(uid) ?: return ApiData.error("用户不存在")
         
         // 检查用户状态
         if (user.status != StatusEnum.ACTIVE.code) {
@@ -101,7 +101,7 @@ class AuthService(
         }
         
         // 获取用户角色
-        val userRoles = userRoleDao.findByUserId(user.id ?: 0)
+        val userRoles = userRoleDao.findByUid(user.id ?: 0)
         val roleIds = userRoles.mapNotNull { it.roleId }
 
         if (roleIds.isEmpty()) {
@@ -197,9 +197,9 @@ class AuthService(
     }
     
     
-    fun refreshToken(userId: Long): ApiData<Map<String, String>> {
+    fun refreshToken(uid: Long): ApiData<Map<String, String>> {
         
-        val user = userDao.findByUid(userId) ?: return ApiData.error("用户不存在")
+        val user = userDao.findByUid(uid) ?: return ApiData.error("用户不存在")
         
         // 检查用户状态
         if (user.status != StatusEnum.ACTIVE.code) {
@@ -207,14 +207,14 @@ class AuthService(
         }
         
         // 生成新的token
-        val newToken = tokenService.refreshToken(userId, user.username ?: "")
+        val newToken = tokenService.refreshToken(uid, user.username ?: "")
         
         return ApiData.success(mapOf("token" to newToken))
     }
     
-    fun changePassword(userId: Long, request: ChangePasswordRequest): ApiData<Unit> {
+    fun changePassword(uid: Long, request: ChangePasswordRequest): ApiData<Unit> {
         
-        val user = userDao.findByUid(userId) ?: return ApiData.error("用户不存在")
+        val user = userDao.findByUid(uid) ?: return ApiData.error("用户不存在")
         
         // 检查用户状态
         if (user.status != StatusEnum.ACTIVE.code) {
@@ -246,8 +246,8 @@ class AuthService(
         return ApiData.success()
     }
     
-    private fun getUserPermissions(userId: Long): List<String> {
-        val userRoles = userRoleDao.findByUserId(userId)
+    private fun getUserPermissions(uid: Long): List<String> {
+        val userRoles = userRoleDao.findByUid(uid)
         val roleIds = userRoles.mapNotNull { it.roleId }
 
         if (roleIds.isEmpty()) {

@@ -20,8 +20,8 @@ data class UserRole(
      * 用户ID
      * 关联到User实体的主键，标识被分配角色的用户
      */
-    var userId: Long? = null,
-    
+    var uid: Long? = null,
+
     /**
      * 角色ID
      * 关联到Role实体的主键，标识分配给用户的角色

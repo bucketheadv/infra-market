@@ -16,26 +16,26 @@ import org.springframework.stereotype.Repository
 @Repository
 class UserRoleDao : ServiceImpl<UserRoleMapper, UserRole>() {
     
-    fun findByUserId(userId: Long): List<UserRole> {
+    fun findByUid(uid: Long): List<UserRole> {
         val query = query().whereWith {
-            UserRole::userId.eq(userId)
+            UserRole::uid.eq(uid)
         }
         return mapper.selectListByQuery(query)
     }
     
-    fun findByUserIds(userIds: List<Long>): List<UserRole> {
-        if (userIds.isEmpty()) {
+    fun findByUids(uids: List<Long>): List<UserRole> {
+        if (uids.isEmpty()) {
             return emptyList()
         }
         val query = query().whereWith {
-            UserRole::userId.inList(userIds)
+            UserRole::uid.inList(uids)
         }
         return mapper.selectListByQuery(query)
     }
     
-    fun deleteByUserId(userId: Long): Int {
+    fun deleteByUid(uid: Long): Int {
         val query = query().whereWith {
-            UserRole::userId.eq(userId)
+            UserRole::uid.eq(uid)
         }
         return mapper.deleteByQuery(query)
     }

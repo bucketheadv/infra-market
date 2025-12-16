@@ -28,20 +28,20 @@ class PermissionCheckService(
      * @return 是否拥有权限
      */
     fun hasPermission(permissionCode: String): Boolean {
-        val userId = AuthHolder.getUid() ?: return false
-        return hasPermission(userId, permissionCode)
+        val uid = AuthHolder.getUid() ?: return false
+        return hasPermission(uid, permissionCode)
     }
     
     /**
      * 检查指定用户是否拥有指定权限
      * 
-     * @param userId 用户ID
+     * @param uid 用户ID
      * @param permissionCode 权限编码
      * @return 是否拥有权限
      */
-    fun hasPermission(userId: Long, permissionCode: String): Boolean {
+    fun hasPermission(uid: Long, permissionCode: String): Boolean {
         // 获取用户角色
-        val userRoles = userRoleDao.findByUserId(userId)
+        val userRoles = userRoleDao.findByUid(uid)
         val roleIds = userRoles.mapNotNull { it.roleId }
         
         if (roleIds.isEmpty()) {
@@ -71,8 +71,8 @@ class PermissionCheckService(
      * @return 是否拥有任意一个权限
      */
     fun hasAnyPermission(permissionCodes: List<String>): Boolean {
-        val userId = AuthHolder.getUid() ?: return false
-        return permissionCodes.any { hasPermission(userId, it) }
+        val uid = AuthHolder.getUid() ?: return false
+        return permissionCodes.any { hasPermission(uid, it) }
     }
     
 }

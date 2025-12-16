@@ -17,7 +17,7 @@ object AuthHolder {
     /**
      * 设置当前用户ID
      */
-    fun setUid(userId: Long) = uidHolder.set(userId)
+    fun setUid(uid: Long) = uidHolder.set(uid)
 
     /**
      * 清理当前用户ID

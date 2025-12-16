@@ -15,16 +15,16 @@ class TokenService(
     /**
      * 保存token到Redis
      */
-    fun saveToken(userId: Long, token: String) {
-        val key = "$tokenPrefix$userId"
+    fun saveToken(uid: Long, token: String) {
+        val key = "$tokenPrefix$uid"
         jedisTemplate.setex(key, tokenExpireTime, token)
     }
     
     /**
      * 从Redis获取token
      */
-    fun getToken(userId: Long): String? {
-        val key = "$tokenPrefix$userId"
+    fun getToken(uid: Long): String? {
+        val key = "$tokenPrefix$uid"
         return jedisTemplate.get(key)
     }
     
@@ -32,7 +32,7 @@ class TokenService(
      * 验证token是否有效
      */
     fun validateToken(token: String): Boolean {
-        val userId = JwtUtil.getUidFromToken(token) ?: return false
+        val uid = JwtUtil.getUidFromToken(token) ?: return false
         
         // 验证JWT token本身
         if (!JwtUtil.validateToken(token)) {
@@ -40,24 +40,24 @@ class TokenService(
         }
         
         // 验证Redis中的token
-        val storedToken = getToken(userId)
+        val storedToken = getToken(uid)
         return storedToken == token
     }
     
     /**
      * 删除token
      */
-    fun deleteToken(userId: Long) {
-        val key = "$tokenPrefix$userId"
+    fun deleteToken(uid: Long) {
+        val key = "$tokenPrefix$uid"
         jedisTemplate.del(key)
     }
     
     /**
      * 刷新token
      */
-    fun refreshToken(userId: Long, username: String): String {
-        val newToken = JwtUtil.generateToken(userId, username)
-        saveToken(userId, newToken)
+    fun refreshToken(uid: Long, username: String): String {
+        val newToken = JwtUtil.generateToken(uid, username)
+        saveToken(uid, newToken)
         return newToken
     }
 }

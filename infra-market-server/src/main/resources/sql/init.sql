@@ -65,13 +65,13 @@ CREATE TABLE IF NOT EXISTS `permission_info` (
 -- 用户角色关联表
 CREATE TABLE IF NOT EXISTS `user_role` (
     `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
-    `user_id` BIGINT NOT NULL COMMENT '用户ID',
+    `uid` BIGINT NOT NULL COMMENT '用户ID',
     `role_id` BIGINT NOT NULL COMMENT '角色ID',
     `create_time` BIGINT NOT NULL DEFAULT (FLOOR(UNIX_TIMESTAMP(NOW(3)) * 1000)) COMMENT '创建时间（毫秒时间戳）',
     `update_time` BIGINT NOT NULL DEFAULT (FLOOR(UNIX_TIMESTAMP(NOW(3)) * 1000)) COMMENT '更新时间（毫秒时间戳）',
     PRIMARY KEY (`id`),
-    UNIQUE KEY `uk_user_role` (`user_id`, `role_id`),
-    KEY `idx_user_id` (`user_id`),
+    UNIQUE KEY `uk_user_role` (`uid`, `role_id`),
+    KEY `idx_uid` (`uid`),
     KEY `idx_role_id` (`role_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户角色关联表';
 
@@ -127,7 +127,7 @@ INSERT INTO `permission_info` (`name`, `code`, `type`, `parent_id`, `path`, `ico
 ('权限状态', 'permission:status', 'button', 14, NULL, NULL, 5, 'active', UNIX_TIMESTAMP() * 1000, UNIX_TIMESTAMP() * 1000);
 
 -- 插入用户角色关联
-INSERT INTO `user_role` (`user_id`, `role_id`, `create_time`, `update_time`) VALUES
+INSERT INTO `user_role` (`uid`, `role_id`, `create_time`, `update_time`) VALUES
 (1, 1, UNIX_TIMESTAMP() * 1000, UNIX_TIMESTAMP() * 1000), -- admin -> 超级管理员
 (2, 2, UNIX_TIMESTAMP() * 1000, UNIX_TIMESTAMP() * 1000), -- user1 -> 管理员
 (3, 3, UNIX_TIMESTAMP() * 1000, UNIX_TIMESTAMP() * 1000); -- user2 -> 普通用户
