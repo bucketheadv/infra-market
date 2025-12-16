@@ -2,7 +2,7 @@ package io.infra.market.config
 
 import io.infra.market.dto.ApiData
 import io.infra.market.enums.ErrorMessageEnum
-import org.slf4j.LoggerFactory
+import io.infra.structure.core.utils.Loggable
 import org.springframework.http.HttpStatus
 import org.springframework.validation.FieldError
 import org.springframework.web.bind.MethodArgumentNotValidException
@@ -17,9 +17,7 @@ import java.util.stream.Collectors
  * Date: 2025/8/30
  */
 @RestControllerAdvice
-class GlobalExceptionHandler {
-    
-    private val logger = LoggerFactory.getLogger(GlobalExceptionHandler::class.java)
+class GlobalExceptionHandler : Loggable {
     
     /**
      * 处理参数校验失败异常
@@ -33,7 +31,7 @@ class GlobalExceptionHandler {
             ))
         
         val errorMessage = errors.values.joinToString("; ")
-        logger.warn("参数校验失败: {}", errorMessage)
+        log.warn("参数校验失败: {}", errorMessage)
         
         return ApiData.error(
             ErrorMessageEnum.VALIDATION_FAILED.message, 
@@ -51,7 +49,7 @@ class GlobalExceptionHandler {
             ex.name ?: "unknown", 
             ex.requiredType?.simpleName
         )
-        logger.warn("参数类型错误: {}", errorMessage)
+        log.warn("参数类型错误: {}", errorMessage)
         
         return ApiData.error(
             ErrorMessageEnum.PARAM_TYPE_ERROR.message, 
@@ -65,7 +63,7 @@ class GlobalExceptionHandler {
      */
     @ExceptionHandler(RuntimeException::class)
     fun handleRuntimeException(ex: RuntimeException): ApiData<Nothing> {
-        logger.error("运行时异常", ex)
+        log.error("运行时异常", ex)
         
         return ApiData.error(
             ErrorMessageEnum.SYSTEM_INTERNAL_ERROR.message, 
@@ -79,7 +77,7 @@ class GlobalExceptionHandler {
      */
     @ExceptionHandler(Exception::class)
     fun handleException(ex: Exception): ApiData<Nothing> {
-        logger.error("系统异常", ex)
+        log.error("系统异常", ex)
         
         return ApiData.error(
             ErrorMessageEnum.SYSTEM_ERROR.message, 

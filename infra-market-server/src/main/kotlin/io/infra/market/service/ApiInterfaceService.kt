@@ -27,7 +27,9 @@ import java.util.concurrent.TimeUnit
 import com.jayway.jsonpath.JsonPath
 import com.jayway.jsonpath.PathNotFoundException
 import io.infra.market.enums.ParamTypeEnum
+import io.infra.structure.core.utils.Loggable
 import org.springframework.web.client.exchange
+import java.net.URLEncoder
 
 /**
  * 接口管理服务
@@ -38,8 +40,8 @@ class ApiInterfaceService(
     private val apiInterfaceExecutionRecordDao: ApiInterfaceExecutionRecordDao,
     private val userDao: UserDao,
     private val objectMapper: ObjectMapper
-) {
-    
+) : Loggable {
+
     /**
      * RestTemplate缓存，避免重复创建
      * Key: 超时时间（毫秒），Value: RestTemplate实例
@@ -275,7 +277,7 @@ class ApiInterfaceService(
                     responseDto.extractedValue = extractedValue
                 } catch (e: Exception) {
                     // 提取失败时记录日志，但不影响整体执行结果
-                    println("JSONPath提取失败: ${e.message}, 路径: $valuePath")
+                    log.warn("JSONPath提取失败: ${e.message}, 路径: $valuePath", e)
                 }
             }
 
@@ -319,7 +321,7 @@ class ApiInterfaceService(
                 )
             } catch (recordException: Exception) {
                 // 记录执行记录失败不影响主流程
-                println("保存执行记录失败: ${recordException.message}")
+                log.error("保存执行记录失败: ${recordException.message}", recordException)
             }
 
             return responseDto
@@ -327,7 +329,7 @@ class ApiInterfaceService(
     }
 
     private fun encodeURIComponent(str: String): String {
-        return java.net.URLEncoder.encode(str, "UTF-8")
+        return URLEncoder.encode(str, "UTF-8")
     }
     
     /**
@@ -510,7 +512,7 @@ class ApiInterfaceService(
             apiInterfaceExecutionRecordDao.save(executionRecord)
         } catch (e: Exception) {
             // 记录执行记录失败不影响主流程，只打印日志
-            println("保存接口执行记录失败: ${e.message}")
+            log.error("保存接口执行记录失败: ${e.message}", e)
         }
     }
     

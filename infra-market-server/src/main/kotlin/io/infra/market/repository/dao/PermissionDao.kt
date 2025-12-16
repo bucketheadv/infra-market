@@ -26,7 +26,7 @@ class PermissionDao : ServiceImpl<PermissionMapper, Permission>() {
     
     fun findByCode(code: String): Permission? {
         val query = query().whereWith {
-            Permission::code.eq(code) and  Permission::status.ne(StatusEnum.DELETED.code)
+            Permission::code.eq(code) and Permission::status.ne(StatusEnum.DELETED.code)
         }
         return mapper.selectOneByQuery(query)
     }
