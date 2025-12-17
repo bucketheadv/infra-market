@@ -46,7 +46,7 @@ class GlobalExceptionHandler : Loggable {
     @ExceptionHandler(MethodArgumentTypeMismatchException::class)
     fun handleTypeMismatchException(ex: MethodArgumentTypeMismatchException): ApiData<Nothing> {
         val errorMessage = ErrorMessageEnum.getParamTypeErrorMessage(
-            ex.name ?: "unknown", 
+            ex.name, 
             ex.requiredType?.simpleName
         )
         log.warn("参数类型错误: {}", errorMessage)
