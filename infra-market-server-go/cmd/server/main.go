@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"log"
 
 	"github.com/bucketheadv/infra-market/internal/config"
@@ -9,8 +10,17 @@ import (
 )
 
 func main() {
+	// 解析命令行参数
+	var configPath string
+	flag.StringVar(&configPath, "config", "config.toml", "配置文件路径")
+	flag.StringVar(&configPath, "c", "config.toml", "配置文件路径（简写）")
+	flag.Parse()
+
 	// 加载配置
-	cfg := config.Load()
+	cfg, err := config.Load(configPath)
+	if err != nil {
+		log.Fatalf("加载配置失败: %v", err)
+	}
 
 	// 初始化数据库
 	db, err := database.InitDB(cfg.Database)

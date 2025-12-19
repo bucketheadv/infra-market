@@ -1,0 +1,22 @@
+# 基础设施市场应用配置文件示例
+# 复制此文件为 config.toml 并修改相应的配置值
+
+[server]
+port = "8080"
+
+[database]
+host = "localhost"
+port = "3306"
+user = "root"
+password = "your_password"
+database = "infra_market"
+
+[jwt]
+secret = "your-jwt-secret-key-change-this-in-production"
+expiration = 259200000  # 3天（毫秒）
+
+[redis]
+host = "localhost"
+port = "6379"
+password = ""
+db = 0
