@@ -19,7 +19,7 @@ func NewAuthController(authService *service.AuthService) *AuthController {
 func (c *AuthController) Login(ctx *gin.Context) {
 	var req dto.LoginRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(400, dto.Error[interface{}]("参数校验失败", 400))
+		ctx.JSON(400, dto.Error[any]("参数校验失败", 400))
 		return
 	}
 
@@ -31,7 +31,7 @@ func (c *AuthController) Login(ctx *gin.Context) {
 func (c *AuthController) GetCurrentUser(ctx *gin.Context) {
 	uid, ok := middleware.GetUIDFromContext(ctx)
 	if !ok {
-		ctx.JSON(401, dto.Error[interface{}]("未登录", 401))
+		ctx.JSON(401, dto.Error[any]("未登录", 401))
 		return
 	}
 
@@ -43,7 +43,7 @@ func (c *AuthController) GetCurrentUser(ctx *gin.Context) {
 func (c *AuthController) GetUserMenus(ctx *gin.Context) {
 	uid, ok := middleware.GetUIDFromContext(ctx)
 	if !ok {
-		ctx.JSON(401, dto.Error[interface{}]("未登录", 401))
+		ctx.JSON(401, dto.Error[any]("未登录", 401))
 		return
 	}
 
@@ -55,7 +55,7 @@ func (c *AuthController) GetUserMenus(ctx *gin.Context) {
 func (c *AuthController) RefreshToken(ctx *gin.Context) {
 	uid, ok := middleware.GetUIDFromContext(ctx)
 	if !ok {
-		ctx.JSON(401, dto.Error[interface{}]("未登录", 401))
+		ctx.JSON(401, dto.Error[any]("未登录", 401))
 		return
 	}
 
@@ -67,7 +67,7 @@ func (c *AuthController) RefreshToken(ctx *gin.Context) {
 func (c *AuthController) Logout(ctx *gin.Context) {
 	uid, ok := middleware.GetUIDFromContext(ctx)
 	if !ok {
-		ctx.JSON(401, dto.Error[interface{}]("未登录", 401))
+		ctx.JSON(401, dto.Error[any]("未登录", 401))
 		return
 	}
 
@@ -79,13 +79,13 @@ func (c *AuthController) Logout(ctx *gin.Context) {
 func (c *AuthController) ChangePassword(ctx *gin.Context) {
 	uid, ok := middleware.GetUIDFromContext(ctx)
 	if !ok {
-		ctx.JSON(401, dto.Error[interface{}]("未登录", 401))
+		ctx.JSON(401, dto.Error[any]("未登录", 401))
 		return
 	}
 
 	var req dto.ChangePasswordRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(400, dto.Error[interface{}]("参数校验失败", 400))
+		ctx.JSON(400, dto.Error[any]("参数校验失败", 400))
 		return
 	}
 

@@ -1,8 +1,6 @@
 package controller
 
 import (
-	"strconv"
-
 	"github.com/bucketheadv/infra-market/internal/dto"
 	"github.com/bucketheadv/infra-market/internal/service"
 	"github.com/gin-gonic/gin"
@@ -20,7 +18,7 @@ func NewRoleController(roleService *service.RoleService) *RoleController {
 func (c *RoleController) GetRoles(ctx *gin.Context) {
 	var query dto.RoleQueryDto
 	if err := ctx.ShouldBindQuery(&query); err != nil {
-		ctx.JSON(400, dto.Error[interface{}]("参数校验失败", 400))
+		ctx.JSON(400, dto.Error[any]("参数校验失败", 400))
 		return
 	}
 
@@ -36,14 +34,13 @@ func (c *RoleController) GetAllRoles(ctx *gin.Context) {
 
 // GetRole 获取角色详情
 func (c *RoleController) GetRole(ctx *gin.Context) {
-	idStr := ctx.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 64)
-	if err != nil {
-		ctx.JSON(400, dto.Error[interface{}]("无效的角色ID", 400))
+	var uriParam dto.IDUriParam
+	if err := ctx.ShouldBindUri(&uriParam); err != nil {
+		ctx.JSON(400, dto.Error[any]("无效的角色ID", 400))
 		return
 	}
 
-	result := c.roleService.GetRole(id)
+	result := c.roleService.GetRole(uriParam.ID)
 	ctx.JSON(200, result)
 }
 
@@ -51,7 +48,7 @@ func (c *RoleController) GetRole(ctx *gin.Context) {
 func (c *RoleController) CreateRole(ctx *gin.Context) {
 	var form dto.RoleFormDto
 	if err := ctx.ShouldBindJSON(&form); err != nil {
-		ctx.JSON(400, dto.Error[interface{}]("参数校验失败", 400))
+		ctx.JSON(400, dto.Error[any]("参数校验失败", 400))
 		return
 	}
 
@@ -61,52 +58,49 @@ func (c *RoleController) CreateRole(ctx *gin.Context) {
 
 // UpdateRole 更新角色
 func (c *RoleController) UpdateRole(ctx *gin.Context) {
-	idStr := ctx.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 64)
-	if err != nil {
-		ctx.JSON(400, dto.Error[interface{}]("无效的角色ID", 400))
+	var uriParam dto.IDUriParam
+	if err := ctx.ShouldBindUri(&uriParam); err != nil {
+		ctx.JSON(400, dto.Error[any]("无效的角色ID", 400))
 		return
 	}
 
 	var form dto.RoleFormDto
 	if err := ctx.ShouldBindJSON(&form); err != nil {
-		ctx.JSON(400, dto.Error[interface{}]("参数校验失败", 400))
+		ctx.JSON(400, dto.Error[any]("参数校验失败", 400))
 		return
 	}
 
-	result := c.roleService.UpdateRole(id, form)
+	result := c.roleService.UpdateRole(uriParam.ID, form)
 	ctx.JSON(200, result)
 }
 
 // DeleteRole 删除角色
 func (c *RoleController) DeleteRole(ctx *gin.Context) {
-	idStr := ctx.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 64)
-	if err != nil {
-		ctx.JSON(400, dto.Error[interface{}]("无效的角色ID", 400))
+	var uriParam dto.IDUriParam
+	if err := ctx.ShouldBindUri(&uriParam); err != nil {
+		ctx.JSON(400, dto.Error[any]("无效的角色ID", 400))
 		return
 	}
 
-	result := c.roleService.DeleteRole(id)
+	result := c.roleService.DeleteRole(uriParam.ID)
 	ctx.JSON(200, result)
 }
 
 // UpdateRoleStatus 更新角色状态
 func (c *RoleController) UpdateRoleStatus(ctx *gin.Context) {
-	idStr := ctx.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 64)
-	if err != nil {
-		ctx.JSON(400, dto.Error[interface{}]("无效的角色ID", 400))
+	var uriParam dto.IDUriParam
+	if err := ctx.ShouldBindUri(&uriParam); err != nil {
+		ctx.JSON(400, dto.Error[any]("无效的角色ID", 400))
 		return
 	}
 
 	var statusDto dto.StatusUpdateDto
 	if err := ctx.ShouldBindJSON(&statusDto); err != nil {
-		ctx.JSON(400, dto.Error[interface{}]("参数校验失败", 400))
+		ctx.JSON(400, dto.Error[any]("参数校验失败", 400))
 		return
 	}
 
-	result := c.roleService.UpdateRoleStatus(id, statusDto.Status)
+	result := c.roleService.UpdateRoleStatus(uriParam.ID, statusDto.Status)
 	ctx.JSON(200, result)
 }
 
@@ -114,10 +108,10 @@ func (c *RoleController) UpdateRoleStatus(ctx *gin.Context) {
 func (c *RoleController) BatchDeleteRoles(ctx *gin.Context) {
 	var req dto.BatchRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(400, dto.Error[interface{}]("参数校验失败", 400))
+		ctx.JSON(400, dto.Error[any]("参数校验失败", 400))
 		return
 	}
 
 	// 这里需要实现批量删除逻辑
-	ctx.JSON(200, dto.Success[interface{}](nil))
+	ctx.JSON(200, dto.Success[any](nil))
 }

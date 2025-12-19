@@ -125,28 +125,55 @@ func (s *PermissionService) UpdatePermission(id uint64, form dto.PermissionFormD
 }
 
 // DeletePermission 删除权限
-func (s *PermissionService) DeletePermission(id uint64) dto.ApiData[interface{}] {
+func (s *PermissionService) DeletePermission(id uint64) dto.ApiData[any] {
 	permission, err := s.permissionRepo.FindByID(id)
 	if err != nil {
-		return dto.Error[interface{}]("权限不存在", 404)
+		return dto.Error[any]("权限不存在", 404)
 	}
 
 	if permission.Code == "system" {
-		return dto.Error[interface{}]("不能删除系统权限", 400)
+		return dto.Error[any]("不能删除系统权限", 400)
 	}
 
 	// 检查是否有子权限
 	childPermissions, _ := s.permissionRepo.FindByParentID(id)
 	if len(childPermissions) > 0 {
-		return dto.Error[interface{}]("该权限下还有子权限，无法删除", 400)
+		return dto.Error[any]("该权限下还有子权限，无法删除", 400)
 	}
 
 	permission.Status = "deleted"
 	if err := s.permissionRepo.Update(permission); err != nil {
-		return dto.Error[interface{}]("删除权限失败", 500)
+		return dto.Error[any]("删除权限失败", 500)
 	}
 
-	return dto.Success[interface{}](nil)
+	return dto.Success[any](nil)
+}
+
+// UpdatePermissionStatus 更新权限状态
+func (s *PermissionService) UpdatePermissionStatus(id uint64, status string) dto.ApiData[any] {
+	permission, err := s.permissionRepo.FindByID(id)
+	if err != nil {
+		return dto.Error[any]("权限不存在", 404)
+	}
+
+	if permission.Code == "system" && status == "deleted" {
+		return dto.Error[any]("不能删除系统权限", 400)
+	}
+
+	if permission.Status == "deleted" && status != "deleted" {
+		return dto.Error[any]("已删除的权限不能重新启用", 400)
+	}
+
+	if status == "deleted" {
+		return s.DeletePermission(id)
+	}
+
+	permission.Status = status
+	if err := s.permissionRepo.Update(permission); err != nil {
+		return dto.Error[any]("更新状态失败", 500)
+	}
+
+	return dto.Success[any](nil)
 }
 
 // buildPermissionTree 构建权限树

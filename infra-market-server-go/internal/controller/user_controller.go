@@ -1,8 +1,6 @@
 package controller
 
 import (
-	"strconv"
-
 	"github.com/bucketheadv/infra-market/internal/dto"
 	"github.com/bucketheadv/infra-market/internal/service"
 	"github.com/gin-gonic/gin"
@@ -20,7 +18,7 @@ func NewUserController(userService *service.UserService) *UserController {
 func (c *UserController) GetUsers(ctx *gin.Context) {
 	var query dto.UserQueryDto
 	if err := ctx.ShouldBindQuery(&query); err != nil {
-		ctx.JSON(400, dto.Error[interface{}]("参数校验失败", 400))
+		ctx.JSON(400, dto.Error[any]("参数校验失败", 400))
 		return
 	}
 
@@ -30,14 +28,13 @@ func (c *UserController) GetUsers(ctx *gin.Context) {
 
 // GetUser 获取用户详情
 func (c *UserController) GetUser(ctx *gin.Context) {
-	idStr := ctx.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 64)
-	if err != nil {
-		ctx.JSON(400, dto.Error[interface{}]("无效的用户ID", 400))
+	var uriParam dto.IDUriParam
+	if err := ctx.ShouldBindUri(&uriParam); err != nil {
+		ctx.JSON(400, dto.Error[any]("无效的用户ID", 400))
 		return
 	}
 
-	result := c.userService.GetUser(id)
+	result := c.userService.GetUser(uriParam.ID)
 	ctx.JSON(200, result)
 }
 
@@ -45,7 +42,7 @@ func (c *UserController) GetUser(ctx *gin.Context) {
 func (c *UserController) CreateUser(ctx *gin.Context) {
 	var form dto.UserFormDto
 	if err := ctx.ShouldBindJSON(&form); err != nil {
-		ctx.JSON(400, dto.Error[interface{}]("参数校验失败", 400))
+		ctx.JSON(400, dto.Error[any]("参数校验失败", 400))
 		return
 	}
 
@@ -55,65 +52,61 @@ func (c *UserController) CreateUser(ctx *gin.Context) {
 
 // UpdateUser 更新用户
 func (c *UserController) UpdateUser(ctx *gin.Context) {
-	idStr := ctx.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 64)
-	if err != nil {
-		ctx.JSON(400, dto.Error[interface{}]("无效的用户ID", 400))
+	var uriParam dto.IDUriParam
+	if err := ctx.ShouldBindUri(&uriParam); err != nil {
+		ctx.JSON(400, dto.Error[any]("无效的用户ID", 400))
 		return
 	}
 
 	var form dto.UserUpdateDto
 	if err := ctx.ShouldBindJSON(&form); err != nil {
-		ctx.JSON(400, dto.Error[interface{}]("参数校验失败", 400))
+		ctx.JSON(400, dto.Error[any]("参数校验失败", 400))
 		return
 	}
 
-	result := c.userService.UpdateUser(id, form)
+	result := c.userService.UpdateUser(uriParam.ID, form)
 	ctx.JSON(200, result)
 }
 
 // DeleteUser 删除用户
 func (c *UserController) DeleteUser(ctx *gin.Context) {
-	idStr := ctx.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 64)
-	if err != nil {
-		ctx.JSON(400, dto.Error[interface{}]("无效的用户ID", 400))
+	var uriParam dto.IDUriParam
+	if err := ctx.ShouldBindUri(&uriParam); err != nil {
+		ctx.JSON(400, dto.Error[any]("无效的用户ID", 400))
 		return
 	}
 
-	result := c.userService.DeleteUser(id)
+	result := c.userService.DeleteUser(uriParam.ID)
 	ctx.JSON(200, result)
 }
 
 // UpdateUserStatus 更新用户状态
 func (c *UserController) UpdateUserStatus(ctx *gin.Context) {
-	idStr := ctx.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 64)
-	if err != nil {
-		ctx.JSON(400, dto.Error[interface{}]("无效的用户ID", 400))
+	var uriParam dto.IDUriParam
+	if err := ctx.ShouldBindUri(&uriParam); err != nil {
+		ctx.JSON(400, dto.Error[any]("无效的用户ID", 400))
 		return
 	}
 
 	var statusDto dto.StatusUpdateDto
 	if err := ctx.ShouldBindJSON(&statusDto); err != nil {
-		ctx.JSON(400, dto.Error[interface{}]("参数校验失败", 400))
+		ctx.JSON(400, dto.Error[any]("参数校验失败", 400))
 		return
 	}
 
-	result := c.userService.UpdateUserStatus(id, statusDto.Status)
+	result := c.userService.UpdateUserStatus(uriParam.ID, statusDto.Status)
 	ctx.JSON(200, result)
 }
 
 // ResetPassword 重置密码
 func (c *UserController) ResetPassword(ctx *gin.Context) {
-	idStr := ctx.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 64)
-	if err != nil {
-		ctx.JSON(400, dto.Error[interface{}]("无效的用户ID", 400))
+	var uriParam dto.IDUriParam
+	if err := ctx.ShouldBindUri(&uriParam); err != nil {
+		ctx.JSON(400, dto.Error[any]("无效的用户ID", 400))
 		return
 	}
 
-	result := c.userService.ResetPassword(id)
+	result := c.userService.ResetPassword(uriParam.ID)
 	ctx.JSON(200, result)
 }
 
@@ -121,7 +114,7 @@ func (c *UserController) ResetPassword(ctx *gin.Context) {
 func (c *UserController) BatchDeleteUsers(ctx *gin.Context) {
 	var req dto.BatchRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(400, dto.Error[interface{}]("参数校验失败", 400))
+		ctx.JSON(400, dto.Error[any]("参数校验失败", 400))
 		return
 	}
 

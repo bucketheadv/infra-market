@@ -1,8 +1,6 @@
 package controller
 
 import (
-	"strconv"
-
 	"github.com/bucketheadv/infra-market/internal/dto"
 	"github.com/bucketheadv/infra-market/internal/service"
 	"github.com/gin-gonic/gin"
@@ -20,7 +18,7 @@ func NewPermissionController(permissionService *service.PermissionService) *Perm
 func (c *PermissionController) GetPermissions(ctx *gin.Context) {
 	var query dto.PermissionQueryDto
 	if err := ctx.ShouldBindQuery(&query); err != nil {
-		ctx.JSON(400, dto.Error[interface{}]("参数校验失败", 400))
+		ctx.JSON(400, dto.Error[any]("参数校验失败", 400))
 		return
 	}
 
@@ -36,14 +34,13 @@ func (c *PermissionController) GetPermissionTree(ctx *gin.Context) {
 
 // GetPermission 获取权限详情
 func (c *PermissionController) GetPermission(ctx *gin.Context) {
-	idStr := ctx.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 64)
-	if err != nil {
-		ctx.JSON(400, dto.Error[interface{}]("无效的权限ID", 400))
+	var uriParam dto.IDUriParam
+	if err := ctx.ShouldBindUri(&uriParam); err != nil {
+		ctx.JSON(400, dto.Error[any]("无效的权限ID", 400))
 		return
 	}
 
-	result := c.permissionService.GetPermission(id)
+	result := c.permissionService.GetPermission(uriParam.ID)
 	ctx.JSON(200, result)
 }
 
@@ -51,7 +48,7 @@ func (c *PermissionController) GetPermission(ctx *gin.Context) {
 func (c *PermissionController) CreatePermission(ctx *gin.Context) {
 	var form dto.PermissionFormDto
 	if err := ctx.ShouldBindJSON(&form); err != nil {
-		ctx.JSON(400, dto.Error[interface{}]("参数校验失败", 400))
+		ctx.JSON(400, dto.Error[any]("参数校验失败", 400))
 		return
 	}
 
@@ -61,63 +58,60 @@ func (c *PermissionController) CreatePermission(ctx *gin.Context) {
 
 // UpdatePermission 更新权限
 func (c *PermissionController) UpdatePermission(ctx *gin.Context) {
-	idStr := ctx.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 64)
-	if err != nil {
-		ctx.JSON(400, dto.Error[interface{}]("无效的权限ID", 400))
+	var uriParam dto.IDUriParam
+	if err := ctx.ShouldBindUri(&uriParam); err != nil {
+		ctx.JSON(400, dto.Error[any]("无效的权限ID", 400))
 		return
 	}
 
 	var form dto.PermissionFormDto
 	if err := ctx.ShouldBindJSON(&form); err != nil {
-		ctx.JSON(400, dto.Error[interface{}]("参数校验失败", 400))
+		ctx.JSON(400, dto.Error[any]("参数校验失败", 400))
 		return
 	}
 
-	result := c.permissionService.UpdatePermission(id, form)
+	result := c.permissionService.UpdatePermission(uriParam.ID, form)
 	ctx.JSON(200, result)
 }
 
 // DeletePermission 删除权限
 func (c *PermissionController) DeletePermission(ctx *gin.Context) {
-	idStr := ctx.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 64)
-	if err != nil {
-		ctx.JSON(400, dto.Error[interface{}]("无效的权限ID", 400))
+	var uriParam dto.IDUriParam
+	if err := ctx.ShouldBindUri(&uriParam); err != nil {
+		ctx.JSON(400, dto.Error[any]("无效的权限ID", 400))
 		return
 	}
 
-	result := c.permissionService.DeletePermission(id)
+	result := c.permissionService.DeletePermission(uriParam.ID)
 	ctx.JSON(200, result)
 }
 
 // UpdatePermissionStatus 更新权限状态
 func (c *PermissionController) UpdatePermissionStatus(ctx *gin.Context) {
-	idStr := ctx.Param("id")
-	_, err := strconv.ParseUint(idStr, 10, 64)
-	if err != nil {
-		ctx.JSON(400, dto.Error[interface{}]("无效的权限ID", 400))
+	var uriParam dto.IDUriParam
+	if err := ctx.ShouldBindUri(&uriParam); err != nil {
+		ctx.JSON(400, dto.Error[any]("无效的权限ID", 400))
 		return
 	}
 
 	var statusDto dto.StatusUpdateDto
 	if err := ctx.ShouldBindJSON(&statusDto); err != nil {
-		ctx.JSON(400, dto.Error[interface{}]("参数校验失败", 400))
+		ctx.JSON(400, dto.Error[any]("参数校验失败", 400))
 		return
 	}
 
-	// 这里需要实现更新状态逻辑
-	ctx.JSON(200, dto.Success[interface{}](nil))
+	result := c.permissionService.UpdatePermissionStatus(uriParam.ID, statusDto.Status)
+	ctx.JSON(200, result)
 }
 
 // BatchDeletePermissions 批量删除权限
 func (c *PermissionController) BatchDeletePermissions(ctx *gin.Context) {
 	var req dto.BatchRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(400, dto.Error[interface{}]("参数校验失败", 400))
+		ctx.JSON(400, dto.Error[any]("参数校验失败", 400))
 		return
 	}
 
 	// 这里需要实现批量删除逻辑
-	ctx.JSON(200, dto.Success[interface{}](nil))
+	ctx.JSON(200, dto.Success[any](nil))
 }

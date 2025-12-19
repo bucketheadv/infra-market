@@ -193,41 +193,41 @@ func (s *UserService) UpdateUser(id uint64, form dto.UserUpdateDto) dto.ApiData[
 }
 
 // DeleteUser 删除用户
-func (s *UserService) DeleteUser(id uint64) dto.ApiData[interface{}] {
+func (s *UserService) DeleteUser(id uint64) dto.ApiData[any] {
 	user, err := s.userRepo.FindByUID(id)
 	if err != nil {
-		return dto.Error[interface{}]("用户不存在", 404)
+		return dto.Error[any]("用户不存在", 404)
 	}
 
 	if user.Username == "admin" {
-		return dto.Error[interface{}]("不能删除超级管理员用户", 400)
+		return dto.Error[any]("不能删除超级管理员用户", 400)
 	}
 
 	if user.Status == "deleted" {
-		return dto.Error[interface{}]("用户已被删除", 400)
+		return dto.Error[any]("用户已被删除", 400)
 	}
 
 	user.Status = "deleted"
 	if err := s.userRepo.Update(user); err != nil {
-		return dto.Error[interface{}]("删除用户失败", 500)
+		return dto.Error[any]("删除用户失败", 500)
 	}
 
-	return dto.Success[interface{}](nil)
+	return dto.Success[any](nil)
 }
 
 // UpdateUserStatus 更新用户状态
-func (s *UserService) UpdateUserStatus(id uint64, status string) dto.ApiData[interface{}] {
+func (s *UserService) UpdateUserStatus(id uint64, status string) dto.ApiData[any] {
 	user, err := s.userRepo.FindByUID(id)
 	if err != nil {
-		return dto.Error[interface{}]("用户不存在", 404)
+		return dto.Error[any]("用户不存在", 404)
 	}
 
 	if user.Username == "admin" && status == "deleted" {
-		return dto.Error[interface{}]("不能删除超级管理员用户", 400)
+		return dto.Error[any]("不能删除超级管理员用户", 400)
 	}
 
 	if user.Status == "deleted" && status != "deleted" {
-		return dto.Error[interface{}]("已删除的用户不能重新启用", 400)
+		return dto.Error[any]("已删除的用户不能重新启用", 400)
 	}
 
 	if status == "deleted" {
@@ -236,10 +236,10 @@ func (s *UserService) UpdateUserStatus(id uint64, status string) dto.ApiData[int
 
 	user.Status = status
 	if err := s.userRepo.Update(user); err != nil {
-		return dto.Error[interface{}]("更新状态失败", 500)
+		return dto.Error[any]("更新状态失败", 500)
 	}
 
-	return dto.Success[interface{}](nil)
+	return dto.Success[any](nil)
 }
 
 // ResetPassword 重置密码
@@ -265,20 +265,20 @@ func (s *UserService) ResetPassword(id uint64) dto.ApiData[map[string]string] {
 }
 
 // BatchDeleteUsers 批量删除用户
-func (s *UserService) BatchDeleteUsers(ids []uint64) dto.ApiData[interface{}] {
+func (s *UserService) BatchDeleteUsers(ids []uint64) dto.ApiData[any] {
 	if len(ids) == 0 {
-		return dto.Error[interface{}]("请选择要删除的用户", 400)
+		return dto.Error[any]("请选择要删除的用户", 400)
 	}
 
 	users, err := s.userRepo.FindByUIDs(ids)
 	if err != nil || len(users) != len(ids) {
-		return dto.Error[interface{}]("部分用户不存在", 400)
+		return dto.Error[any]("部分用户不存在", 400)
 	}
 
 	// 检查是否包含超级管理员
 	for _, user := range users {
 		if user.Username == "admin" {
-			return dto.Error[interface{}]("不能删除超级管理员用户", 400)
+			return dto.Error[any]("不能删除超级管理员用户", 400)
 		}
 	}
 
@@ -288,7 +288,7 @@ func (s *UserService) BatchDeleteUsers(ids []uint64) dto.ApiData[interface{}] {
 		s.userRepo.Update(&user)
 	}
 
-	return dto.Success[interface{}](nil)
+	return dto.Success[any](nil)
 }
 
 // convertUserToDto 转换用户实体为DTO

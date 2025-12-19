@@ -16,21 +16,21 @@ func AuthMiddleware(tokenService *service.TokenService) gin.HandlerFunc {
 		// 获取token
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
-			c.JSON(http.StatusUnauthorized, dto.Error[interface{}]("登录已过期，请重新登录", 401))
+			c.JSON(http.StatusUnauthorized, dto.Error[any]("登录已过期，请重新登录", 401))
 			c.Abort()
 			return
 		}
 
 		token := strings.TrimPrefix(authHeader, "Bearer ")
 		if token == "" {
-			c.JSON(http.StatusUnauthorized, dto.Error[interface{}]("登录已过期，请重新登录", 401))
+			c.JSON(http.StatusUnauthorized, dto.Error[any]("登录已过期，请重新登录", 401))
 			c.Abort()
 			return
 		}
 
 		// 验证token
 		if !tokenService.ValidateToken(token) {
-			c.JSON(http.StatusUnauthorized, dto.Error[interface{}]("登录已过期，请重新登录", 401))
+			c.JSON(http.StatusUnauthorized, dto.Error[any]("登录已过期，请重新登录", 401))
 			c.Abort()
 			return
 		}

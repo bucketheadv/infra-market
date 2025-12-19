@@ -21,7 +21,7 @@ func NewApiInterfaceController(apiInterfaceService *service.ApiInterfaceService)
 func (c *ApiInterfaceController) List(ctx *gin.Context) {
 	var query dto.ApiInterfaceQueryDto
 	if err := ctx.ShouldBindQuery(&query); err != nil {
-		ctx.JSON(400, dto.Error[interface{}]("参数校验失败", 400))
+		ctx.JSON(400, dto.Error[any]("参数校验失败", 400))
 		return
 	}
 
@@ -31,14 +31,13 @@ func (c *ApiInterfaceController) List(ctx *gin.Context) {
 
 // Detail 获取接口详情
 func (c *ApiInterfaceController) Detail(ctx *gin.Context) {
-	idStr := ctx.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 64)
-	if err != nil {
-		ctx.JSON(400, dto.Error[interface{}]("无效的接口ID", 400))
+	var uriParam dto.IDUriParam
+	if err := ctx.ShouldBindUri(&uriParam); err != nil {
+		ctx.JSON(400, dto.Error[any]("无效的接口ID", 400))
 		return
 	}
 
-	result := c.apiInterfaceService.FindByID(id)
+	result := c.apiInterfaceService.FindByID(uriParam.ID)
 	ctx.JSON(200, result)
 }
 
@@ -46,7 +45,7 @@ func (c *ApiInterfaceController) Detail(ctx *gin.Context) {
 func (c *ApiInterfaceController) Create(ctx *gin.Context) {
 	var form dto.ApiInterfaceFormDto
 	if err := ctx.ShouldBindJSON(&form); err != nil {
-		ctx.JSON(400, dto.Error[interface{}]("参数校验失败", 400))
+		ctx.JSON(400, dto.Error[any]("参数校验失败", 400))
 		return
 	}
 
@@ -56,66 +55,62 @@ func (c *ApiInterfaceController) Create(ctx *gin.Context) {
 
 // Update 更新接口
 func (c *ApiInterfaceController) Update(ctx *gin.Context) {
-	idStr := ctx.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 64)
-	if err != nil {
-		ctx.JSON(400, dto.Error[interface{}]("无效的接口ID", 400))
+	var uriParam dto.IDUriParam
+	if err := ctx.ShouldBindUri(&uriParam); err != nil {
+		ctx.JSON(400, dto.Error[any]("无效的接口ID", 400))
 		return
 	}
 
 	var form dto.ApiInterfaceFormDto
 	if err := ctx.ShouldBindJSON(&form); err != nil {
-		ctx.JSON(400, dto.Error[interface{}]("参数校验失败", 400))
+		ctx.JSON(400, dto.Error[any]("参数校验失败", 400))
 		return
 	}
 
-	result := c.apiInterfaceService.Update(id, form)
+	result := c.apiInterfaceService.Update(uriParam.ID, form)
 	ctx.JSON(200, result)
 }
 
 // Delete 删除接口
 func (c *ApiInterfaceController) Delete(ctx *gin.Context) {
-	idStr := ctx.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 64)
-	if err != nil {
-		ctx.JSON(400, dto.Error[interface{}]("无效的接口ID", 400))
+	var uriParam dto.IDUriParam
+	if err := ctx.ShouldBindUri(&uriParam); err != nil {
+		ctx.JSON(400, dto.Error[any]("无效的接口ID", 400))
 		return
 	}
 
-	result := c.apiInterfaceService.Delete(id)
+	result := c.apiInterfaceService.Delete(uriParam.ID)
 	ctx.JSON(200, result)
 }
 
 // UpdateStatus 更新接口状态
 func (c *ApiInterfaceController) UpdateStatus(ctx *gin.Context) {
-	idStr := ctx.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 64)
-	if err != nil {
-		ctx.JSON(400, dto.Error[interface{}]("无效的接口ID", 400))
+	var uriParam dto.IDUriParam
+	if err := ctx.ShouldBindUri(&uriParam); err != nil {
+		ctx.JSON(400, dto.Error[any]("无效的接口ID", 400))
 		return
 	}
 
 	statusStr := ctx.Query("status")
 	status, err := strconv.Atoi(statusStr)
 	if err != nil {
-		ctx.JSON(400, dto.Error[interface{}]("无效的状态值", 400))
+		ctx.JSON(400, dto.Error[any]("无效的状态值", 400))
 		return
 	}
 
-	result := c.apiInterfaceService.UpdateStatus(id, status)
+	result := c.apiInterfaceService.UpdateStatus(uriParam.ID, status)
 	ctx.JSON(200, result)
 }
 
 // Copy 复制接口
 func (c *ApiInterfaceController) Copy(ctx *gin.Context) {
-	idStr := ctx.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 64)
-	if err != nil {
-		ctx.JSON(400, dto.Error[interface{}]("无效的接口ID", 400))
+	var uriParam dto.IDUriParam
+	if err := ctx.ShouldBindUri(&uriParam); err != nil {
+		ctx.JSON(400, dto.Error[any]("无效的接口ID", 400))
 		return
 	}
 
-	result := c.apiInterfaceService.Copy(id)
+	result := c.apiInterfaceService.Copy(uriParam.ID)
 	ctx.JSON(200, result)
 }
 
@@ -142,13 +137,13 @@ func (c *ApiInterfaceController) GetMostUsed(ctx *gin.Context) {
 func (c *ApiInterfaceController) Execute(ctx *gin.Context) {
 	uid, ok := middleware.GetUIDFromContext(ctx)
 	if !ok {
-		ctx.JSON(401, dto.Error[interface{}]("未登录", 401))
+		ctx.JSON(401, dto.Error[any]("未登录", 401))
 		return
 	}
 
 	var req dto.ApiExecuteRequestDto
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(400, dto.Error[interface{}]("参数校验失败", 400))
+		ctx.JSON(400, dto.Error[any]("参数校验失败", 400))
 		return
 	}
 

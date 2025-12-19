@@ -27,7 +27,7 @@ func ErrorHandler() gin.HandlerFunc {
 
 			// 处理其他错误
 			log.Printf("Error: %v", err)
-			c.JSON(http.StatusInternalServerError, dto.Error[interface{}](
+			c.JSON(http.StatusInternalServerError, dto.Error[any](
 				string(enums.ErrorMessageSystemError),
 				http.StatusInternalServerError,
 			))
@@ -43,7 +43,7 @@ func handleValidationError(c *gin.Context, err validator.ValidationErrors) {
 	}
 
 	errorMessage := "参数校验失败"
-	c.JSON(http.StatusBadRequest, dto.ErrorWithDetail[interface{}](
+	c.JSON(http.StatusBadRequest, dto.ErrorWithDetail[any](
 		string(enums.ErrorMessageValidationFailed),
 		errorMessage,
 		http.StatusBadRequest,

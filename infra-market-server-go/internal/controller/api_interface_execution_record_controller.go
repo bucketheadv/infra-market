@@ -20,7 +20,7 @@ func NewApiInterfaceExecutionRecordController(service *service.ApiInterfaceExecu
 func (c *ApiInterfaceExecutionRecordController) List(ctx *gin.Context) {
 	var query dto.ApiInterfaceExecutionRecordQueryDto
 	if err := ctx.ShouldBindJSON(&query); err != nil {
-		ctx.JSON(400, dto.Error[interface{}]("参数校验失败", 400))
+		ctx.JSON(400, dto.Error[any]("参数校验失败", 400))
 		return
 	}
 
@@ -30,43 +30,40 @@ func (c *ApiInterfaceExecutionRecordController) List(ctx *gin.Context) {
 
 // Detail 获取执行记录详情
 func (c *ApiInterfaceExecutionRecordController) Detail(ctx *gin.Context) {
-	idStr := ctx.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 64)
-	if err != nil {
-		ctx.JSON(400, dto.Error[interface{}]("无效的记录ID", 400))
+	var uriParam dto.IDUriParam
+	if err := ctx.ShouldBindUri(&uriParam); err != nil {
+		ctx.JSON(400, dto.Error[any]("无效的记录ID", 400))
 		return
 	}
 
-	result := c.service.GetByID(id)
+	result := c.service.GetByID(uriParam.ID)
 	ctx.JSON(200, result)
 }
 
 // GetByExecutorID 根据执行人ID查询
 func (c *ApiInterfaceExecutionRecordController) GetByExecutorID(ctx *gin.Context) {
-	executorIDStr := ctx.Param("executorId")
-	executorID, err := strconv.ParseUint(executorIDStr, 10, 64)
-	if err != nil {
-		ctx.JSON(400, dto.Error[interface{}]("无效的执行人ID", 400))
+	var uriParam dto.ExecutorIDUriParam
+	if err := ctx.ShouldBindUri(&uriParam); err != nil {
+		ctx.JSON(400, dto.Error[any]("无效的执行人ID", 400))
 		return
 	}
 
 	limitStr := ctx.DefaultQuery("limit", "10")
 	limit, _ := strconv.Atoi(limitStr)
 
-	result := c.service.FindByExecutorID(executorID, limit)
+	result := c.service.FindByExecutorID(uriParam.ExecutorID, limit)
 	ctx.JSON(200, result)
 }
 
 // GetExecutionStats 获取执行统计信息
 func (c *ApiInterfaceExecutionRecordController) GetExecutionStats(ctx *gin.Context) {
-	interfaceIDStr := ctx.Param("interfaceId")
-	interfaceID, err := strconv.ParseUint(interfaceIDStr, 10, 64)
-	if err != nil {
-		ctx.JSON(400, dto.Error[interface{}]("无效的接口ID", 400))
+	var uriParam dto.InterfaceIDUriParam
+	if err := ctx.ShouldBindUri(&uriParam); err != nil {
+		ctx.JSON(400, dto.Error[any]("无效的接口ID", 400))
 		return
 	}
 
-	result := c.service.GetExecutionStats(interfaceID)
+	result := c.service.GetExecutionStats(uriParam.InterfaceID)
 	ctx.JSON(200, result)
 }
 
@@ -77,13 +74,13 @@ func (c *ApiInterfaceExecutionRecordController) GetExecutionCount(ctx *gin.Conte
 
 	startTime, err := strconv.ParseInt(startTimeStr, 10, 64)
 	if err != nil {
-		ctx.JSON(400, dto.Error[interface{}]("无效的开始时间", 400))
+		ctx.JSON(400, dto.Error[any]("无效的开始时间", 400))
 		return
 	}
 
 	endTime, err := strconv.ParseInt(endTimeStr, 10, 64)
 	if err != nil {
-		ctx.JSON(400, dto.Error[interface{}]("无效的结束时间", 400))
+		ctx.JSON(400, dto.Error[any]("无效的结束时间", 400))
 		return
 	}
 
@@ -96,7 +93,7 @@ func (c *ApiInterfaceExecutionRecordController) CleanupOldRecords(ctx *gin.Conte
 	beforeTimeStr := ctx.Query("beforeTime")
 	beforeTime, err := strconv.ParseInt(beforeTimeStr, 10, 64)
 	if err != nil {
-		ctx.JSON(400, dto.Error[interface{}]("无效的时间", 400))
+		ctx.JSON(400, dto.Error[any]("无效的时间", 400))
 		return
 	}
 

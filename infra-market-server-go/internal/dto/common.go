@@ -56,3 +56,18 @@ type ChangePasswordRequest struct {
 type StatusUpdateDto struct {
 	Status string `json:"status" binding:"required"`
 }
+
+// IDUriParam ID路径参数
+type IDUriParam struct {
+	ID uint64 `uri:"id" binding:"required,min=1"`
+}
+
+// ExecutorIDUriParam 执行人ID路径参数
+type ExecutorIDUriParam struct {
+	ExecutorID uint64 `uri:"executorId" binding:"required,min=1"`
+}
+
+// InterfaceIDUriParam 接口ID路径参数
+type InterfaceIDUriParam struct {
+	InterfaceID uint64 `uri:"interfaceId" binding:"required,min=1"`
+}

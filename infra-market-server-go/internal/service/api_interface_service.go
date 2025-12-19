@@ -150,11 +150,11 @@ func (s *ApiInterfaceService) Update(id uint64, form dto.ApiInterfaceFormDto) dt
 }
 
 // Delete 删除接口
-func (s *ApiInterfaceService) Delete(id uint64) dto.ApiData[interface{}] {
+func (s *ApiInterfaceService) Delete(id uint64) dto.ApiData[any] {
 	if err := s.apiInterfaceRepo.Delete(id); err != nil {
-		return dto.Error[interface{}]("删除接口失败", 500)
+		return dto.Error[any]("删除接口失败", 500)
 	}
-	return dto.Success[interface{}](nil)
+	return dto.Success[any](nil)
 }
 
 // UpdateStatus 更新接口状态
@@ -401,8 +401,8 @@ func (s *ApiInterfaceService) executeHTTPRequest(apiInterface *entity.ApiInterfa
 
 // extractValueByPath 根据JSONPath提取值
 func (s *ApiInterfaceService) extractValueByPath(jsonString, path string) *string {
-	// 先将JSON字符串解析为interface{}
-	var data interface{}
+	// 先将JSON字符串解析为any
+	var data any
 	if err := json.Unmarshal([]byte(jsonString), &data); err != nil {
 		log.Printf("JSON解析失败: %v", err)
 		return nil
@@ -424,7 +424,7 @@ func (s *ApiInterfaceService) extractValueByPath(jsonString, path string) *strin
 		resultStr = fmt.Sprintf("%v", v)
 	case bool:
 		resultStr = fmt.Sprintf("%v", v)
-	case []interface{}, map[string]interface{}:
+	case []any, map[string]any:
 		jsonBytes, _ := json.Marshal(v)
 		resultStr = string(jsonBytes)
 	default:
@@ -665,13 +665,13 @@ func (s *ApiInterfaceService) processParams(apiInterface *entity.ApiInterface, r
 	}
 
 	// 处理URL参数
-	processedURLParams := make(map[string]interface{})
+	processedURLParams := make(map[string]any)
 	if req.URLParams != nil {
 		for k, v := range req.URLParams {
 			if param, ok := paramMap[k]; ok && param.DataType != nil && *param.DataType == "JSON_OBJECT" {
 				// JSON_OBJECT类型：解析为对象
 				if str, ok := v.(string); ok {
-					var obj interface{}
+					var obj any
 					if err := json.Unmarshal([]byte(str), &obj); err == nil {
 						processedURLParams[k] = obj
 					} else {
@@ -700,13 +700,13 @@ func (s *ApiInterfaceService) processParams(apiInterface *entity.ApiInterface, r
 	}
 
 	// 处理Body参数
-	processedBodyParams := make(map[string]interface{})
+	processedBodyParams := make(map[string]any)
 	if req.BodyParams != nil {
 		for k, v := range req.BodyParams {
 			if param, ok := paramMap[k]; ok && param.DataType != nil && *param.DataType == "JSON_OBJECT" {
 				// JSON_OBJECT类型：解析为对象
 				if str, ok := v.(string); ok {
-					var obj interface{}
+					var obj any
 					if err := json.Unmarshal([]byte(str), &obj); err == nil {
 						processedBodyParams[k] = obj
 					} else {

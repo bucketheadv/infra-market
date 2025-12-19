@@ -53,7 +53,7 @@ func ValidateToken(tokenString string) bool {
 
 // getClaimsFromToken 从token中获取Claims
 func getClaimsFromToken(tokenString string) (*Claims, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (any, error) {
 		return []byte(secretKey), nil
 	})
 

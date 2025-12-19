@@ -79,9 +79,9 @@ func (s *AuthService) Login(req dto.LoginRequest) dto.ApiData[dto.LoginResponse]
 }
 
 // Logout 用户登出
-func (s *AuthService) Logout(uid uint64) dto.ApiData[interface{}] {
+func (s *AuthService) Logout(uid uint64) dto.ApiData[any] {
 	s.tokenService.DeleteToken(uid)
-	return dto.Success[interface{}](nil)
+	return dto.Success[any](nil)
 }
 
 // GetCurrentUser 获取当前用户信息
@@ -241,27 +241,27 @@ func (s *AuthService) RefreshToken(uid uint64) dto.ApiData[map[string]string] {
 }
 
 // ChangePassword 修改密码
-func (s *AuthService) ChangePassword(uid uint64, req dto.ChangePasswordRequest) dto.ApiData[interface{}] {
+func (s *AuthService) ChangePassword(uid uint64, req dto.ChangePasswordRequest) dto.ApiData[any] {
 	user, err := s.userRepo.FindByUID(uid)
 	if err != nil {
-		return dto.Error[interface{}]("用户不存在", 404)
+		return dto.Error[any]("用户不存在", 404)
 	}
 
 	// 验证原密码
 	if !util.Matches(req.OldPassword, user.Password) {
-		return dto.Error[interface{}]("原密码错误", 400)
+		return dto.Error[any]("原密码错误", 400)
 	}
 
 	// 加密新密码
 	encryptedPassword, err := util.Encrypt(req.NewPassword)
 	if err != nil {
-		return dto.Error[interface{}]("密码加密失败", 500)
+		return dto.Error[any]("密码加密失败", 500)
 	}
 
 	user.Password = encryptedPassword
 	s.userRepo.Update(user)
 
-	return dto.Success[interface{}](nil)
+	return dto.Success[any](nil)
 }
 
 // getUserPermissions 获取用户权限编码列表

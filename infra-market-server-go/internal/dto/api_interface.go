@@ -53,7 +53,7 @@ type ApiParamDto struct {
 	InputType    *string           `json:"inputType"`
 	DataType     *string           `json:"dataType"`
 	Required     *bool             `json:"required"`
-	DefaultValue interface{}       `json:"defaultValue"`
+	DefaultValue any               `json:"defaultValue"`
 	Changeable   *bool             `json:"changeable"`
 	Options      []SelectOptionDto `json:"options"`
 	Description  *string           `json:"description"`
@@ -68,12 +68,12 @@ type SelectOptionDto struct {
 
 // ApiExecuteRequestDto 接口执行请求DTO
 type ApiExecuteRequestDto struct {
-	InterfaceID *uint64                `json:"interfaceId" binding:"required"`
-	Headers     map[string]string      `json:"headers"`
-	URLParams   map[string]interface{} `json:"urlParams"`
-	BodyParams  map[string]interface{} `json:"bodyParams"`
-	Timeout     *int64                 `json:"timeout"`
-	Remark      *string                `json:"remark"`
+	InterfaceID *uint64           `json:"interfaceId" binding:"required"`
+	Headers     map[string]string `json:"headers"`
+	URLParams   map[string]any    `json:"urlParams"`
+	BodyParams  map[string]any    `json:"bodyParams"`
+	Timeout     *int64            `json:"timeout"`
+	Remark      *string           `json:"remark"`
 }
 
 // ApiExecuteResponseDto 接口执行响应DTO

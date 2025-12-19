@@ -172,43 +172,43 @@ func (s *RoleService) UpdateRole(id uint64, form dto.RoleFormDto) dto.ApiData[dt
 }
 
 // DeleteRole 删除角色
-func (s *RoleService) DeleteRole(id uint64) dto.ApiData[interface{}] {
+func (s *RoleService) DeleteRole(id uint64) dto.ApiData[any] {
 	role, err := s.roleRepo.FindByID(id)
 	if err != nil {
-		return dto.Error[interface{}]("角色不存在", 404)
+		return dto.Error[any]("角色不存在", 404)
 	}
 
 	if role.Code == "admin" {
-		return dto.Error[interface{}]("不能删除系统角色", 400)
+		return dto.Error[any]("不能删除系统角色", 400)
 	}
 
 	// 检查是否有用户正在使用此角色
 	userCount, _ := s.userRoleRepo.CountByRoleID(id)
 	if userCount > 0 {
-		return dto.Error[interface{}]("该角色下还有用户，无法删除", 400)
+		return dto.Error[any]("该角色下还有用户，无法删除", 400)
 	}
 
 	role.Status = "deleted"
 	if err := s.roleRepo.Update(role); err != nil {
-		return dto.Error[interface{}]("删除角色失败", 500)
+		return dto.Error[any]("删除角色失败", 500)
 	}
 
-	return dto.Success[interface{}](nil)
+	return dto.Success[any](nil)
 }
 
 // UpdateRoleStatus 更新角色状态
-func (s *RoleService) UpdateRoleStatus(id uint64, status string) dto.ApiData[interface{}] {
+func (s *RoleService) UpdateRoleStatus(id uint64, status string) dto.ApiData[any] {
 	role, err := s.roleRepo.FindByID(id)
 	if err != nil {
-		return dto.Error[interface{}]("角色不存在", 404)
+		return dto.Error[any]("角色不存在", 404)
 	}
 
 	if role.Code == "admin" && status == "deleted" {
-		return dto.Error[interface{}]("不能删除系统角色", 400)
+		return dto.Error[any]("不能删除系统角色", 400)
 	}
 
 	if role.Status == "deleted" && status != "deleted" {
-		return dto.Error[interface{}]("已删除的角色不能重新启用", 400)
+		return dto.Error[any]("已删除的角色不能重新启用", 400)
 	}
 
 	if status == "deleted" {
@@ -217,10 +217,10 @@ func (s *RoleService) UpdateRoleStatus(id uint64, status string) dto.ApiData[int
 
 	role.Status = status
 	if err := s.roleRepo.Update(role); err != nil {
-		return dto.Error[interface{}]("更新状态失败", 500)
+		return dto.Error[any]("更新状态失败", 500)
 	}
 
-	return dto.Success[interface{}](nil)
+	return dto.Success[any](nil)
 }
 
 // convertRoleToDto 转换角色实体为DTO
