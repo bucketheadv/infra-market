@@ -4,9 +4,11 @@ import (
 	"crypto/rand"
 	"log"
 	"math/big"
+	"net/http"
 
 	"github.com/bucketheadv/infra-market/internal/dto"
 	"github.com/bucketheadv/infra-market/internal/entity"
+	"github.com/bucketheadv/infra-market/internal/enums"
 	"github.com/bucketheadv/infra-market/internal/repository"
 	"github.com/bucketheadv/infra-market/internal/util"
 	"gorm.io/gorm"
@@ -30,7 +32,7 @@ func NewUserService(db *gorm.DB, userRepo *repository.UserRepository, userRoleRe
 func (s *UserService) GetUsers(query dto.UserQueryDto) dto.ApiData[dto.PageResult[dto.UserDto]] {
 	users, total, err := s.userRepo.Page(query)
 	if err != nil {
-		return dto.Error[dto.PageResult[dto.UserDto]]("查询失败", 500)
+		return dto.Error[dto.PageResult[dto.UserDto]]("查询失败", http.StatusInternalServerError)
 	}
 
 	// 批量获取所有用户的角色ID
@@ -69,7 +71,7 @@ func (s *UserService) GetUser(id uint64) dto.ApiData[dto.UserDto] {
 	user, err := s.userRepo.FindByUID(id)
 	if err != nil {
 		log.Printf("获取用户详情失败，用户ID: %d, 错误: %v\n", id, err)
-		return dto.Error[dto.UserDto]("用户不存在", 404)
+		return dto.Error[dto.UserDto]("用户不存在", http.StatusNotFound)
 	}
 
 	userRoles, _ := s.userRoleRepo.FindByUID(id)
@@ -88,32 +90,32 @@ func (s *UserService) GetUser(id uint64) dto.ApiData[dto.UserDto] {
 func (s *UserService) CreateUser(form dto.UserFormDto) dto.ApiData[dto.UserDto] {
 	// 检查用户名是否已存在
 	if _, err := s.userRepo.FindByUsername(form.Username); err == nil {
-		return dto.Error[dto.UserDto]("用户名已存在", 400)
+		return dto.Error[dto.UserDto]("用户名已存在", http.StatusBadRequest)
 	}
 
 	// 检查邮箱是否已存在
 	if form.Email != nil && *form.Email != "" {
 		if _, err := s.userRepo.FindByEmail(*form.Email); err == nil {
-			return dto.Error[dto.UserDto]("邮箱已存在", 400)
+			return dto.Error[dto.UserDto]("邮箱已存在", http.StatusBadRequest)
 		}
 	}
 
 	// 检查手机号是否已存在
 	if form.Phone != nil && *form.Phone != "" {
 		if _, err := s.userRepo.FindByPhone(*form.Phone); err == nil {
-			return dto.Error[dto.UserDto]("手机号已存在", 400)
+			return dto.Error[dto.UserDto]("手机号已存在", http.StatusBadRequest)
 		}
 	}
 
 	// 加密密码
-	password := "123456"
+	password := enums.DefaultPassword
 	if form.Password != nil && *form.Password != "" {
 		password = *form.Password
 	}
 	encryptedPassword, err := util.Encrypt(password)
 	if err != nil {
 		log.Printf("创建用户失败，密码加密失败，用户名: %s, 错误: %v\n", form.Username, err)
-		return dto.Error[dto.UserDto]("密码加密失败", 500)
+		return dto.Error[dto.UserDto]("密码加密失败", http.StatusInternalServerError)
 	}
 
 	user := &entity.User{
@@ -121,7 +123,7 @@ func (s *UserService) CreateUser(form dto.UserFormDto) dto.ApiData[dto.UserDto] 
 		Password: encryptedPassword,
 		Email:    form.Email,
 		Phone:    form.Phone,
-		Status:   "active",
+		Status:   enums.StatusActive.Code(),
 	}
 
 	// 在事务中执行：创建用户 + 创建用户角色关联
@@ -151,7 +153,7 @@ func (s *UserService) CreateUser(form dto.UserFormDto) dto.ApiData[dto.UserDto] 
 
 	if err != nil {
 		log.Printf("创建用户失败，用户名: %s, 错误: %v\n", form.Username, err)
-		return dto.Error[dto.UserDto]("创建用户失败", 500)
+		return dto.Error[dto.UserDto]("创建用户失败", http.StatusInternalServerError)
 	}
 
 	userDto := s.convertUserToDto(user, form.RoleIds)
@@ -163,25 +165,25 @@ func (s *UserService) UpdateUser(id uint64, form dto.UserUpdateDto) dto.ApiData[
 	user, err := s.userRepo.FindByUID(id)
 	if err != nil {
 		log.Printf("更新用户失败，用户ID: %d, 错误: %v\n", id, err)
-		return dto.Error[dto.UserDto]("用户不存在", 404)
+		return dto.Error[dto.UserDto]("用户不存在", http.StatusNotFound)
 	}
 
 	// 检查用户名是否已被其他用户使用
 	if existingUser, err := s.userRepo.FindByUsername(form.Username); err == nil && existingUser.ID != user.ID {
-		return dto.Error[dto.UserDto]("用户名已存在", 400)
+		return dto.Error[dto.UserDto]("用户名已存在", http.StatusBadRequest)
 	}
 
 	// 检查邮箱
 	if form.Email != nil && *form.Email != "" {
 		if existingUser, err := s.userRepo.FindByEmail(*form.Email); err == nil && existingUser.ID != user.ID {
-			return dto.Error[dto.UserDto]("邮箱已存在", 400)
+			return dto.Error[dto.UserDto]("邮箱已存在", http.StatusBadRequest)
 		}
 	}
 
 	// 检查手机号
 	if form.Phone != nil && *form.Phone != "" {
 		if existingUser, err := s.userRepo.FindByPhone(*form.Phone); err == nil && existingUser.ID != user.ID {
-			return dto.Error[dto.UserDto]("手机号已存在", 400)
+			return dto.Error[dto.UserDto]("手机号已存在", http.StatusBadRequest)
 		}
 	}
 
@@ -194,7 +196,7 @@ func (s *UserService) UpdateUser(id uint64, form dto.UserUpdateDto) dto.ApiData[
 		encryptedPassword, err := util.Encrypt(*form.Password)
 		if err != nil {
 			log.Printf("更新用户失败，密码加密失败，用户ID: %d, 错误: %v\n", id, err)
-			return dto.Error[dto.UserDto]("密码加密失败", 500)
+			return dto.Error[dto.UserDto]("密码加密失败", http.StatusInternalServerError)
 		}
 		user.Password = encryptedPassword
 	}
@@ -231,7 +233,7 @@ func (s *UserService) UpdateUser(id uint64, form dto.UserUpdateDto) dto.ApiData[
 
 	if err != nil {
 		log.Printf("更新用户失败，用户ID: %d, 错误: %v\n", id, err)
-		return dto.Error[dto.UserDto]("更新用户失败", 500)
+		return dto.Error[dto.UserDto]("更新用户失败", http.StatusInternalServerError)
 	}
 
 	userDto := s.convertUserToDto(user, form.RoleIds)
@@ -243,21 +245,21 @@ func (s *UserService) DeleteUser(id uint64) dto.ApiData[any] {
 	user, err := s.userRepo.FindByUID(id)
 	if err != nil {
 		log.Printf("删除用户失败，用户ID: %d, 错误: %v\n", id, err)
-		return dto.Error[any]("用户不存在", 404)
+		return dto.Error[any]("用户不存在", http.StatusNotFound)
 	}
 
-	if user.Username == "admin" {
-		return dto.Error[any]("不能删除超级管理员用户", 400)
+	if user.Username == enums.AdminUsername {
+		return dto.Error[any]("不能删除超级管理员用户", http.StatusBadRequest)
 	}
 
-	if user.Status == "deleted" {
-		return dto.Error[any]("用户已被删除", 400)
+	if user.Status == enums.StatusDeleted.Code() {
+		return dto.Error[any]("用户已被删除", http.StatusBadRequest)
 	}
 
-	user.Status = "deleted"
+	user.Status = enums.StatusDeleted.Code()
 	if err := s.userRepo.Update(user); err != nil {
 		log.Printf("删除用户失败，用户ID: %d, 错误: %v\n", id, err)
-		return dto.Error[any]("删除用户失败", 500)
+		return dto.Error[any]("删除用户失败", http.StatusInternalServerError)
 	}
 
 	return dto.Success[any](nil)
@@ -268,25 +270,25 @@ func (s *UserService) UpdateUserStatus(id uint64, status string) dto.ApiData[any
 	user, err := s.userRepo.FindByUID(id)
 	if err != nil {
 		log.Printf("更新用户状态失败，用户ID: %d, 错误: %v\n", id, err)
-		return dto.Error[any]("用户不存在", 404)
+		return dto.Error[any]("用户不存在", http.StatusNotFound)
 	}
 
-	if user.Username == "admin" && status == "deleted" {
-		return dto.Error[any]("不能删除超级管理员用户", 400)
+	if user.Username == enums.AdminUsername && status == enums.StatusDeleted.Code() {
+		return dto.Error[any]("不能删除超级管理员用户", http.StatusBadRequest)
 	}
 
-	if user.Status == "deleted" && status != "deleted" {
-		return dto.Error[any]("已删除的用户不能重新启用", 400)
+	if user.Status == enums.StatusDeleted.Code() && status != enums.StatusDeleted.Code() {
+		return dto.Error[any]("已删除的用户不能重新启用", http.StatusBadRequest)
 	}
 
-	if status == "deleted" {
+	if status == enums.StatusDeleted.Code() {
 		return s.DeleteUser(id)
 	}
 
 	user.Status = status
 	if err := s.userRepo.Update(user); err != nil {
 		log.Printf("更新用户状态失败，用户ID: %d, 状态: %s, 错误: %v\n", id, status, err)
-		return dto.Error[any]("更新状态失败", 500)
+		return dto.Error[any]("更新状态失败", http.StatusInternalServerError)
 	}
 
 	return dto.Success[any](nil)
@@ -297,7 +299,7 @@ func (s *UserService) ResetPassword(id uint64) dto.ApiData[map[string]string] {
 	user, err := s.userRepo.FindByUID(id)
 	if err != nil {
 		log.Printf("重置密码失败，用户ID: %d, 错误: %v\n", id, err)
-		return dto.Error[map[string]string]("用户不存在", 404)
+		return dto.Error[map[string]string]("用户不存在", http.StatusNotFound)
 	}
 
 	// 生成随机密码
@@ -305,13 +307,13 @@ func (s *UserService) ResetPassword(id uint64) dto.ApiData[map[string]string] {
 	encryptedPassword, err := util.Encrypt(newPassword)
 	if err != nil {
 		log.Printf("重置密码失败，密码加密失败，用户ID: %d, 错误: %v\n", id, err)
-		return dto.Error[map[string]string]("密码加密失败", 500)
+		return dto.Error[map[string]string]("密码加密失败", http.StatusInternalServerError)
 	}
 
 	user.Password = encryptedPassword
 	if err := s.userRepo.Update(user); err != nil {
 		log.Printf("重置密码失败，用户ID: %d, 错误: %v\n", id, err)
-		return dto.Error[map[string]string]("重置密码失败", 500)
+		return dto.Error[map[string]string]("重置密码失败", http.StatusInternalServerError)
 	}
 
 	return dto.Success(map[string]string{"password": newPassword})
@@ -320,19 +322,19 @@ func (s *UserService) ResetPassword(id uint64) dto.ApiData[map[string]string] {
 // BatchDeleteUsers 批量删除用户
 func (s *UserService) BatchDeleteUsers(ids []uint64) dto.ApiData[any] {
 	if len(ids) == 0 {
-		return dto.Error[any]("请选择要删除的用户", 400)
+		return dto.Error[any]("请选择要删除的用户", http.StatusBadRequest)
 	}
 
 	users, err := s.userRepo.FindByUIDs(ids)
 	if err != nil || len(users) != len(ids) {
 		log.Printf("批量删除用户失败，查询用户失败，错误: %v\n", err)
-		return dto.Error[any]("部分用户不存在", 400)
+		return dto.Error[any]("部分用户不存在", http.StatusBadRequest)
 	}
 
 	// 检查是否包含超级管理员
 	for _, user := range users {
-		if user.Username == "admin" {
-			return dto.Error[any]("不能删除超级管理员用户", 400)
+		if user.Username == enums.AdminUsername {
+			return dto.Error[any]("不能删除超级管理员用户", http.StatusBadRequest)
 		}
 	}
 
@@ -340,7 +342,7 @@ func (s *UserService) BatchDeleteUsers(ids []uint64) dto.ApiData[any] {
 	err = WithTransaction(s.db, func(tx *gorm.DB) error {
 		txUserRepo := repository.NewUserRepository(tx)
 		for _, user := range users {
-			user.Status = "deleted"
+			user.Status = enums.StatusDeleted.Code()
 			if err := txUserRepo.Update(&user); err != nil {
 				return err
 			}
@@ -350,7 +352,7 @@ func (s *UserService) BatchDeleteUsers(ids []uint64) dto.ApiData[any] {
 
 	if err != nil {
 		log.Printf("批量删除用户失败，错误: %v\n", err)
-		return dto.Error[any]("批量删除用户失败", 500)
+		return dto.Error[any]("批量删除用户失败", http.StatusInternalServerError)
 	}
 
 	return dto.Success[any](nil)

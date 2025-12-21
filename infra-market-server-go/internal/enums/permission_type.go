@@ -6,6 +6,7 @@ type PermissionType string
 const (
 	PermissionTypeMenu   PermissionType = "menu"
 	PermissionTypeButton PermissionType = "button"
+	PermissionTypeAPI    PermissionType = "api"
 )
 
 func (p PermissionType) Code() string {
@@ -16,6 +17,7 @@ func PermissionTypeFromCode(code string) *PermissionType {
 	types := map[string]PermissionType{
 		"menu":   PermissionTypeMenu,
 		"button": PermissionTypeButton,
+		"api":    PermissionTypeAPI,
 	}
 	if permissionType, ok := types[code]; ok {
 		return &permissionType

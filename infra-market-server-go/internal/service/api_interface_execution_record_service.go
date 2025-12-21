@@ -1,6 +1,8 @@
 package service
 
 import (
+	"net/http"
+
 	"github.com/bucketheadv/infra-market/internal/dto"
 	"github.com/bucketheadv/infra-market/internal/entity"
 	"github.com/bucketheadv/infra-market/internal/repository"
@@ -19,7 +21,7 @@ func NewApiInterfaceExecutionRecordService(repo *repository.ApiInterfaceExecutio
 func (s *ApiInterfaceExecutionRecordService) FindPage(query dto.ApiInterfaceExecutionRecordQueryDto) dto.ApiData[dto.PageResult[dto.ApiInterfaceExecutionRecordDto]] {
 	records, total, err := s.repo.Page(query)
 	if err != nil {
-		return dto.Error[dto.PageResult[dto.ApiInterfaceExecutionRecordDto]]("查询失败", 500)
+		return dto.Error[dto.PageResult[dto.ApiInterfaceExecutionRecordDto]]("查询失败", http.StatusInternalServerError)
 	}
 
 	recordDtos := make([]dto.ApiInterfaceExecutionRecordDto, len(records))
@@ -44,7 +46,7 @@ func (s *ApiInterfaceExecutionRecordService) FindPage(query dto.ApiInterfaceExec
 func (s *ApiInterfaceExecutionRecordService) GetByID(id uint64) dto.ApiData[dto.ApiInterfaceExecutionRecordDto] {
 	record, err := s.repo.FindByID(id)
 	if err != nil {
-		return dto.Error[dto.ApiInterfaceExecutionRecordDto]("执行记录不存在", 404)
+		return dto.Error[dto.ApiInterfaceExecutionRecordDto]("执行记录不存在", http.StatusNotFound)
 	}
 
 	recordDto := s.convertToDto(record)
@@ -55,7 +57,7 @@ func (s *ApiInterfaceExecutionRecordService) GetByID(id uint64) dto.ApiData[dto.
 func (s *ApiInterfaceExecutionRecordService) FindByExecutorID(executorID uint64, limit int) dto.ApiData[[]dto.ApiInterfaceExecutionRecordDto] {
 	records, err := s.repo.FindByExecutorID(executorID, limit)
 	if err != nil {
-		return dto.Error[[]dto.ApiInterfaceExecutionRecordDto]("查询失败", 500)
+		return dto.Error[[]dto.ApiInterfaceExecutionRecordDto]("查询失败", http.StatusInternalServerError)
 	}
 
 	recordDtos := make([]dto.ApiInterfaceExecutionRecordDto, len(records))
@@ -74,7 +76,7 @@ func (s *ApiInterfaceExecutionRecordService) GetExecutionStats(interfaceID uint6
 	}
 	records, _, err := s.repo.Page(query)
 	if err != nil {
-		return dto.Error[dto.ApiInterfaceExecutionRecordStatsDto]("查询失败", 500)
+		return dto.Error[dto.ApiInterfaceExecutionRecordStatsDto]("查询失败", http.StatusInternalServerError)
 	}
 
 	if len(records) == 0 {
@@ -149,7 +151,7 @@ func (s *ApiInterfaceExecutionRecordService) GetExecutionStats(interfaceID uint6
 func (s *ApiInterfaceExecutionRecordService) CountByTimeRange(startTime, endTime int64) dto.ApiData[int64] {
 	count, err := s.repo.CountByTimeRange(startTime, endTime)
 	if err != nil {
-		return dto.Error[int64]("统计失败", 500)
+		return dto.Error[int64]("统计失败", http.StatusInternalServerError)
 	}
 	return dto.Success(count)
 }
@@ -158,7 +160,7 @@ func (s *ApiInterfaceExecutionRecordService) CountByTimeRange(startTime, endTime
 func (s *ApiInterfaceExecutionRecordService) DeleteByTimeBefore(beforeTime int64) dto.ApiData[int64] {
 	deletedCount, err := s.repo.DeleteByTimeBefore(beforeTime)
 	if err != nil {
-		return dto.Error[int64]("删除失败", 500)
+		return dto.Error[int64]("删除失败", http.StatusInternalServerError)
 	}
 	return dto.Success(deletedCount)
 }

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"net/url"
 	"strings"
 	"time"
@@ -38,7 +39,7 @@ func NewApiInterfaceService(
 func (s *ApiInterfaceService) FindPage(query dto.ApiInterfaceQueryDto) dto.ApiData[dto.PageResult[dto.ApiInterfaceDto]] {
 	interfaces, total, err := s.apiInterfaceRepo.Page(query)
 	if err != nil {
-		return dto.Error[dto.PageResult[dto.ApiInterfaceDto]]("查询失败", 500)
+		return dto.Error[dto.PageResult[dto.ApiInterfaceDto]]("查询失败", http.StatusInternalServerError)
 	}
 
 	interfaceDtos := make([]dto.ApiInterfaceDto, len(interfaces))
@@ -61,7 +62,7 @@ func (s *ApiInterfaceService) FindMostUsedInterfaces(days, limit int) dto.ApiDat
 	// 查询最近使用最多的接口ID
 	interfaceIDs, err := s.apiInterfaceExecutionRecordRepo.FindMostUsedInterfaceIDs(days, limit)
 	if err != nil {
-		return dto.Error[[]dto.ApiInterfaceDto]("查询失败", 500)
+		return dto.Error[[]dto.ApiInterfaceDto]("查询失败", http.StatusInternalServerError)
 	}
 
 	if len(interfaceIDs) == 0 {
@@ -71,7 +72,7 @@ func (s *ApiInterfaceService) FindMostUsedInterfaces(days, limit int) dto.ApiDat
 	// 根据ID列表查询接口详情
 	interfaces, err := s.apiInterfaceRepo.FindByIDs(interfaceIDs)
 	if err != nil {
-		return dto.Error[[]dto.ApiInterfaceDto]("查询接口详情失败", 500)
+		return dto.Error[[]dto.ApiInterfaceDto]("查询接口详情失败", http.StatusInternalServerError)
 	}
 
 	// 按照interfaceIDs的顺序排序结果
@@ -94,7 +95,7 @@ func (s *ApiInterfaceService) FindMostUsedInterfaces(days, limit int) dto.ApiDat
 func (s *ApiInterfaceService) FindByID(id uint64) dto.ApiData[dto.ApiInterfaceDto] {
 	apiInterface, err := s.apiInterfaceRepo.FindByID(id)
 	if err != nil {
-		return dto.Error[dto.ApiInterfaceDto]("接口不存在", 404)
+		return dto.Error[dto.ApiInterfaceDto]("接口不存在", http.StatusNotFound)
 	}
 
 	interfaceDto := s.convertToDto(apiInterface)
@@ -105,7 +106,7 @@ func (s *ApiInterfaceService) FindByID(id uint64) dto.ApiData[dto.ApiInterfaceDt
 func (s *ApiInterfaceService) Save(form dto.ApiInterfaceFormDto) dto.ApiData[dto.ApiInterfaceDto] {
 	// 验证POST类型
 	if err := s.validatePostType(&form); err != nil {
-		return dto.Error[dto.ApiInterfaceDto](err.Error(), 400)
+		return dto.Error[dto.ApiInterfaceDto](err.Error(), http.StatusBadRequest)
 	}
 
 	apiInterface := s.convertToEntity(&form)
@@ -121,7 +122,7 @@ func (s *ApiInterfaceService) Save(form dto.ApiInterfaceFormDto) dto.ApiData[dto
 			name = *form.Name
 		}
 		log.Printf("创建接口失败，接口名称: %s, 错误: %v\n", name, err)
-		return dto.Error[dto.ApiInterfaceDto]("创建接口失败", 500)
+		return dto.Error[dto.ApiInterfaceDto]("创建接口失败", http.StatusInternalServerError)
 	}
 
 	interfaceDto := s.convertToDto(apiInterface)
@@ -132,12 +133,12 @@ func (s *ApiInterfaceService) Save(form dto.ApiInterfaceFormDto) dto.ApiData[dto
 func (s *ApiInterfaceService) Update(id uint64, form dto.ApiInterfaceFormDto) dto.ApiData[dto.ApiInterfaceDto] {
 	existing, err := s.apiInterfaceRepo.FindByID(id)
 	if err != nil {
-		return dto.Error[dto.ApiInterfaceDto]("接口不存在", 404)
+		return dto.Error[dto.ApiInterfaceDto]("接口不存在", http.StatusNotFound)
 	}
 
 	// 验证POST类型
 	if err := s.validatePostType(&form); err != nil {
-		return dto.Error[dto.ApiInterfaceDto](err.Error(), 400)
+		return dto.Error[dto.ApiInterfaceDto](err.Error(), http.StatusBadRequest)
 	}
 
 	apiInterface := s.convertToEntity(&form)
@@ -148,7 +149,7 @@ func (s *ApiInterfaceService) Update(id uint64, form dto.ApiInterfaceFormDto) dt
 
 	if err := s.apiInterfaceRepo.Update(apiInterface); err != nil {
 		log.Printf("更新接口失败，接口ID: %d, 错误: %v\n", id, err)
-		return dto.Error[dto.ApiInterfaceDto]("更新接口失败", 500)
+		return dto.Error[dto.ApiInterfaceDto]("更新接口失败", http.StatusInternalServerError)
 	}
 
 	interfaceDto := s.convertToDto(apiInterface)
@@ -159,7 +160,7 @@ func (s *ApiInterfaceService) Update(id uint64, form dto.ApiInterfaceFormDto) dt
 func (s *ApiInterfaceService) Delete(id uint64) dto.ApiData[any] {
 	if err := s.apiInterfaceRepo.Delete(id); err != nil {
 		log.Printf("删除接口失败，接口ID: %d, 错误: %v\n", id, err)
-		return dto.Error[any]("删除接口失败", 500)
+		return dto.Error[any]("删除接口失败", http.StatusInternalServerError)
 	}
 	return dto.Success[any](nil)
 }
@@ -168,7 +169,7 @@ func (s *ApiInterfaceService) Delete(id uint64) dto.ApiData[any] {
 func (s *ApiInterfaceService) UpdateStatus(id uint64, status int) dto.ApiData[dto.ApiInterfaceDto] {
 	apiInterface, err := s.apiInterfaceRepo.FindByID(id)
 	if err != nil {
-		return dto.Error[dto.ApiInterfaceDto]("接口不存在", 404)
+		return dto.Error[dto.ApiInterfaceDto]("接口不存在", http.StatusNotFound)
 	}
 
 	apiInterface.Status = &status
@@ -176,7 +177,7 @@ func (s *ApiInterfaceService) UpdateStatus(id uint64, status int) dto.ApiData[dt
 
 	if err := s.apiInterfaceRepo.Update(apiInterface); err != nil {
 		log.Printf("更新接口状态失败，接口ID: %d, 状态: %d, 错误: %v\n", id, status, err)
-		return dto.Error[dto.ApiInterfaceDto]("更新状态失败", 500)
+		return dto.Error[dto.ApiInterfaceDto]("更新状态失败", http.StatusInternalServerError)
 	}
 
 	interfaceDto := s.convertToDto(apiInterface)
@@ -187,7 +188,7 @@ func (s *ApiInterfaceService) UpdateStatus(id uint64, status int) dto.ApiData[dt
 func (s *ApiInterfaceService) Copy(id uint64) dto.ApiData[dto.ApiInterfaceDto] {
 	existing, err := s.apiInterfaceRepo.FindByID(id)
 	if err != nil {
-		return dto.Error[dto.ApiInterfaceDto]("接口不存在", 404)
+		return dto.Error[dto.ApiInterfaceDto]("接口不存在", http.StatusNotFound)
 	}
 
 	newInterface := *existing
@@ -202,7 +203,7 @@ func (s *ApiInterfaceService) Copy(id uint64) dto.ApiData[dto.ApiInterfaceDto] {
 	newInterface.Status = &status
 
 	if err := s.apiInterfaceRepo.Create(&newInterface); err != nil {
-		return dto.Error[dto.ApiInterfaceDto]("复制接口失败", 500)
+		return dto.Error[dto.ApiInterfaceDto]("复制接口失败", http.StatusInternalServerError)
 	}
 
 	interfaceDto := s.convertToDto(&newInterface)
@@ -221,13 +222,13 @@ func (s *ApiInterfaceService) Execute(req dto.ApiExecuteRequestDto, executorID u
 
 	// 获取接口信息
 	if req.InterfaceID == nil {
-		return dto.Error[dto.ApiExecuteResponseDto]("接口ID不能为空", 400)
+		return dto.Error[dto.ApiExecuteResponseDto]("接口ID不能为空", http.StatusBadRequest)
 	}
 
 	apiInterface, err := s.apiInterfaceRepo.FindByID(*req.InterfaceID)
 	if err != nil {
 		log.Printf("执行接口失败，接口ID: %d, 错误: %v\n", *req.InterfaceID, err)
-		return dto.Error[dto.ApiExecuteResponseDto]("接口不存在", 404)
+		return dto.Error[dto.ApiExecuteResponseDto]("接口不存在", http.StatusNotFound)
 	}
 
 	// 检查接口状态
@@ -248,7 +249,7 @@ func (s *ApiInterfaceService) Execute(req dto.ApiExecuteRequestDto, executorID u
 	if err := s.validateRequiredParams(apiInterface, processedReq); err != nil {
 		responseTime := time.Since(startTime).Milliseconds()
 		return dto.Success(dto.ApiExecuteResponseDto{
-			Status:       400,
+			Status:       http.StatusBadRequest,
 			Success:      false,
 			Error:        stringPtr(err.Error()),
 			ResponseTime: responseTime,
@@ -262,14 +263,14 @@ func (s *ApiInterfaceService) Execute(req dto.ApiExecuteRequestDto, executorID u
 	if err != nil {
 		// 记录失败的执行记录
 		s.saveExecutionRecord(*processedReq.InterfaceID, &executorID, executorName, processedReq, &dto.ApiExecuteResponseDto{
-			Status:       500,
+			Status:       http.StatusInternalServerError,
 			Success:      false,
 			Error:        stringPtr(err.Error()),
 			ResponseTime: responseTime,
 		}, clientIP, userAgent, req.Remark)
 
 		return dto.Success(dto.ApiExecuteResponseDto{
-			Status:       500,
+			Status:       http.StatusInternalServerError,
 			Success:      false,
 			Error:        stringPtr(err.Error()),
 			ResponseTime: responseTime,

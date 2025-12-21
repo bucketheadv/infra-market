@@ -2,10 +2,12 @@ package service
 
 import (
 	"log"
+	"net/http"
 	"sort"
 
 	"github.com/bucketheadv/infra-market/internal/dto"
 	"github.com/bucketheadv/infra-market/internal/entity"
+	"github.com/bucketheadv/infra-market/internal/enums"
 	"github.com/bucketheadv/infra-market/internal/repository"
 	"github.com/bucketheadv/infra-market/internal/util"
 )
@@ -30,7 +32,7 @@ func (s *PermissionService) GetPermissions(query dto.PermissionQueryDto) dto.Api
 	permissions, total, err := s.permissionRepo.Page(query)
 	if err != nil {
 		log.Printf("获取权限列表失败: %v\n", err)
-		return dto.Error[dto.PageResult[dto.PermissionDto]]("查询失败", 500)
+		return dto.Error[dto.PageResult[dto.PermissionDto]]("查询失败", http.StatusInternalServerError)
 	}
 
 	permissionDtos := make([]dto.PermissionDto, len(permissions))
@@ -55,7 +57,7 @@ func (s *PermissionService) GetPermissionTree() dto.ApiData[[]dto.PermissionDto]
 	// 只返回激活状态的权限
 	activePermissions := make([]entity.Permission, 0)
 	for _, p := range permissions {
-		if p.Status == "active" {
+		if p.Status == enums.StatusActive.Code() {
 			activePermissions = append(activePermissions, p)
 		}
 	}
@@ -69,7 +71,7 @@ func (s *PermissionService) GetPermission(id uint64) dto.ApiData[dto.PermissionD
 	permission, err := s.permissionRepo.FindByID(id)
 	if err != nil {
 		log.Printf("获取权限详情失败，权限ID: %d, 错误: %v\n", id, err)
-		return dto.Error[dto.PermissionDto]("权限不存在", 404)
+		return dto.Error[dto.PermissionDto]("权限不存在", http.StatusNotFound)
 	}
 
 	permissionDto := s.convertPermissionToDtoWithParent(permission)
@@ -80,7 +82,7 @@ func (s *PermissionService) GetPermission(id uint64) dto.ApiData[dto.PermissionD
 func (s *PermissionService) CreatePermission(form dto.PermissionFormDto) dto.ApiData[dto.PermissionDto] {
 	// 检查权限编码是否已存在
 	if _, err := s.permissionRepo.FindByCode(form.Code); err == nil {
-		return dto.Error[dto.PermissionDto]("权限编码已存在", 400)
+		return dto.Error[dto.PermissionDto]("权限编码已存在", http.StatusBadRequest)
 	}
 
 	permission := &entity.Permission{
@@ -91,12 +93,12 @@ func (s *PermissionService) CreatePermission(form dto.PermissionFormDto) dto.Api
 		Path:     form.Path,
 		Icon:     form.Icon,
 		Sort:     form.Sort,
-		Status:   "active",
+		Status:   enums.StatusActive.Code(),
 	}
 
 	if err := s.permissionRepo.Create(permission); err != nil {
 		log.Printf("创建权限失败，权限编码: %s, 错误: %v\n", form.Code, err)
-		return dto.Error[dto.PermissionDto]("创建权限失败", 500)
+		return dto.Error[dto.PermissionDto]("创建权限失败", http.StatusInternalServerError)
 	}
 
 	permissionDto := s.convertPermissionToDto(permission, nil)
@@ -108,12 +110,12 @@ func (s *PermissionService) UpdatePermission(id uint64, form dto.PermissionFormD
 	permission, err := s.permissionRepo.FindByID(id)
 	if err != nil {
 		log.Printf("更新权限失败，权限ID: %d, 错误: %v\n", id, err)
-		return dto.Error[dto.PermissionDto]("权限不存在", 404)
+		return dto.Error[dto.PermissionDto]("权限不存在", http.StatusNotFound)
 	}
 
 	// 检查权限编码是否已被其他权限使用
 	if existingPermission, err := s.permissionRepo.FindByCode(form.Code); err == nil && existingPermission.ID != permission.ID {
-		return dto.Error[dto.PermissionDto]("权限编码已存在", 400)
+		return dto.Error[dto.PermissionDto]("权限编码已存在", http.StatusBadRequest)
 	}
 
 	permission.Name = form.Name
@@ -125,7 +127,7 @@ func (s *PermissionService) UpdatePermission(id uint64, form dto.PermissionFormD
 
 	if err := s.permissionRepo.Update(permission); err != nil {
 		log.Printf("更新权限失败，权限ID: %d, 错误: %v\n", id, err)
-		return dto.Error[dto.PermissionDto]("更新权限失败", 500)
+		return dto.Error[dto.PermissionDto]("更新权限失败", http.StatusInternalServerError)
 	}
 
 	permissionDto := s.convertPermissionToDto(permission, nil)
@@ -137,23 +139,23 @@ func (s *PermissionService) DeletePermission(id uint64) dto.ApiData[any] {
 	permission, err := s.permissionRepo.FindByID(id)
 	if err != nil {
 		log.Printf("删除权限失败，权限ID: %d, 错误: %v\n", id, err)
-		return dto.Error[any]("权限不存在", 404)
+		return dto.Error[any]("权限不存在", http.StatusNotFound)
 	}
 
-	if permission.Code == "system" {
-		return dto.Error[any]("不能删除系统权限", 400)
+	if permission.Code == enums.SystemPermissionCode {
+		return dto.Error[any]("不能删除系统权限", http.StatusBadRequest)
 	}
 
 	// 检查是否有子权限
 	childPermissions, _ := s.permissionRepo.FindByParentID(id)
 	if len(childPermissions) > 0 {
-		return dto.Error[any]("该权限下还有子权限，无法删除", 400)
+		return dto.Error[any]("该权限下还有子权限，无法删除", http.StatusBadRequest)
 	}
 
-	permission.Status = "deleted"
+	permission.Status = enums.StatusDeleted.Code()
 	if err := s.permissionRepo.Update(permission); err != nil {
 		log.Printf("删除权限失败，权限ID: %d, 错误: %v\n", id, err)
-		return dto.Error[any]("删除权限失败", 500)
+		return dto.Error[any]("删除权限失败", http.StatusInternalServerError)
 	}
 
 	return dto.Success[any](nil)
@@ -164,25 +166,25 @@ func (s *PermissionService) UpdatePermissionStatus(id uint64, status string) dto
 	permission, err := s.permissionRepo.FindByID(id)
 	if err != nil {
 		log.Printf("更新权限状态失败，权限ID: %d, 错误: %v\n", id, err)
-		return dto.Error[any]("权限不存在", 404)
+		return dto.Error[any]("权限不存在", http.StatusNotFound)
 	}
 
-	if permission.Code == "system" && status == "deleted" {
-		return dto.Error[any]("不能删除系统权限", 400)
+	if permission.Code == enums.SystemPermissionCode && status == enums.StatusDeleted.Code() {
+		return dto.Error[any]("不能删除系统权限", http.StatusBadRequest)
 	}
 
-	if permission.Status == "deleted" && status != "deleted" {
-		return dto.Error[any]("已删除的权限不能重新启用", 400)
+	if permission.Status == enums.StatusDeleted.Code() && status != enums.StatusDeleted.Code() {
+		return dto.Error[any]("已删除的权限不能重新启用", http.StatusBadRequest)
 	}
 
-	if status == "deleted" {
+	if status == enums.StatusDeleted.Code() {
 		return s.DeletePermission(id)
 	}
 
 	permission.Status = status
 	if err := s.permissionRepo.Update(permission); err != nil {
 		log.Printf("更新权限状态失败，权限ID: %d, 状态: %s, 错误: %v\n", id, status, err)
-		return dto.Error[any]("更新状态失败", 500)
+		return dto.Error[any]("更新状态失败", http.StatusInternalServerError)
 	}
 
 	return dto.Success[any](nil)

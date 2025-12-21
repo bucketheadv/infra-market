@@ -2,10 +2,12 @@ package service
 
 import (
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/bucketheadv/infra-market/internal/dto"
 	"github.com/bucketheadv/infra-market/internal/entity"
+	"github.com/bucketheadv/infra-market/internal/enums"
 	"github.com/bucketheadv/infra-market/internal/repository"
 	"github.com/bucketheadv/infra-market/internal/util"
 )
@@ -38,17 +40,17 @@ func NewAuthService(
 func (s *AuthService) Login(req dto.LoginRequest) dto.ApiData[dto.LoginResponse] {
 	user, err := s.userRepo.FindByUsername(req.Username)
 	if err != nil {
-		return dto.Error[dto.LoginResponse]("用户名或密码错误", 400)
+		return dto.Error[dto.LoginResponse]("用户名或密码错误", http.StatusBadRequest)
 	}
 
 	// 验证密码
 	if !util.Matches(req.Password, user.Password) {
-		return dto.Error[dto.LoginResponse]("用户名或密码错误", 400)
+		return dto.Error[dto.LoginResponse]("用户名或密码错误", http.StatusBadRequest)
 	}
 
 	// 检查用户状态
-	if user.Status != "active" {
-		return dto.Error[dto.LoginResponse]("用户已被禁用", 400)
+	if user.Status != enums.StatusActive.Code() {
+		return dto.Error[dto.LoginResponse]("用户已被禁用", http.StatusBadRequest)
 	}
 
 	// 更新登录时间
@@ -63,7 +65,7 @@ func (s *AuthService) Login(req dto.LoginRequest) dto.ApiData[dto.LoginResponse]
 	token, err := util.GenerateToken(user.ID, user.Username)
 	if err != nil {
 		log.Printf("用户登录失败，生成token失败，用户名: %s, 错误: %v\n", req.Username, err)
-		return dto.Error[dto.LoginResponse]("生成token失败", 500)
+		return dto.Error[dto.LoginResponse]("生成token失败", http.StatusInternalServerError)
 	}
 
 	// 保存token到Redis
@@ -90,11 +92,11 @@ func (s *AuthService) GetCurrentUser(uid uint64) dto.ApiData[dto.LoginResponse] 
 	user, err := s.userRepo.FindByUID(uid)
 	if err != nil {
 		log.Printf("获取当前用户信息失败，用户ID: %d, 错误: %v\n", uid, err)
-		return dto.Error[dto.LoginResponse]("用户不存在", 404)
+		return dto.Error[dto.LoginResponse]("用户不存在", http.StatusNotFound)
 	}
 
-	if user.Status != "active" {
-		return dto.Error[dto.LoginResponse]("用户已被禁用", 400)
+	if user.Status != enums.StatusActive.Code() {
+		return dto.Error[dto.LoginResponse]("用户已被禁用", http.StatusBadRequest)
 	}
 
 	permissions := s.getUserPermissions(user.ID)
@@ -114,11 +116,11 @@ func (s *AuthService) GetUserMenus(uid uint64) dto.ApiData[[]dto.PermissionDto] 
 	user, err := s.userRepo.FindByUID(uid)
 	if err != nil {
 		log.Printf("获取用户菜单失败，用户ID: %d, 错误: %v\n", uid, err)
-		return dto.Error[[]dto.PermissionDto]("用户不存在", 404)
+		return dto.Error[[]dto.PermissionDto]("用户不存在", http.StatusNotFound)
 	}
 
-	if user.Status != "active" {
-		return dto.Error[[]dto.PermissionDto]("用户已被禁用", 400)
+	if user.Status != enums.StatusActive.Code() {
+		return dto.Error[[]dto.PermissionDto]("用户已被禁用", http.StatusBadRequest)
 	}
 
 	// 获取用户的所有权限（包括按钮权限）
@@ -162,7 +164,7 @@ func (s *AuthService) GetUserMenus(uid uint64) dto.ApiData[[]dto.PermissionDto] 
 
 	// 从按钮权限向上收集父级菜单
 	for _, permission := range allUserPermissions {
-		if permission.Type == "button" && permission.ParentID != nil {
+		if permission.Type == enums.PermissionTypeButton.Code() && permission.ParentID != nil {
 			currentParentID := permission.ParentID
 			for currentParentID != nil {
 				allMenuPermissionIds[*currentParentID] = true
@@ -179,7 +181,7 @@ func (s *AuthService) GetUserMenus(uid uint64) dto.ApiData[[]dto.PermissionDto] 
 
 	// 从菜单权限向上收集父级菜单
 	for _, permission := range allUserPermissions {
-		if permission.Type == "menu" {
+		if permission.Type == enums.PermissionTypeMenu.Code() {
 			// 向上收集父级菜单
 			if permission.ParentID != nil {
 				currentParentID := permission.ParentID
@@ -215,7 +217,7 @@ func (s *AuthService) GetUserMenus(uid uint64) dto.ApiData[[]dto.PermissionDto] 
 	// 只保留菜单类型的权限
 	menuPermissions := make([]entity.Permission, 0)
 	for _, p := range allPermissions {
-		if p.Type == "menu" {
+		if p.Type == enums.PermissionTypeMenu.Code() {
 			menuPermissions = append(menuPermissions, p)
 		}
 	}
@@ -230,13 +232,13 @@ func (s *AuthService) GetUserMenus(uid uint64) dto.ApiData[[]dto.PermissionDto] 
 func (s *AuthService) RefreshToken(uid uint64) dto.ApiData[map[string]string] {
 	user, err := s.userRepo.FindByUID(uid)
 	if err != nil {
-		return dto.Error[map[string]string]("用户不存在", 404)
+		return dto.Error[map[string]string]("用户不存在", http.StatusNotFound)
 	}
 
 	token, err := util.GenerateToken(user.ID, user.Username)
 	if err != nil {
 		log.Printf("刷新token失败，生成token失败，用户ID: %d, 错误: %v\n", uid, err)
-		return dto.Error[map[string]string]("生成token失败", 500)
+		return dto.Error[map[string]string]("生成token失败", http.StatusInternalServerError)
 	}
 
 	s.tokenService.SaveToken(uid, token)
@@ -248,25 +250,25 @@ func (s *AuthService) RefreshToken(uid uint64) dto.ApiData[map[string]string] {
 func (s *AuthService) ChangePassword(uid uint64, req dto.ChangePasswordRequest) dto.ApiData[any] {
 	user, err := s.userRepo.FindByUID(uid)
 	if err != nil {
-		return dto.Error[any]("用户不存在", 404)
+		return dto.Error[any]("用户不存在", http.StatusNotFound)
 	}
 
 	// 验证原密码
 	if !util.Matches(req.OldPassword, user.Password) {
-		return dto.Error[any]("原密码错误", 400)
+		return dto.Error[any]("原密码错误", http.StatusBadRequest)
 	}
 
 	// 加密新密码
 	encryptedPassword, err := util.Encrypt(req.NewPassword)
 	if err != nil {
 		log.Printf("修改密码失败，密码加密失败，用户ID: %d, 错误: %v\n", uid, err)
-		return dto.Error[any]("密码加密失败", 500)
+		return dto.Error[any]("密码加密失败", http.StatusInternalServerError)
 	}
 
 	user.Password = encryptedPassword
 	if err := s.userRepo.Update(user); err != nil {
 		log.Printf("修改密码失败，更新密码失败，用户ID: %d, 错误: %v\n", uid, err)
-		return dto.Error[any]("更新密码失败", 500)
+		return dto.Error[any]("更新密码失败", http.StatusInternalServerError)
 	}
 
 	return dto.Success[any](nil)
@@ -327,7 +329,7 @@ func (s *AuthService) getUserPermissions(uid uint64) []string {
 	codes := make([]string, 0)
 	for _, p := range permissions {
 		// 只返回激活状态的权限
-		if p.Status == "active" && p.Code != "" {
+		if p.Status == enums.StatusActive.Code() && p.Code != "" {
 			// 去重
 			if !codeSet[p.Code] {
 				codeSet[p.Code] = true

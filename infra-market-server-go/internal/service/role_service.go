@@ -2,9 +2,11 @@ package service
 
 import (
 	"log"
+	"net/http"
 
 	"github.com/bucketheadv/infra-market/internal/dto"
 	"github.com/bucketheadv/infra-market/internal/entity"
+	"github.com/bucketheadv/infra-market/internal/enums"
 	"github.com/bucketheadv/infra-market/internal/repository"
 	"github.com/bucketheadv/infra-market/internal/util"
 	"gorm.io/gorm"
@@ -67,7 +69,7 @@ func (s *RoleService) GetRoles(query dto.RoleQueryDto) dto.ApiData[dto.PageResul
 	roles, total, err := s.roleRepo.Page(query)
 	if err != nil {
 		log.Printf("获取角色列表失败: %v\n", err)
-		return dto.Error[dto.PageResult[dto.RoleDto]]("查询失败", 500)
+		return dto.Error[dto.PageResult[dto.RoleDto]]("查询失败", http.StatusInternalServerError)
 	}
 
 	roleDtos := s.convertRolesToDtos(roles)
@@ -84,10 +86,10 @@ func (s *RoleService) GetRoles(query dto.RoleQueryDto) dto.ApiData[dto.PageResul
 
 // GetAllRoles 获取所有激活的角色
 func (s *RoleService) GetAllRoles() dto.ApiData[[]dto.RoleDto] {
-	roles, err := s.roleRepo.FindByStatus("active")
+	roles, err := s.roleRepo.FindByStatus(enums.StatusActive.Code())
 	if err != nil {
 		log.Printf("获取所有激活角色失败: %v\n", err)
-		return dto.Error[[]dto.RoleDto]("查询失败", 500)
+		return dto.Error[[]dto.RoleDto]("查询失败", http.StatusInternalServerError)
 	}
 
 	roleDtos := s.convertRolesToDtos(roles)
@@ -99,7 +101,7 @@ func (s *RoleService) GetRole(id uint64) dto.ApiData[dto.RoleDto] {
 	role, err := s.roleRepo.FindByID(id)
 	if err != nil {
 		log.Printf("获取角色详情失败，角色ID: %d, 错误: %v\n", id, err)
-		return dto.Error[dto.RoleDto]("角色不存在", 404)
+		return dto.Error[dto.RoleDto]("角色不存在", http.StatusNotFound)
 	}
 
 	rolePermissions, _ := s.rolePermissionRepo.FindByRoleID(id)
@@ -116,14 +118,14 @@ func (s *RoleService) GetRole(id uint64) dto.ApiData[dto.RoleDto] {
 func (s *RoleService) CreateRole(form dto.RoleFormDto) dto.ApiData[dto.RoleDto] {
 	// 检查角色编码是否已存在
 	if _, err := s.roleRepo.FindByCode(form.Code); err == nil {
-		return dto.Error[dto.RoleDto]("角色编码已存在", 400)
+		return dto.Error[dto.RoleDto]("角色编码已存在", http.StatusBadRequest)
 	}
 
 	role := &entity.Role{
 		Name:        form.Name,
 		Code:        form.Code,
 		Description: form.Description,
-		Status:      "active",
+		Status:      enums.StatusActive.Code(),
 	}
 
 	// 在事务中执行：创建角色 + 创建角色权限关联
@@ -153,7 +155,7 @@ func (s *RoleService) CreateRole(form dto.RoleFormDto) dto.ApiData[dto.RoleDto] 
 
 	if err != nil {
 		log.Printf("创建角色失败，角色编码: %s, 错误: %v\n", form.Code, err)
-		return dto.Error[dto.RoleDto]("创建角色失败", 500)
+		return dto.Error[dto.RoleDto]("创建角色失败", http.StatusInternalServerError)
 	}
 
 	roleDto := s.convertRoleToDto(role, form.PermissionIds)
@@ -165,12 +167,12 @@ func (s *RoleService) UpdateRole(id uint64, form dto.RoleFormDto) dto.ApiData[dt
 	role, err := s.roleRepo.FindByID(id)
 	if err != nil {
 		log.Printf("更新角色失败，角色ID: %d, 错误: %v\n", id, err)
-		return dto.Error[dto.RoleDto]("角色不存在", 404)
+		return dto.Error[dto.RoleDto]("角色不存在", http.StatusNotFound)
 	}
 
 	// 检查角色编码是否已被其他角色使用
 	if existingRole, err := s.roleRepo.FindByCode(form.Code); err == nil && existingRole.ID != role.ID {
-		return dto.Error[dto.RoleDto]("角色编码已存在", 400)
+		return dto.Error[dto.RoleDto]("角色编码已存在", http.StatusBadRequest)
 	}
 
 	role.Name = form.Name
@@ -208,7 +210,7 @@ func (s *RoleService) UpdateRole(id uint64, form dto.RoleFormDto) dto.ApiData[dt
 
 	if err != nil {
 		log.Printf("更新角色失败，角色ID: %d, 错误: %v\n", id, err)
-		return dto.Error[dto.RoleDto]("更新角色失败", 500)
+		return dto.Error[dto.RoleDto]("更新角色失败", http.StatusInternalServerError)
 	}
 
 	roleDto := s.convertRoleToDto(role, form.PermissionIds)
@@ -220,23 +222,23 @@ func (s *RoleService) DeleteRole(id uint64) dto.ApiData[any] {
 	role, err := s.roleRepo.FindByID(id)
 	if err != nil {
 		log.Printf("删除角色失败，角色ID: %d, 错误: %v\n", id, err)
-		return dto.Error[any]("角色不存在", 404)
+		return dto.Error[any]("角色不存在", http.StatusNotFound)
 	}
 
-	if role.Code == "admin" {
-		return dto.Error[any]("不能删除系统角色", 400)
+	if role.Code == enums.AdminRoleCode {
+		return dto.Error[any]("不能删除系统角色", http.StatusBadRequest)
 	}
 
 	// 检查是否有用户正在使用此角色
 	userCount, _ := s.userRoleRepo.CountByRoleID(id)
 	if userCount > 0 {
-		return dto.Error[any]("该角色下还有用户，无法删除", 400)
+		return dto.Error[any]("该角色下还有用户，无法删除", http.StatusBadRequest)
 	}
 
-	role.Status = "deleted"
+	role.Status = enums.StatusDeleted.Code()
 	if err := s.roleRepo.Update(role); err != nil {
 		log.Printf("删除角色失败，角色ID: %d, 错误: %v\n", id, err)
-		return dto.Error[any]("删除角色失败", 500)
+		return dto.Error[any]("删除角色失败", http.StatusInternalServerError)
 	}
 
 	return dto.Success[any](nil)
@@ -247,25 +249,25 @@ func (s *RoleService) UpdateRoleStatus(id uint64, status string) dto.ApiData[any
 	role, err := s.roleRepo.FindByID(id)
 	if err != nil {
 		log.Printf("更新角色状态失败，角色ID: %d, 错误: %v\n", id, err)
-		return dto.Error[any]("角色不存在", 404)
+		return dto.Error[any]("角色不存在", http.StatusNotFound)
 	}
 
-	if role.Code == "admin" && status == "deleted" {
-		return dto.Error[any]("不能删除系统角色", 400)
+	if role.Code == enums.AdminRoleCode && status == enums.StatusDeleted.Code() {
+		return dto.Error[any]("不能删除系统角色", http.StatusBadRequest)
 	}
 
-	if role.Status == "deleted" && status != "deleted" {
-		return dto.Error[any]("已删除的角色不能重新启用", 400)
+	if role.Status == enums.StatusDeleted.Code() && status != enums.StatusDeleted.Code() {
+		return dto.Error[any]("已删除的角色不能重新启用", http.StatusBadRequest)
 	}
 
-	if status == "deleted" {
+	if status == enums.StatusDeleted.Code() {
 		return s.DeleteRole(id)
 	}
 
 	role.Status = status
 	if err := s.roleRepo.Update(role); err != nil {
 		log.Printf("更新角色状态失败，角色ID: %d, 状态: %s, 错误: %v\n", id, status, err)
-		return dto.Error[any]("更新状态失败", 500)
+		return dto.Error[any]("更新状态失败", http.StatusInternalServerError)
 	}
 
 	return dto.Success[any](nil)
