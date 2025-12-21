@@ -29,7 +29,6 @@ func (r *ApiInterfaceExecutionRecordRepository) FindByID(id uint64) (*entity.Api
 // Page 分页查询
 func (r *ApiInterfaceExecutionRecordRepository) Page(query dto.ApiInterfaceExecutionRecordQueryDto) ([]entity.ApiInterfaceExecutionRecord, int64, error) {
 	var records []entity.ApiInterfaceExecutionRecord
-	var total int64
 
 	db := r.db.Model(&entity.ApiInterfaceExecutionRecord{})
 
@@ -58,22 +57,7 @@ func (r *ApiInterfaceExecutionRecordRepository) Page(query dto.ApiInterfaceExecu
 		db = db.Where("create_time <= ?", *query.EndTime)
 	}
 
-	if err := db.Count(&total).Error; err != nil {
-		return nil, 0, err
-	}
-
-	page := 1
-	if query.Page != nil {
-		page = *query.Page
-	}
-	size := 10
-	if query.Size != nil {
-		size = *query.Size
-	}
-	offset := (page - 1) * size
-
-	err := db.Order("create_time DESC").Offset(offset).Limit(size).Find(&records).Error
-	return records, total, err
+	return PaginateQuery(db, query.Page, query.Size, "create_time DESC", &records)
 }
 
 // FindByExecutorID 根据执行人ID查询

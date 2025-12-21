@@ -37,7 +37,6 @@ func (r *ApiInterfaceRepository) FindByIDs(ids []uint64) ([]entity.ApiInterface,
 // Page 分页查询
 func (r *ApiInterfaceRepository) Page(query dto.ApiInterfaceQueryDto) ([]entity.ApiInterface, int64, error) {
 	var interfaces []entity.ApiInterface
-	var total int64
 
 	db := r.db.Model(&entity.ApiInterface{})
 
@@ -54,22 +53,7 @@ func (r *ApiInterfaceRepository) Page(query dto.ApiInterfaceQueryDto) ([]entity.
 		db = db.Where("environment = ?", *query.Environment)
 	}
 
-	if err := db.Count(&total).Error; err != nil {
-		return nil, 0, err
-	}
-
-	page := 1
-	if query.Page != nil {
-		page = *query.Page
-	}
-	size := 10
-	if query.Size != nil {
-		size = *query.Size
-	}
-	offset := (page - 1) * size
-
-	err := db.Order("create_time DESC").Offset(offset).Limit(size).Find(&interfaces).Error
-	return interfaces, total, err
+	return PaginateQuery(db, query.Page, query.Size, "create_time DESC", &interfaces)
 }
 
 // Create 创建接口

@@ -71,3 +71,19 @@ type ExecutorIDUriParam struct {
 type InterfaceIDUriParam struct {
 	InterfaceID uint64 `uri:"interfaceId" binding:"required,min=1"`
 }
+
+// GetPage 获取分页页码，如果为nil则返回默认值1
+func GetPage(page *int) int {
+	if page != nil {
+		return *page
+	}
+	return 1
+}
+
+// GetSize 获取分页大小，如果为nil则返回默认值10
+func GetSize(size *int) int {
+	if size != nil {
+		return *size
+	}
+	return 10
+}

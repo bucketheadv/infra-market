@@ -27,14 +27,8 @@ func (s *ApiInterfaceExecutionRecordService) FindPage(query dto.ApiInterfaceExec
 		recordDtos[i] = s.convertToDto(&record)
 	}
 
-	page := 1
-	if query.Page != nil {
-		page = *query.Page
-	}
-	size := 10
-	if query.Size != nil {
-		size = *query.Size
-	}
+	page := dto.GetPage(query.Page)
+	size := dto.GetSize(query.Size)
 
 	result := dto.PageResult[dto.ApiInterfaceExecutionRecordDto]{
 		Records: recordDtos,
