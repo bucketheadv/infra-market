@@ -1,6 +1,8 @@
 package service
 
 import (
+	"log"
+
 	"github.com/bucketheadv/infra-market/internal/dto"
 	"github.com/bucketheadv/infra-market/internal/entity"
 	"github.com/bucketheadv/infra-market/internal/repository"
@@ -64,6 +66,7 @@ func (s *RoleService) convertRolesToDtos(roles []entity.Role) []dto.RoleDto {
 func (s *RoleService) GetRoles(query dto.RoleQueryDto) dto.ApiData[dto.PageResult[dto.RoleDto]] {
 	roles, total, err := s.roleRepo.Page(query)
 	if err != nil {
+		log.Printf("获取角色列表失败: %v\n", err)
 		return dto.Error[dto.PageResult[dto.RoleDto]]("查询失败", 500)
 	}
 
@@ -83,6 +86,7 @@ func (s *RoleService) GetRoles(query dto.RoleQueryDto) dto.ApiData[dto.PageResul
 func (s *RoleService) GetAllRoles() dto.ApiData[[]dto.RoleDto] {
 	roles, err := s.roleRepo.FindByStatus("active")
 	if err != nil {
+		log.Printf("获取所有激活角色失败: %v\n", err)
 		return dto.Error[[]dto.RoleDto]("查询失败", 500)
 	}
 
@@ -94,6 +98,7 @@ func (s *RoleService) GetAllRoles() dto.ApiData[[]dto.RoleDto] {
 func (s *RoleService) GetRole(id uint64) dto.ApiData[dto.RoleDto] {
 	role, err := s.roleRepo.FindByID(id)
 	if err != nil {
+		log.Printf("获取角色详情失败，角色ID: %d, 错误: %v\n", id, err)
 		return dto.Error[dto.RoleDto]("角色不存在", 404)
 	}
 
@@ -147,6 +152,7 @@ func (s *RoleService) CreateRole(form dto.RoleFormDto) dto.ApiData[dto.RoleDto] 
 	})
 
 	if err != nil {
+		log.Printf("创建角色失败，角色编码: %s, 错误: %v\n", form.Code, err)
 		return dto.Error[dto.RoleDto]("创建角色失败", 500)
 	}
 
@@ -158,6 +164,7 @@ func (s *RoleService) CreateRole(form dto.RoleFormDto) dto.ApiData[dto.RoleDto] 
 func (s *RoleService) UpdateRole(id uint64, form dto.RoleFormDto) dto.ApiData[dto.RoleDto] {
 	role, err := s.roleRepo.FindByID(id)
 	if err != nil {
+		log.Printf("更新角色失败，角色ID: %d, 错误: %v\n", id, err)
 		return dto.Error[dto.RoleDto]("角色不存在", 404)
 	}
 
@@ -200,6 +207,7 @@ func (s *RoleService) UpdateRole(id uint64, form dto.RoleFormDto) dto.ApiData[dt
 	})
 
 	if err != nil {
+		log.Printf("更新角色失败，角色ID: %d, 错误: %v\n", id, err)
 		return dto.Error[dto.RoleDto]("更新角色失败", 500)
 	}
 
@@ -211,6 +219,7 @@ func (s *RoleService) UpdateRole(id uint64, form dto.RoleFormDto) dto.ApiData[dt
 func (s *RoleService) DeleteRole(id uint64) dto.ApiData[any] {
 	role, err := s.roleRepo.FindByID(id)
 	if err != nil {
+		log.Printf("删除角色失败，角色ID: %d, 错误: %v\n", id, err)
 		return dto.Error[any]("角色不存在", 404)
 	}
 
@@ -226,6 +235,7 @@ func (s *RoleService) DeleteRole(id uint64) dto.ApiData[any] {
 
 	role.Status = "deleted"
 	if err := s.roleRepo.Update(role); err != nil {
+		log.Printf("删除角色失败，角色ID: %d, 错误: %v\n", id, err)
 		return dto.Error[any]("删除角色失败", 500)
 	}
 
@@ -236,6 +246,7 @@ func (s *RoleService) DeleteRole(id uint64) dto.ApiData[any] {
 func (s *RoleService) UpdateRoleStatus(id uint64, status string) dto.ApiData[any] {
 	role, err := s.roleRepo.FindByID(id)
 	if err != nil {
+		log.Printf("更新角色状态失败，角色ID: %d, 错误: %v\n", id, err)
 		return dto.Error[any]("角色不存在", 404)
 	}
 
@@ -253,6 +264,7 @@ func (s *RoleService) UpdateRoleStatus(id uint64, status string) dto.ApiData[any
 
 	role.Status = status
 	if err := s.roleRepo.Update(role); err != nil {
+		log.Printf("更新角色状态失败，角色ID: %d, 状态: %s, 错误: %v\n", id, status, err)
 		return dto.Error[any]("更新状态失败", 500)
 	}
 

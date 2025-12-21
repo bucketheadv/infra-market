@@ -1,7 +1,7 @@
 package service
 
 import (
-	"sort"
+	"log"
 	"time"
 
 	"github.com/bucketheadv/infra-market/internal/dto"
@@ -62,6 +62,7 @@ func (s *AuthService) Login(req dto.LoginRequest) dto.ApiData[dto.LoginResponse]
 	// 生成JWT token
 	token, err := util.GenerateToken(user.ID, user.Username)
 	if err != nil {
+		log.Printf("用户登录失败，生成token失败，用户名: %s, 错误: %v\n", req.Username, err)
 		return dto.Error[dto.LoginResponse]("生成token失败", 500)
 	}
 
@@ -88,6 +89,7 @@ func (s *AuthService) Logout(uid uint64) dto.ApiData[any] {
 func (s *AuthService) GetCurrentUser(uid uint64) dto.ApiData[dto.LoginResponse] {
 	user, err := s.userRepo.FindByUID(uid)
 	if err != nil {
+		log.Printf("获取当前用户信息失败，用户ID: %d, 错误: %v\n", uid, err)
 		return dto.Error[dto.LoginResponse]("用户不存在", 404)
 	}
 
@@ -111,6 +113,7 @@ func (s *AuthService) GetCurrentUser(uid uint64) dto.ApiData[dto.LoginResponse] 
 func (s *AuthService) GetUserMenus(uid uint64) dto.ApiData[[]dto.PermissionDto] {
 	user, err := s.userRepo.FindByUID(uid)
 	if err != nil {
+		log.Printf("获取用户菜单失败，用户ID: %d, 错误: %v\n", uid, err)
 		return dto.Error[[]dto.PermissionDto]("用户不存在", 404)
 	}
 
@@ -232,6 +235,7 @@ func (s *AuthService) RefreshToken(uid uint64) dto.ApiData[map[string]string] {
 
 	token, err := util.GenerateToken(user.ID, user.Username)
 	if err != nil {
+		log.Printf("刷新token失败，生成token失败，用户ID: %d, 错误: %v\n", uid, err)
 		return dto.Error[map[string]string]("生成token失败", 500)
 	}
 
@@ -255,11 +259,13 @@ func (s *AuthService) ChangePassword(uid uint64, req dto.ChangePasswordRequest) 
 	// 加密新密码
 	encryptedPassword, err := util.Encrypt(req.NewPassword)
 	if err != nil {
+		log.Printf("修改密码失败，密码加密失败，用户ID: %d, 错误: %v\n", uid, err)
 		return dto.Error[any]("密码加密失败", 500)
 	}
 
 	user.Password = encryptedPassword
 	if err := s.userRepo.Update(user); err != nil {
+		log.Printf("修改密码失败，更新密码失败，用户ID: %d, 错误: %v\n", uid, err)
 		return dto.Error[any]("更新密码失败", 500)
 	}
 
@@ -407,45 +413,7 @@ func (s *AuthService) buildPermissionTree(permissions []entity.Permission) []dto
 		permissionMap[p.ID] = s.convertPermissionToDto(p, nil)
 	}
 
-	// 找到所有根节点并递归构建树
-	var roots []dto.PermissionDto
-	for _, p := range permissions {
-		if p.ParentID == nil {
-			// 根节点，递归构建其子节点树
-			rootDto := s.buildPermissionWithChildren(permissionMap[p.ID], permissionMap)
-			roots = append(roots, rootDto)
-		}
-	}
-
-	// 按sort字段排序
-	sort.Slice(roots, func(i, j int) bool {
-		return roots[i].Sort < roots[j].Sort
-	})
-
-	return roots
-}
-
-// buildPermissionWithChildren 递归构建带子权限的权限对象
-func (s *AuthService) buildPermissionWithChildren(permission dto.PermissionDto, permissionMap map[uint64]dto.PermissionDto) dto.PermissionDto {
-	var children []dto.PermissionDto
-
-	// 查找所有以当前权限为父级的权限
-	for _, childPermission := range permissionMap {
-		if childPermission.ParentID != nil && *childPermission.ParentID == permission.ID {
-			// 递归构建子权限
-			childWithChildren := s.buildPermissionWithChildren(childPermission, permissionMap)
-			children = append(children, childWithChildren)
-		}
-	}
-
-	// 按sort字段排序子权限
-	sort.Slice(children, func(i, j int) bool {
-		return children[i].Sort < children[j].Sort
-	})
-
-	// 返回带有子权限的新PermissionDto
-	permission.Children = children
-	return permission
+	return buildPermissionTreeFromMap(permissions, permissionMap)
 }
 
 // convertUserToDto 转换用户实体为DTO

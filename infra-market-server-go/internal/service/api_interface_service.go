@@ -116,6 +116,11 @@ func (s *ApiInterfaceService) Save(form dto.ApiInterfaceFormDto) dto.ApiData[dto
 	apiInterface.Status = &status
 
 	if err := s.apiInterfaceRepo.Create(apiInterface); err != nil {
+		name := ""
+		if form.Name != nil {
+			name = *form.Name
+		}
+		log.Printf("创建接口失败，接口名称: %s, 错误: %v\n", name, err)
 		return dto.Error[dto.ApiInterfaceDto]("创建接口失败", 500)
 	}
 
@@ -142,6 +147,7 @@ func (s *ApiInterfaceService) Update(id uint64, form dto.ApiInterfaceFormDto) dt
 	apiInterface.Status = existing.Status
 
 	if err := s.apiInterfaceRepo.Update(apiInterface); err != nil {
+		log.Printf("更新接口失败，接口ID: %d, 错误: %v\n", id, err)
 		return dto.Error[dto.ApiInterfaceDto]("更新接口失败", 500)
 	}
 
@@ -152,6 +158,7 @@ func (s *ApiInterfaceService) Update(id uint64, form dto.ApiInterfaceFormDto) dt
 // Delete 删除接口
 func (s *ApiInterfaceService) Delete(id uint64) dto.ApiData[any] {
 	if err := s.apiInterfaceRepo.Delete(id); err != nil {
+		log.Printf("删除接口失败，接口ID: %d, 错误: %v\n", id, err)
 		return dto.Error[any]("删除接口失败", 500)
 	}
 	return dto.Success[any](nil)
@@ -168,6 +175,7 @@ func (s *ApiInterfaceService) UpdateStatus(id uint64, status int) dto.ApiData[dt
 	apiInterface.UpdateTime = time.Now().UnixMilli()
 
 	if err := s.apiInterfaceRepo.Update(apiInterface); err != nil {
+		log.Printf("更新接口状态失败，接口ID: %d, 状态: %d, 错误: %v\n", id, status, err)
 		return dto.Error[dto.ApiInterfaceDto]("更新状态失败", 500)
 	}
 
@@ -218,6 +226,7 @@ func (s *ApiInterfaceService) Execute(req dto.ApiExecuteRequestDto, executorID u
 
 	apiInterface, err := s.apiInterfaceRepo.FindByID(*req.InterfaceID)
 	if err != nil {
+		log.Printf("执行接口失败，接口ID: %d, 错误: %v\n", *req.InterfaceID, err)
 		return dto.Error[dto.ApiExecuteResponseDto]("接口不存在", 404)
 	}
 

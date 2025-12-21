@@ -1,6 +1,7 @@
 package service
 
 import (
+	"log"
 	"sort"
 
 	"github.com/bucketheadv/infra-market/internal/dto"
@@ -28,6 +29,7 @@ func NewPermissionService(
 func (s *PermissionService) GetPermissions(query dto.PermissionQueryDto) dto.ApiData[dto.PageResult[dto.PermissionDto]] {
 	permissions, total, err := s.permissionRepo.Page(query)
 	if err != nil {
+		log.Printf("获取权限列表失败: %v\n", err)
 		return dto.Error[dto.PageResult[dto.PermissionDto]]("查询失败", 500)
 	}
 
@@ -66,6 +68,7 @@ func (s *PermissionService) GetPermissionTree() dto.ApiData[[]dto.PermissionDto]
 func (s *PermissionService) GetPermission(id uint64) dto.ApiData[dto.PermissionDto] {
 	permission, err := s.permissionRepo.FindByID(id)
 	if err != nil {
+		log.Printf("获取权限详情失败，权限ID: %d, 错误: %v\n", id, err)
 		return dto.Error[dto.PermissionDto]("权限不存在", 404)
 	}
 
@@ -92,6 +95,7 @@ func (s *PermissionService) CreatePermission(form dto.PermissionFormDto) dto.Api
 	}
 
 	if err := s.permissionRepo.Create(permission); err != nil {
+		log.Printf("创建权限失败，权限编码: %s, 错误: %v\n", form.Code, err)
 		return dto.Error[dto.PermissionDto]("创建权限失败", 500)
 	}
 
@@ -103,6 +107,7 @@ func (s *PermissionService) CreatePermission(form dto.PermissionFormDto) dto.Api
 func (s *PermissionService) UpdatePermission(id uint64, form dto.PermissionFormDto) dto.ApiData[dto.PermissionDto] {
 	permission, err := s.permissionRepo.FindByID(id)
 	if err != nil {
+		log.Printf("更新权限失败，权限ID: %d, 错误: %v\n", id, err)
 		return dto.Error[dto.PermissionDto]("权限不存在", 404)
 	}
 
@@ -119,6 +124,7 @@ func (s *PermissionService) UpdatePermission(id uint64, form dto.PermissionFormD
 	permission.Sort = form.Sort
 
 	if err := s.permissionRepo.Update(permission); err != nil {
+		log.Printf("更新权限失败，权限ID: %d, 错误: %v\n", id, err)
 		return dto.Error[dto.PermissionDto]("更新权限失败", 500)
 	}
 
@@ -130,6 +136,7 @@ func (s *PermissionService) UpdatePermission(id uint64, form dto.PermissionFormD
 func (s *PermissionService) DeletePermission(id uint64) dto.ApiData[any] {
 	permission, err := s.permissionRepo.FindByID(id)
 	if err != nil {
+		log.Printf("删除权限失败，权限ID: %d, 错误: %v\n", id, err)
 		return dto.Error[any]("权限不存在", 404)
 	}
 
@@ -145,6 +152,7 @@ func (s *PermissionService) DeletePermission(id uint64) dto.ApiData[any] {
 
 	permission.Status = "deleted"
 	if err := s.permissionRepo.Update(permission); err != nil {
+		log.Printf("删除权限失败，权限ID: %d, 错误: %v\n", id, err)
 		return dto.Error[any]("删除权限失败", 500)
 	}
 
@@ -155,6 +163,7 @@ func (s *PermissionService) DeletePermission(id uint64) dto.ApiData[any] {
 func (s *PermissionService) UpdatePermissionStatus(id uint64, status string) dto.ApiData[any] {
 	permission, err := s.permissionRepo.FindByID(id)
 	if err != nil {
+		log.Printf("更新权限状态失败，权限ID: %d, 错误: %v\n", id, err)
 		return dto.Error[any]("权限不存在", 404)
 	}
 
@@ -172,6 +181,7 @@ func (s *PermissionService) UpdatePermissionStatus(id uint64, status string) dto
 
 	permission.Status = status
 	if err := s.permissionRepo.Update(permission); err != nil {
+		log.Printf("更新权限状态失败，权限ID: %d, 状态: %s, 错误: %v\n", id, status, err)
 		return dto.Error[any]("更新状态失败", 500)
 	}
 
@@ -187,13 +197,17 @@ func (s *PermissionService) buildPermissionTree(permissions []entity.Permission)
 		permissionMap[p.ID] = s.convertPermissionToDto(&p, nil)
 	}
 
+	return buildPermissionTreeFromMap(permissions, permissionMap)
+}
+
+// buildPermissionTreeFromMap 从权限Map构建权限树（公共函数）
+func buildPermissionTreeFromMap(permissions []entity.Permission, permissionMap map[uint64]dto.PermissionDto) []dto.PermissionDto {
 	// 构建树形结构
 	var roots []dto.PermissionDto
 	for _, p := range permissions {
-		permissionDto := permissionMap[p.ID]
 		if p.ParentID == nil {
 			// 根节点，递归构建其子节点树
-			rootDto := s.buildPermissionWithChildren(permissionDto, permissionMap)
+			rootDto := buildPermissionWithChildren(permissionMap[p.ID], permissionMap)
 			roots = append(roots, rootDto)
 		}
 	}
@@ -206,15 +220,15 @@ func (s *PermissionService) buildPermissionTree(permissions []entity.Permission)
 	return roots
 }
 
-// buildPermissionWithChildren 递归构建带子权限的权限对象
-func (s *PermissionService) buildPermissionWithChildren(permission dto.PermissionDto, permissionMap map[uint64]dto.PermissionDto) dto.PermissionDto {
+// buildPermissionWithChildren 递归构建带子权限的权限对象（公共函数）
+func buildPermissionWithChildren(permission dto.PermissionDto, permissionMap map[uint64]dto.PermissionDto) dto.PermissionDto {
 	var children []dto.PermissionDto
 
 	// 查找所有以当前权限为父级的权限
 	for _, childPermission := range permissionMap {
 		if childPermission.ParentID != nil && *childPermission.ParentID == permission.ID {
 			// 递归构建子权限
-			childWithChildren := s.buildPermissionWithChildren(childPermission, permissionMap)
+			childWithChildren := buildPermissionWithChildren(childPermission, permissionMap)
 			children = append(children, childWithChildren)
 		}
 	}

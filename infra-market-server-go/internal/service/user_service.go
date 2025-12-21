@@ -2,6 +2,7 @@ package service
 
 import (
 	"crypto/rand"
+	"log"
 	"math/big"
 
 	"github.com/bucketheadv/infra-market/internal/dto"
@@ -67,6 +68,7 @@ func (s *UserService) GetUsers(query dto.UserQueryDto) dto.ApiData[dto.PageResul
 func (s *UserService) GetUser(id uint64) dto.ApiData[dto.UserDto] {
 	user, err := s.userRepo.FindByUID(id)
 	if err != nil {
+		log.Printf("获取用户详情失败，用户ID: %d, 错误: %v\n", id, err)
 		return dto.Error[dto.UserDto]("用户不存在", 404)
 	}
 
@@ -110,6 +112,7 @@ func (s *UserService) CreateUser(form dto.UserFormDto) dto.ApiData[dto.UserDto] 
 	}
 	encryptedPassword, err := util.Encrypt(password)
 	if err != nil {
+		log.Printf("创建用户失败，密码加密失败，用户名: %s, 错误: %v\n", form.Username, err)
 		return dto.Error[dto.UserDto]("密码加密失败", 500)
 	}
 
@@ -147,6 +150,7 @@ func (s *UserService) CreateUser(form dto.UserFormDto) dto.ApiData[dto.UserDto] 
 	})
 
 	if err != nil {
+		log.Printf("创建用户失败，用户名: %s, 错误: %v\n", form.Username, err)
 		return dto.Error[dto.UserDto]("创建用户失败", 500)
 	}
 
@@ -158,6 +162,7 @@ func (s *UserService) CreateUser(form dto.UserFormDto) dto.ApiData[dto.UserDto] 
 func (s *UserService) UpdateUser(id uint64, form dto.UserUpdateDto) dto.ApiData[dto.UserDto] {
 	user, err := s.userRepo.FindByUID(id)
 	if err != nil {
+		log.Printf("更新用户失败，用户ID: %d, 错误: %v\n", id, err)
 		return dto.Error[dto.UserDto]("用户不存在", 404)
 	}
 
@@ -188,6 +193,7 @@ func (s *UserService) UpdateUser(id uint64, form dto.UserUpdateDto) dto.ApiData[
 	if form.Password != nil && *form.Password != "" {
 		encryptedPassword, err := util.Encrypt(*form.Password)
 		if err != nil {
+			log.Printf("更新用户失败，密码加密失败，用户ID: %d, 错误: %v\n", id, err)
 			return dto.Error[dto.UserDto]("密码加密失败", 500)
 		}
 		user.Password = encryptedPassword
@@ -224,6 +230,7 @@ func (s *UserService) UpdateUser(id uint64, form dto.UserUpdateDto) dto.ApiData[
 	})
 
 	if err != nil {
+		log.Printf("更新用户失败，用户ID: %d, 错误: %v\n", id, err)
 		return dto.Error[dto.UserDto]("更新用户失败", 500)
 	}
 
@@ -235,6 +242,7 @@ func (s *UserService) UpdateUser(id uint64, form dto.UserUpdateDto) dto.ApiData[
 func (s *UserService) DeleteUser(id uint64) dto.ApiData[any] {
 	user, err := s.userRepo.FindByUID(id)
 	if err != nil {
+		log.Printf("删除用户失败，用户ID: %d, 错误: %v\n", id, err)
 		return dto.Error[any]("用户不存在", 404)
 	}
 
@@ -248,6 +256,7 @@ func (s *UserService) DeleteUser(id uint64) dto.ApiData[any] {
 
 	user.Status = "deleted"
 	if err := s.userRepo.Update(user); err != nil {
+		log.Printf("删除用户失败，用户ID: %d, 错误: %v\n", id, err)
 		return dto.Error[any]("删除用户失败", 500)
 	}
 
@@ -258,6 +267,7 @@ func (s *UserService) DeleteUser(id uint64) dto.ApiData[any] {
 func (s *UserService) UpdateUserStatus(id uint64, status string) dto.ApiData[any] {
 	user, err := s.userRepo.FindByUID(id)
 	if err != nil {
+		log.Printf("更新用户状态失败，用户ID: %d, 错误: %v\n", id, err)
 		return dto.Error[any]("用户不存在", 404)
 	}
 
@@ -275,6 +285,7 @@ func (s *UserService) UpdateUserStatus(id uint64, status string) dto.ApiData[any
 
 	user.Status = status
 	if err := s.userRepo.Update(user); err != nil {
+		log.Printf("更新用户状态失败，用户ID: %d, 状态: %s, 错误: %v\n", id, status, err)
 		return dto.Error[any]("更新状态失败", 500)
 	}
 
@@ -285,6 +296,7 @@ func (s *UserService) UpdateUserStatus(id uint64, status string) dto.ApiData[any
 func (s *UserService) ResetPassword(id uint64) dto.ApiData[map[string]string] {
 	user, err := s.userRepo.FindByUID(id)
 	if err != nil {
+		log.Printf("重置密码失败，用户ID: %d, 错误: %v\n", id, err)
 		return dto.Error[map[string]string]("用户不存在", 404)
 	}
 
@@ -292,11 +304,13 @@ func (s *UserService) ResetPassword(id uint64) dto.ApiData[map[string]string] {
 	newPassword := generateRandomPassword()
 	encryptedPassword, err := util.Encrypt(newPassword)
 	if err != nil {
+		log.Printf("重置密码失败，密码加密失败，用户ID: %d, 错误: %v\n", id, err)
 		return dto.Error[map[string]string]("密码加密失败", 500)
 	}
 
 	user.Password = encryptedPassword
 	if err := s.userRepo.Update(user); err != nil {
+		log.Printf("重置密码失败，用户ID: %d, 错误: %v\n", id, err)
 		return dto.Error[map[string]string]("重置密码失败", 500)
 	}
 
@@ -311,6 +325,7 @@ func (s *UserService) BatchDeleteUsers(ids []uint64) dto.ApiData[any] {
 
 	users, err := s.userRepo.FindByUIDs(ids)
 	if err != nil || len(users) != len(ids) {
+		log.Printf("批量删除用户失败，查询用户失败，错误: %v\n", err)
 		return dto.Error[any]("部分用户不存在", 400)
 	}
 
@@ -334,6 +349,7 @@ func (s *UserService) BatchDeleteUsers(ids []uint64) dto.ApiData[any] {
 	})
 
 	if err != nil {
+		log.Printf("批量删除用户失败，错误: %v\n", err)
 		return dto.Error[any]("批量删除用户失败", 500)
 	}
 
