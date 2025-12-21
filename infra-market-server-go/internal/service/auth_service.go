@@ -259,7 +259,9 @@ func (s *AuthService) ChangePassword(uid uint64, req dto.ChangePasswordRequest) 
 	}
 
 	user.Password = encryptedPassword
-	s.userRepo.Update(user)
+	if err := s.userRepo.Update(user); err != nil {
+		return dto.Error[any]("更新密码失败", 500)
+	}
 
 	return dto.Success[any](nil)
 }

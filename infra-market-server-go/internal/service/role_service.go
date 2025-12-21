@@ -131,7 +131,9 @@ func (s *RoleService) CreateRole(form dto.RoleFormDto) dto.ApiData[dto.RoleDto] 
 			RoleID:       role.ID,
 			PermissionID: permissionID,
 		}
-		s.rolePermissionRepo.Create(rolePermission)
+		if err := s.rolePermissionRepo.Create(rolePermission); err != nil {
+			return dto.Error[dto.RoleDto]("保存角色权限关联失败", 500)
+		}
 	}
 
 	roleDto := s.convertRoleToDto(role, form.PermissionIds)
@@ -158,13 +160,17 @@ func (s *RoleService) UpdateRole(id uint64, form dto.RoleFormDto) dto.ApiData[dt
 	}
 
 	// 更新角色权限关联
-	s.rolePermissionRepo.DeleteByRoleID(id)
+	if err := s.rolePermissionRepo.DeleteByRoleID(id); err != nil {
+		return dto.Error[dto.RoleDto]("删除角色权限关联失败", 500)
+	}
 	for _, permissionID := range form.PermissionIds {
 		rolePermission := &entity.RolePermission{
 			RoleID:       id,
 			PermissionID: permissionID,
 		}
-		s.rolePermissionRepo.Create(rolePermission)
+		if err := s.rolePermissionRepo.Create(rolePermission); err != nil {
+			return dto.Error[dto.RoleDto]("保存角色权限关联失败", 500)
+		}
 	}
 
 	roleDto := s.convertRoleToDto(role, form.PermissionIds)

@@ -188,12 +188,12 @@ func (s *PermissionService) buildPermissionTree(permissions []entity.Permission)
 	// 构建树形结构
 	var roots []dto.PermissionDto
 	for _, p := range permissions {
-		dto := permissionMap[p.ID]
+		permissionDto := permissionMap[p.ID]
 		if p.ParentID == nil {
-			roots = append(roots, dto)
+			roots = append(roots, permissionDto)
 		} else {
 			if parent, ok := permissionMap[*p.ParentID]; ok {
-				parent.Children = append(parent.Children, dto)
+				parent.Children = append(parent.Children, permissionDto)
 				permissionMap[*p.ParentID] = parent
 			}
 		}

@@ -128,7 +128,9 @@ func (s *UserService) CreateUser(form dto.UserFormDto) dto.ApiData[dto.UserDto] 
 			UID:    &user.ID,
 			RoleID: &roleID,
 		}
-		s.userRoleRepo.Create(userRole)
+		if err := s.userRoleRepo.Create(userRole); err != nil {
+			return dto.Error[dto.UserDto]("保存用户角色关联失败", 500)
+		}
 	}
 
 	userDto := s.convertUserToDto(user, form.RoleIds)
@@ -179,13 +181,17 @@ func (s *UserService) UpdateUser(id uint64, form dto.UserUpdateDto) dto.ApiData[
 	}
 
 	// 更新用户角色关联
-	s.userRoleRepo.DeleteByUID(id)
+	if err := s.userRoleRepo.DeleteByUID(id); err != nil {
+		return dto.Error[dto.UserDto]("删除用户角色关联失败", 500)
+	}
 	for _, roleID := range form.RoleIds {
 		userRole := &entity.UserRole{
 			UID:    &id,
 			RoleID: &roleID,
 		}
-		s.userRoleRepo.Create(userRole)
+		if err := s.userRoleRepo.Create(userRole); err != nil {
+			return dto.Error[dto.UserDto]("保存用户角色关联失败", 500)
+		}
 	}
 
 	userDto := s.convertUserToDto(user, form.RoleIds)
@@ -285,7 +291,9 @@ func (s *UserService) BatchDeleteUsers(ids []uint64) dto.ApiData[any] {
 	// 批量删除
 	for _, user := range users {
 		user.Status = "deleted"
-		s.userRepo.Update(&user)
+		if err := s.userRepo.Update(&user); err != nil {
+			return dto.Error[any]("批量删除用户失败", 500)
+		}
 	}
 
 	return dto.Success[any](nil)

@@ -343,7 +343,10 @@ func (s *ApiInterfaceService) executeHTTPRequest(apiInterface *entity.ApiInterfa
 			request.SetBody(body)
 		} else {
 			// JSON格式
-			jsonData, _ := json.Marshal(req.BodyParams)
+			jsonData, err := json.Marshal(req.BodyParams)
+			if err != nil {
+				return nil, fmt.Errorf("序列化请求体失败: %w", err)
+			}
 			body = string(jsonData)
 			request.SetHeader("Content-Type", "application/json")
 			request.SetBody(jsonData)
@@ -404,14 +407,14 @@ func (s *ApiInterfaceService) extractValueByPath(jsonString, path string) *strin
 	// 先将JSON字符串解析为any
 	var data any
 	if err := json.Unmarshal([]byte(jsonString), &data); err != nil {
-		log.Printf("JSON解析失败: %v", err)
+		log.Printf("JSON解析失败: %v\n", err)
 		return nil
 	}
 
 	// 使用JSONPath提取值
 	result, err := jsonpath.Get(path, data)
 	if err != nil {
-		log.Printf("JSONPath提取失败: %v, 路径: %s", err, path)
+		log.Printf("JSONPath提取失败: %v, 路径: %s\n", err, path)
 		return nil
 	}
 
@@ -425,8 +428,13 @@ func (s *ApiInterfaceService) extractValueByPath(jsonString, path string) *strin
 	case bool:
 		resultStr = fmt.Sprintf("%v", v)
 	case []any, map[string]any:
-		jsonBytes, _ := json.Marshal(v)
-		resultStr = string(jsonBytes)
+		jsonBytes, err := json.Marshal(v)
+		if err != nil {
+			log.Printf("JSON序列化失败: %v\n", err)
+			resultStr = fmt.Sprintf("%v", v)
+		} else {
+			resultStr = string(jsonBytes)
+		}
 	default:
 		resultStr = fmt.Sprintf("%v", v)
 	}
@@ -445,12 +453,28 @@ func (s *ApiInterfaceService) saveExecutionRecord(
 	remark *string,
 ) {
 	// 序列化请求参数
-	requestParamsJSON, _ := json.Marshal(request.URLParams)
-	requestHeadersJSON, _ := json.Marshal(request.Headers)
-	requestBodyJSON, _ := json.Marshal(request.BodyParams)
+	requestParamsJSON, err := json.Marshal(request.URLParams)
+	if err != nil {
+		log.Printf("序列化请求参数失败: %v\n", err)
+		requestParamsJSON = []byte("{}")
+	}
+	requestHeadersJSON, err := json.Marshal(request.Headers)
+	if err != nil {
+		log.Printf("序列化请求头失败: %v\n", err)
+		requestHeadersJSON = []byte("{}")
+	}
+	requestBodyJSON, err := json.Marshal(request.BodyParams)
+	if err != nil {
+		log.Printf("序列化请求体失败: %v\n", err)
+		requestBodyJSON = []byte("{}")
+	}
 
 	// 序列化响应头
-	responseHeadersJSON, _ := json.Marshal(response.Headers)
+	responseHeadersJSON, err := json.Marshal(response.Headers)
+	if err != nil {
+		log.Printf("序列化响应头失败: %v\n", err)
+		responseHeadersJSON = []byte("{}")
+	}
 
 	record := &entity.ApiInterfaceExecutionRecord{
 		InterfaceID:     &interfaceID,
@@ -471,7 +495,7 @@ func (s *ApiInterfaceService) saveExecutionRecord(
 	}
 
 	if err := s.apiInterfaceExecutionRecordRepo.Create(record); err != nil {
-		log.Printf("保存接口执行记录失败: %v", err)
+		log.Printf("保存接口执行记录失败: %v\n", err)
 	}
 }
 
@@ -499,6 +523,7 @@ func (s *ApiInterfaceService) validateRequiredParams(apiInterface *entity.ApiInt
 
 	var params []dto.ApiParamDto
 	if err := json.Unmarshal([]byte(*apiInterface.Params), &params); err != nil {
+		log.Printf("解析接口参数失败: %v\n", err)
 		return nil
 	}
 
@@ -558,9 +583,15 @@ func (s *ApiInterfaceService) convertToDto(entity *entity.ApiInterface) dto.ApiI
 	// 解析参数
 	var urlParams, headerParams, bodyParams []dto.ApiParamDto
 	if entity.Params != nil && *entity.Params != "" {
-		json.Unmarshal([]byte(*entity.Params), &urlParams)
-		json.Unmarshal([]byte(*entity.Params), &headerParams)
-		json.Unmarshal([]byte(*entity.Params), &bodyParams)
+		if err := json.Unmarshal([]byte(*entity.Params), &urlParams); err != nil {
+			log.Printf("解析URL参数失败: %v\n", err)
+		}
+		if err := json.Unmarshal([]byte(*entity.Params), &headerParams); err != nil {
+			log.Printf("解析Header参数失败: %v\n", err)
+		}
+		if err := json.Unmarshal([]byte(*entity.Params), &bodyParams); err != nil {
+			log.Printf("解析Body参数失败: %v\n", err)
+		}
 
 		// 过滤参数类型
 		filteredURLParams := make([]dto.ApiParamDto, 0)
@@ -626,9 +657,16 @@ func (s *ApiInterfaceService) convertToEntity(form *dto.ApiInterfaceFormDto) *en
 
 	var paramsJSON *string
 	if len(allParams) > 0 {
-		jsonBytes, _ := json.Marshal(allParams)
-		jsonStr := string(jsonBytes)
-		paramsJSON = &jsonStr
+		jsonBytes, err := json.Marshal(allParams)
+		if err != nil {
+			log.Printf("序列化参数失败: %v\n", err)
+			// 如果序列化失败，使用空字符串
+			emptyStr := "[]"
+			paramsJSON = &emptyStr
+		} else {
+			jsonStr := string(jsonBytes)
+			paramsJSON = &jsonStr
+		}
 	}
 
 	return &entity.ApiInterface{
