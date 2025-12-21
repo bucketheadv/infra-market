@@ -8,15 +8,18 @@ import (
 	"github.com/bucketheadv/infra-market/internal/entity"
 	"github.com/bucketheadv/infra-market/internal/repository"
 	"github.com/bucketheadv/infra-market/internal/util"
+	"gorm.io/gorm"
 )
 
 type UserService struct {
+	db           *gorm.DB
 	userRepo     *repository.UserRepository
 	userRoleRepo *repository.UserRoleRepository
 }
 
-func NewUserService(userRepo *repository.UserRepository, userRoleRepo *repository.UserRoleRepository) *UserService {
+func NewUserService(db *gorm.DB, userRepo *repository.UserRepository, userRoleRepo *repository.UserRoleRepository) *UserService {
 	return &UserService{
+		db:           db,
 		userRepo:     userRepo,
 		userRoleRepo: userRoleRepo,
 	}
@@ -118,19 +121,33 @@ func (s *UserService) CreateUser(form dto.UserFormDto) dto.ApiData[dto.UserDto] 
 		Status:   "active",
 	}
 
-	if err := s.userRepo.Create(user); err != nil {
-		return dto.Error[dto.UserDto]("创建用户失败", 500)
-	}
+	// 在事务中执行：创建用户 + 创建用户角色关联
+	err = WithTransaction(s.db, func(tx *gorm.DB) error {
+		// 使用事务 db 创建新的 repository 实例
+		txUserRepo := repository.NewUserRepository(tx)
+		txUserRoleRepo := repository.NewUserRoleRepository(tx)
 
-	// 保存用户角色关联
-	for _, roleID := range form.RoleIds {
-		userRole := &entity.UserRole{
-			UID:    &user.ID,
-			RoleID: &roleID,
+		// 创建用户
+		if err := txUserRepo.Create(user); err != nil {
+			return err
 		}
-		if err := s.userRoleRepo.Create(userRole); err != nil {
-			return dto.Error[dto.UserDto]("保存用户角色关联失败", 500)
+
+		// 保存用户角色关联
+		for _, roleID := range form.RoleIds {
+			userRole := &entity.UserRole{
+				UID:    &user.ID,
+				RoleID: &roleID,
+			}
+			if err := txUserRoleRepo.Create(userRole); err != nil {
+				return err
+			}
 		}
+
+		return nil
+	})
+
+	if err != nil {
+		return dto.Error[dto.UserDto]("创建用户失败", 500)
 	}
 
 	userDto := s.convertUserToDto(user, form.RoleIds)
@@ -176,22 +193,38 @@ func (s *UserService) UpdateUser(id uint64, form dto.UserUpdateDto) dto.ApiData[
 		user.Password = encryptedPassword
 	}
 
-	if err := s.userRepo.Update(user); err != nil {
-		return dto.Error[dto.UserDto]("更新用户失败", 500)
-	}
+	// 在事务中执行：更新用户 + 删除旧角色关联 + 创建新角色关联
+	err = WithTransaction(s.db, func(tx *gorm.DB) error {
+		// 使用事务 db 创建新的 repository 实例
+		txUserRepo := repository.NewUserRepository(tx)
+		txUserRoleRepo := repository.NewUserRoleRepository(tx)
 
-	// 更新用户角色关联
-	if err := s.userRoleRepo.DeleteByUID(id); err != nil {
-		return dto.Error[dto.UserDto]("删除用户角色关联失败", 500)
-	}
-	for _, roleID := range form.RoleIds {
-		userRole := &entity.UserRole{
-			UID:    &id,
-			RoleID: &roleID,
+		// 更新用户
+		if err := txUserRepo.Update(user); err != nil {
+			return err
 		}
-		if err := s.userRoleRepo.Create(userRole); err != nil {
-			return dto.Error[dto.UserDto]("保存用户角色关联失败", 500)
+
+		// 删除旧角色关联
+		if err := txUserRoleRepo.DeleteByUID(id); err != nil {
+			return err
 		}
+
+		// 创建新角色关联
+		for _, roleID := range form.RoleIds {
+			userRole := &entity.UserRole{
+				UID:    &id,
+				RoleID: &roleID,
+			}
+			if err := txUserRoleRepo.Create(userRole); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return dto.Error[dto.UserDto]("更新用户失败", 500)
 	}
 
 	userDto := s.convertUserToDto(user, form.RoleIds)
@@ -288,12 +321,20 @@ func (s *UserService) BatchDeleteUsers(ids []uint64) dto.ApiData[any] {
 		}
 	}
 
-	// 批量删除
-	for _, user := range users {
-		user.Status = "deleted"
-		if err := s.userRepo.Update(&user); err != nil {
-			return dto.Error[any]("批量删除用户失败", 500)
+	// 在事务中批量删除
+	err = WithTransaction(s.db, func(tx *gorm.DB) error {
+		txUserRepo := repository.NewUserRepository(tx)
+		for _, user := range users {
+			user.Status = "deleted"
+			if err := txUserRepo.Update(&user); err != nil {
+				return err
+			}
 		}
+		return nil
+	})
+
+	if err != nil {
+		return dto.Error[any]("批量删除用户失败", 500)
 	}
 
 	return dto.Success[any](nil)

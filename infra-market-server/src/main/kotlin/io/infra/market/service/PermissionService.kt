@@ -10,6 +10,7 @@ import io.infra.market.repository.dao.PermissionDao
 import io.infra.market.repository.dao.RolePermissionDao
 import io.infra.market.repository.entity.Permission
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 
 @Service
 class PermissionService(
@@ -157,6 +158,7 @@ class PermissionService(
     }
     
     
+    @Transactional
     fun batchDeletePermissions(ids: List<Long>): ApiData<Unit> {
         if (ids.isEmpty()) {
             return ApiData.error("请选择要删除的权限")

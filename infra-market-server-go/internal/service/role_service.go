@@ -5,40 +5,46 @@ import (
 	"github.com/bucketheadv/infra-market/internal/entity"
 	"github.com/bucketheadv/infra-market/internal/repository"
 	"github.com/bucketheadv/infra-market/internal/util"
+	"gorm.io/gorm"
 )
 
 type RoleService struct {
+	db                 *gorm.DB
 	roleRepo           *repository.RoleRepository
 	rolePermissionRepo *repository.RolePermissionRepository
 	userRoleRepo       *repository.UserRoleRepository
 }
 
 func NewRoleService(
+	db *gorm.DB,
 	roleRepo *repository.RoleRepository,
 	rolePermissionRepo *repository.RolePermissionRepository,
 	userRoleRepo *repository.UserRoleRepository,
 ) *RoleService {
 	return &RoleService{
+		db:                 db,
 		roleRepo:           roleRepo,
 		rolePermissionRepo: rolePermissionRepo,
 		userRoleRepo:       userRoleRepo,
 	}
 }
 
-// GetRoles 获取角色列表
-func (s *RoleService) GetRoles(query dto.RoleQueryDto) dto.ApiData[dto.PageResult[dto.RoleDto]] {
-	roles, total, err := s.roleRepo.Page(query)
-	if err != nil {
-		return dto.Error[dto.PageResult[dto.RoleDto]]("查询失败", 500)
+// convertRolesToDtos 将角色列表转换为DTO列表，包含权限信息
+func (s *RoleService) convertRolesToDtos(roles []entity.Role) []dto.RoleDto {
+	if len(roles) == 0 {
+		return []dto.RoleDto{}
 	}
 
-	// 批量获取所有角色的权限ID
+	// 提取角色ID列表
 	roleIDs := make([]uint64, len(roles))
 	for i, r := range roles {
 		roleIDs[i] = r.ID
 	}
 
+	// 批量获取角色权限关联
 	rolePermissions, _ := s.rolePermissionRepo.FindByRoleIDs(roleIDs)
+
+	// 构建角色权限映射
 	rolePermissionMap := make(map[uint64][]uint64)
 	for _, rp := range rolePermissions {
 		rolePermissionMap[rp.RoleID] = append(rolePermissionMap[rp.RoleID], rp.PermissionID)
@@ -50,6 +56,18 @@ func (s *RoleService) GetRoles(query dto.RoleQueryDto) dto.ApiData[dto.PageResul
 		permissionIds := rolePermissionMap[role.ID]
 		roleDtos[i] = s.convertRoleToDto(&role, permissionIds)
 	}
+
+	return roleDtos
+}
+
+// GetRoles 获取角色列表
+func (s *RoleService) GetRoles(query dto.RoleQueryDto) dto.ApiData[dto.PageResult[dto.RoleDto]] {
+	roles, total, err := s.roleRepo.Page(query)
+	if err != nil {
+		return dto.Error[dto.PageResult[dto.RoleDto]]("查询失败", 500)
+	}
+
+	roleDtos := s.convertRolesToDtos(roles)
 
 	result := dto.PageResult[dto.RoleDto]{
 		Records: roleDtos,
@@ -68,25 +86,7 @@ func (s *RoleService) GetAllRoles() dto.ApiData[[]dto.RoleDto] {
 		return dto.Error[[]dto.RoleDto]("查询失败", 500)
 	}
 
-	// 批量获取所有角色的权限ID
-	roleIDs := make([]uint64, len(roles))
-	for i, r := range roles {
-		roleIDs[i] = r.ID
-	}
-
-	rolePermissions, _ := s.rolePermissionRepo.FindByRoleIDs(roleIDs)
-	rolePermissionMap := make(map[uint64][]uint64)
-	for _, rp := range rolePermissions {
-		rolePermissionMap[rp.RoleID] = append(rolePermissionMap[rp.RoleID], rp.PermissionID)
-	}
-
-	// 转换为DTO
-	roleDtos := make([]dto.RoleDto, len(roles))
-	for i, role := range roles {
-		permissionIds := rolePermissionMap[role.ID]
-		roleDtos[i] = s.convertRoleToDto(&role, permissionIds)
-	}
-
+	roleDtos := s.convertRolesToDtos(roles)
 	return dto.Success(roleDtos)
 }
 
@@ -121,19 +121,33 @@ func (s *RoleService) CreateRole(form dto.RoleFormDto) dto.ApiData[dto.RoleDto] 
 		Status:      "active",
 	}
 
-	if err := s.roleRepo.Create(role); err != nil {
-		return dto.Error[dto.RoleDto]("创建角色失败", 500)
-	}
+	// 在事务中执行：创建角色 + 创建角色权限关联
+	err := WithTransaction(s.db, func(tx *gorm.DB) error {
+		// 使用事务 db 创建新的 repository 实例
+		txRoleRepo := repository.NewRoleRepository(tx)
+		txRolePermissionRepo := repository.NewRolePermissionRepository(tx)
 
-	// 保存角色权限关联
-	for _, permissionID := range form.PermissionIds {
-		rolePermission := &entity.RolePermission{
-			RoleID:       role.ID,
-			PermissionID: permissionID,
+		// 创建角色
+		if err := txRoleRepo.Create(role); err != nil {
+			return err
 		}
-		if err := s.rolePermissionRepo.Create(rolePermission); err != nil {
-			return dto.Error[dto.RoleDto]("保存角色权限关联失败", 500)
+
+		// 保存角色权限关联
+		for _, permissionID := range form.PermissionIds {
+			rolePermission := &entity.RolePermission{
+				RoleID:       role.ID,
+				PermissionID: permissionID,
+			}
+			if err := txRolePermissionRepo.Create(rolePermission); err != nil {
+				return err
+			}
 		}
+
+		return nil
+	})
+
+	if err != nil {
+		return dto.Error[dto.RoleDto]("创建角色失败", 500)
 	}
 
 	roleDto := s.convertRoleToDto(role, form.PermissionIds)
@@ -155,22 +169,38 @@ func (s *RoleService) UpdateRole(id uint64, form dto.RoleFormDto) dto.ApiData[dt
 	role.Name = form.Name
 	role.Description = form.Description
 
-	if err := s.roleRepo.Update(role); err != nil {
-		return dto.Error[dto.RoleDto]("更新角色失败", 500)
-	}
+	// 在事务中执行：更新角色 + 删除旧权限关联 + 创建新权限关联
+	err = WithTransaction(s.db, func(tx *gorm.DB) error {
+		// 使用事务 db 创建新的 repository 实例
+		txRoleRepo := repository.NewRoleRepository(tx)
+		txRolePermissionRepo := repository.NewRolePermissionRepository(tx)
 
-	// 更新角色权限关联
-	if err := s.rolePermissionRepo.DeleteByRoleID(id); err != nil {
-		return dto.Error[dto.RoleDto]("删除角色权限关联失败", 500)
-	}
-	for _, permissionID := range form.PermissionIds {
-		rolePermission := &entity.RolePermission{
-			RoleID:       id,
-			PermissionID: permissionID,
+		// 更新角色
+		if err := txRoleRepo.Update(role); err != nil {
+			return err
 		}
-		if err := s.rolePermissionRepo.Create(rolePermission); err != nil {
-			return dto.Error[dto.RoleDto]("保存角色权限关联失败", 500)
+
+		// 删除旧权限关联
+		if err := txRolePermissionRepo.DeleteByRoleID(id); err != nil {
+			return err
 		}
+
+		// 创建新权限关联
+		for _, permissionID := range form.PermissionIds {
+			rolePermission := &entity.RolePermission{
+				RoleID:       id,
+				PermissionID: permissionID,
+			}
+			if err := txRolePermissionRepo.Create(rolePermission); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return dto.Error[dto.RoleDto]("更新角色失败", 500)
 	}
 
 	roleDto := s.convertRoleToDto(role, form.PermissionIds)

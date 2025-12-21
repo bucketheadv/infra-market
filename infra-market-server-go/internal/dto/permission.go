@@ -2,18 +2,27 @@ package dto
 
 // PermissionDto 权限信息DTO
 type PermissionDto struct {
-	ID         uint64          `json:"id"`
-	Name       string          `json:"name"`
-	Code       string          `json:"code"`
-	Type       string          `json:"type"`
-	ParentID   *uint64         `json:"parentId"`
-	Path       *string         `json:"path"`
-	Icon       *string         `json:"icon"`
-	Sort       int             `json:"sort"`
-	Status     string          `json:"status"`
-	Children   []PermissionDto `json:"children,omitempty"`
-	CreateTime string          `json:"createTime"`
-	UpdateTime string          `json:"updateTime"`
+	ID               uint64               `json:"id"`
+	Name             string               `json:"name"`
+	Code             string               `json:"code"`
+	Type             string               `json:"type"`
+	ParentID         *uint64              `json:"parentId"`
+	Path             *string              `json:"path"`
+	Icon             *string              `json:"icon"`
+	Sort             int                  `json:"sort"`
+	Status           string               `json:"status"`
+	Children         []PermissionDto      `json:"children,omitempty"`
+	ParentPermission *ParentPermissionDto `json:"parentPermission,omitempty"`
+	AccessPath       []string             `json:"accessPath,omitempty"`
+	CreateTime       string               `json:"createTime"`
+	UpdateTime       string               `json:"updateTime"`
+}
+
+// ParentPermissionDto 父级权限信息
+type ParentPermissionDto struct {
+	ID   uint64 `json:"id"`
+	Name string `json:"name"`
+	Code string `json:"code"`
 }
 
 // PermissionFormDto 权限创建/更新表单

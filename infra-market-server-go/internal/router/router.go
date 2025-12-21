@@ -34,7 +34,7 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 	// 初始化Service
 	tokenService := service.NewTokenService(redisClient)
 	authService := service.NewAuthService(userRepo, userRoleRepo, rolePermissionRepo, permissionRepo, tokenService)
-	userService := service.NewUserService(userRepo, userRoleRepo)
+	userService := service.NewUserService(db, userRepo, userRoleRepo)
 
 	// 全局中间件
 	r.Use(middleware.CORSMiddleware())
@@ -59,7 +59,7 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 	apiInterfaceRepo = repository.NewApiInterfaceRepository(db)
 	apiInterfaceExecutionRecordRepo = repository.NewApiInterfaceExecutionRecordRepository(db)
 
-	roleService := service.NewRoleService(roleRepo, rolePermissionRepo, userRoleRepo)
+	roleService := service.NewRoleService(db, roleRepo, rolePermissionRepo, userRoleRepo)
 	permissionService := service.NewPermissionService(permissionRepo, rolePermissionRepo)
 	apiInterfaceService := service.NewApiInterfaceService(apiInterfaceRepo, apiInterfaceExecutionRecordRepo, userRepo)
 	apiInterfaceExecutionRecordService := service.NewApiInterfaceExecutionRecordService(apiInterfaceExecutionRecordRepo)

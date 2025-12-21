@@ -178,6 +178,7 @@ class RoleService(
         return ApiData.success()
     }
     
+    @Transactional
     fun batchDeleteRoles(ids: List<Long>): ApiData<Unit> {
         if (ids.isEmpty()) {
             return ApiData.error("请选择要删除的角色")

@@ -214,6 +214,7 @@ class UserService(
         return (1..8).map { chars.random() }.joinToString("")
     }
     
+    @Transactional
     fun batchDeleteUsers(ids: List<Long>): ApiData<Unit> {
         if (ids.isEmpty()) {
             return ApiData.error("请选择要删除的用户")
