@@ -262,7 +262,8 @@ const getIconComponent = (iconName: string) => {
           { prefix: '/system/users/', listPath: '/system/users' },
           { prefix: '/system/roles/', listPath: '/system/roles' },
           { prefix: '/system/permissions/', listPath: '/system/permissions' },
-          { prefix: '/tools/interface/', listPath: '/tools/interface' }
+          { prefix: '/tools/interface/', listPath: '/tools/interface' },
+          { prefix: '/tools/interface/execution/record', listPath: '/tools/interface/execution/record' }
         ]
       
       for (const pattern of editPatterns) {

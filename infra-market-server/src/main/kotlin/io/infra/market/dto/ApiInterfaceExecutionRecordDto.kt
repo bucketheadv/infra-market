@@ -129,6 +129,12 @@ data class ApiInterfaceExecutionRecordQueryDto(
     var interfaceId: Long? = null,
 
     /**
+     * 关键字
+     * 支持在执行人姓名、错误信息、备注等字段中模糊查询
+     */
+    var keyword: String? = null,
+
+    /**
      * 执行人ID
      * 精确匹配查询
      */

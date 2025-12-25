@@ -26,13 +26,14 @@ type ApiInterfaceExecutionRecordDto struct {
 // ApiInterfaceExecutionRecordQueryDto 执行记录查询DTO
 type ApiInterfaceExecutionRecordQueryDto struct {
 	InterfaceID      *uint64 `form:"interfaceId"`
+	Keyword          *string `form:"keyword"`
 	ExecutorID       *uint64 `form:"executorId"`
 	ExecutorName     *string `form:"executorName"`
 	Success          *bool   `form:"success"`
 	StartTime        *int64  `form:"startTime"`
 	EndTime          *int64  `form:"endTime"`
 	MinExecutionTime *int64  `form:"minExecutionTime"`
-	MaxExecutionTime *int64  `form:"maxExecutionTime"`
+	MaxExecutionTime  *int64  `form:"maxExecutionTime"`
 	Page             *int    `form:"page" binding:"omitempty,min=1" default:"1"`
 	Size             *int    `form:"size" binding:"omitempty,min=1,max=1000" default:"10"`
 }

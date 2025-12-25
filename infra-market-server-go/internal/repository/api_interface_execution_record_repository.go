@@ -35,6 +35,13 @@ func (r *ApiInterfaceExecutionRecordRepository) Page(query dto.ApiInterfaceExecu
 	if query.InterfaceID != nil {
 		db = db.Where("interface_id = ?", *query.InterfaceID)
 	}
+
+	// 关键字查询：在执行人姓名、错误信息、备注等字段中搜索
+	if query.Keyword != nil && *query.Keyword != "" {
+		keyword := "%" + *query.Keyword + "%"
+		db = db.Where("executor_name LIKE ? OR error_message LIKE ? OR remark LIKE ?", keyword, keyword, keyword)
+	}
+
 	if query.ExecutorID != nil {
 		db = db.Where("executor_id = ?", *query.ExecutorID)
 	}
@@ -57,7 +64,7 @@ func (r *ApiInterfaceExecutionRecordRepository) Page(query dto.ApiInterfaceExecu
 		db = db.Where("create_time <= ?", *query.EndTime)
 	}
 
-	return PaginateQuery(db, query.Page, query.Size, "create_time DESC", &records)
+	return PaginateQuery(db, query.Page, query.Size, "id DESC", &records)
 }
 
 // FindByExecutorID 根据执行人ID查询

@@ -10,6 +10,7 @@ import com.mybatisflex.kotlin.extensions.kproperty.like
 import com.mybatisflex.kotlin.extensions.kproperty.isNotNull
 import com.mybatisflex.kotlin.extensions.wrapper.whereWith
 import com.mybatisflex.kotlin.extensions.condition.and
+import com.mybatisflex.kotlin.extensions.condition.or
 import com.mybatisflex.core.paginate.Page
 import io.infra.market.dto.ApiInterfaceExecutionRecordQueryDto
 import io.infra.market.dto.ApiInterfaceExecutionRecordStatsDto
@@ -49,6 +50,16 @@ class ApiInterfaceExecutionRecordDao : ServiceImpl<ApiInterfaceExecutionRecordMa
                 condition = condition and ApiInterfaceExecutionRecord::interfaceId.eq(queryDto.interfaceId)
             }
             
+            // 关键字查询：在执行人姓名、错误信息、备注等字段中搜索
+            if (!queryDto.keyword.isNullOrBlank()) {
+                val keyword = "%${queryDto.keyword}%"
+                condition = condition and (
+                    ApiInterfaceExecutionRecord::executorName.like(keyword) or
+                    ApiInterfaceExecutionRecord::errorMessage.like(keyword) or
+                    ApiInterfaceExecutionRecord::remark.like(keyword)
+                )
+            }
+            
             if (queryDto.executorId != null) {
                 condition = condition and ApiInterfaceExecutionRecord::executorId.eq(queryDto.executorId)
             }
@@ -84,8 +95,8 @@ class ApiInterfaceExecutionRecordDao : ServiceImpl<ApiInterfaceExecutionRecordMa
             condition
         }
         
-        // 按创建时间倒序排序
-        queryBuilder.orderBy("create_time DESC")
+        // 按ID倒序排序
+        queryBuilder.orderBy("id DESC")
         
         val page = Page<ApiInterfaceExecutionRecord>(queryDto.page ?: 1, queryDto.size ?: 10)
         return page(page, queryBuilder)

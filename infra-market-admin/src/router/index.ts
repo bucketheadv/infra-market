@@ -110,6 +110,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '接口执行', permission: 'interface:execute' }
       },
       {
+        path: '/tools/interface/execution/record',
+        name: 'ExecutionRecordList',
+        component: () => import('@/views/interface/ExecutionRecordList.vue'),
+        meta: { title: '接口执行日志', permission: 'interface:view' }
+      },
+      {
         path: '/tools/image',
         name: 'ImageProcessor',
         component: () => import('@/views/tools/ImageProcessor.vue'),

@@ -232,6 +232,7 @@ export interface ApiInterfaceExecutionRecord {
 
 export interface ApiInterfaceExecutionRecordQuery {
   interfaceId?: number
+  keyword?: string
   executorId?: number
   success?: boolean
   minExecutionTime?: number
