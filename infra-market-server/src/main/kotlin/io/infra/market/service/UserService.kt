@@ -75,6 +75,7 @@ class UserService(
         // 加密密码
         val encodedPassword = AesUtil.encrypt(form.password ?: "123456")
         
+        val now = System.currentTimeMillis()
         val user = User(
             username = form.username,
             password = encodedPassword,
@@ -82,6 +83,8 @@ class UserService(
             phone = form.phone,
             status = StatusEnum.ACTIVE.code
         )
+        user.createTime = now
+        user.updateTime = now
         
         userDao.save(user)
         
@@ -91,6 +94,8 @@ class UserService(
                 uid = user.id,
                 roleId = roleId
             )
+            userRole.createTime = now
+            userRole.updateTime = now
             userRoleDao.save(userRole)
         }
         
@@ -128,6 +133,7 @@ class UserService(
         user.username = form.username
         user.email = form.email
         user.phone = form.phone
+        user.updateTime = System.currentTimeMillis()
         
         // 如果提供了新密码，则更新密码
         if (!form.password.isNullOrBlank()) {
@@ -138,11 +144,14 @@ class UserService(
         
         // 更新用户角色关联
         userRoleDao.deleteByUid(id)
+        val now = System.currentTimeMillis()
         for (roleId in form.roleIds) {
             val userRole = UserRole(
                 uid = id,
                 roleId = roleId
             )
+            userRole.createTime = now
+            userRole.updateTime = now
             userRoleDao.save(userRole)
         }
         

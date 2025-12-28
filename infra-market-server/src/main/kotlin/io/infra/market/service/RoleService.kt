@@ -72,12 +72,15 @@ class RoleService(
             return ApiData.error("角色编码已存在")
         }
         
+        val now = System.currentTimeMillis()
         val role = Role(
             name = form.name,
             code = form.code,
             description = form.description,
             status = StatusEnum.ACTIVE.code
         )
+        role.createTime = now
+        role.updateTime = now
         
         roleDao.save(role)
         
@@ -87,6 +90,8 @@ class RoleService(
                 roleId = role.id,
                 permissionId = permissionId
             )
+            rolePermission.createTime = now
+            rolePermission.updateTime = now
             rolePermissionDao.save(rolePermission)
         }
         
@@ -107,16 +112,20 @@ class RoleService(
         
         role.name = form.name
         role.description = form.description
+        role.updateTime = System.currentTimeMillis()
         
         roleDao.updateById(role)
         
         // 更新角色权限关联
         rolePermissionDao.deleteByRoleId(id)
+        val now = System.currentTimeMillis()
         for (permissionId in form.permissionIds) {
             val rolePermission = RolePermission(
                 roleId = id,
                 permissionId = permissionId
             )
+            rolePermission.createTime = now
+            rolePermission.updateTime = now
             rolePermissionDao.save(rolePermission)
         }
         

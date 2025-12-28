@@ -491,6 +491,7 @@ class ApiInterfaceService(
         remark: String? = null
     ) {
         try {
+            val now = System.currentTimeMillis()
             val executionRecord = ApiInterfaceExecutionRecord(
                 interfaceId = interfaceId,
                 executorId = executorId,
@@ -508,6 +509,10 @@ class ApiInterfaceService(
                 clientIp = clientIp,
                 userAgent = userAgent
             )
+            
+            // 设置创建时间和更新时间
+            executionRecord.createTime = now
+            executionRecord.updateTime = now
 
             apiInterfaceExecutionRecordDao.save(executionRecord)
         } catch (e: Exception) {

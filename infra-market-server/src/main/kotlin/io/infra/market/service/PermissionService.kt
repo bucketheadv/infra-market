@@ -57,6 +57,7 @@ class PermissionService(
             return ApiData.error("权限编码已存在")
         }
         
+        val now = System.currentTimeMillis()
         val permission = Permission(
             name = form.name,
             code = form.code,
@@ -67,6 +68,8 @@ class PermissionService(
             sort = form.sort,
             status = StatusEnum.ACTIVE.code
         )
+        permission.createTime = now
+        permission.updateTime = now
         
         permissionDao.save(permission)
         
@@ -90,6 +93,7 @@ class PermissionService(
         permission.path = form.path
         permission.icon = form.icon
         permission.sort = form.sort
+        permission.updateTime = System.currentTimeMillis()
         
         permissionDao.updateById(permission)
         
