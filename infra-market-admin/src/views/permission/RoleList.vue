@@ -236,7 +236,7 @@ const fetchRoles = async () => {
   loading.value = true
   try {
     const params: PageParams = {
-      current: pagination.current,
+      page: pagination.current,
       size: pagination.pageSize,
       ...searchForm,
     }
@@ -268,7 +268,7 @@ const handleReset = () => {
 
 // 表格变化
 const handleTableChange = (pag: any) => {
-  pagination.current = pag.current
+  pagination.current = pag.page
   pagination.pageSize = pag.pageSize
   fetchRoles()
 }

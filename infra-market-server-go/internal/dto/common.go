@@ -37,7 +37,7 @@ func ErrorWithDetail[T any](message string, detail string, code int) ApiData[T] 
 type PageResult[T any] struct {
 	Records []T   `json:"records"`
 	Total   int64 `json:"total"`
-	Current int   `json:"current"`
+	Page    int   `json:"page"`
 	Size    int   `json:"size"`
 }
 

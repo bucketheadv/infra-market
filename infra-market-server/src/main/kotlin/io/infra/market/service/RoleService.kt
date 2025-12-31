@@ -34,7 +34,7 @@ class RoleService(
         val result = PageResultDto(
             records = roleDtos,
             total = page.totalRow,
-            current = page.pageNumber,
+            page = page.pageNumber,
             size = page.pageSize
         )
         

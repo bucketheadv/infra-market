@@ -3,6 +3,7 @@ package repository
 import (
 	"github.com/bucketheadv/infra-market/internal/dto"
 	"github.com/bucketheadv/infra-market/internal/entity"
+	"github.com/bucketheadv/infra-market/internal/util"
 	"gorm.io/gorm"
 )
 
@@ -40,20 +41,20 @@ func (r *ApiInterfaceRepository) Page(query dto.ApiInterfaceQueryDto) ([]entity.
 
 	db := r.db.Model(&entity.ApiInterface{})
 
-	if query.Name != nil && *query.Name != "" {
+	if util.IsNotBlank(query.Name) {
 		db = db.Where("name LIKE ?", "%"+*query.Name+"%")
 	}
-	if query.Method != nil && *query.Method != "" {
+	if util.IsNotBlank(query.Method) {
 		db = db.Where("method = ?", *query.Method)
 	}
 	if query.Status != nil {
 		db = db.Where("status = ?", *query.Status)
 	}
-	if query.Environment != nil && *query.Environment != "" {
+	if util.IsNotBlank(query.Environment) {
 		db = db.Where("environment = ?", *query.Environment)
 	}
 
-	return PaginateQuery(db, query.Page, query.Size, "create_time DESC", &interfaces)
+	return PaginateQuery(db, &query, "create_time DESC", &interfaces)
 }
 
 // Create 创建接口

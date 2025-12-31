@@ -37,7 +37,7 @@ class UserService(
         val result = PageResultDto(
             records = userDtos,
             total = page.totalRow,
-            current = page.pageNumber,
+            page = page.pageNumber,
             size = page.pageSize
         )
         

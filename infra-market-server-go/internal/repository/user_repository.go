@@ -3,6 +3,7 @@ package repository
 import (
 	"github.com/bucketheadv/infra-market/internal/dto"
 	"github.com/bucketheadv/infra-market/internal/entity"
+	"github.com/bucketheadv/infra-market/internal/util"
 	"gorm.io/gorm"
 )
 
@@ -64,35 +65,17 @@ func (r *UserRepository) FindByPhone(phone string) (*entity.User, error) {
 // Page 分页查询
 func (r *UserRepository) Page(query dto.UserQueryDto) ([]entity.User, int64, error) {
 	var users []entity.User
-	var total int64
 
 	db := r.db.Model(&entity.User{}).Where("status != ?", "deleted")
 
-	if query.Username != nil && *query.Username != "" {
+	if util.IsNotBlank(query.Username) {
 		db = db.Where("username LIKE ?", "%"+*query.Username+"%")
 	}
-	if query.Status != nil && *query.Status != "" {
+	if util.IsNotBlank(query.Status) {
 		db = db.Where("status = ?", *query.Status)
 	}
 
-	// 获取总数
-	if err := db.Count(&total).Error; err != nil {
-		return nil, 0, err
-	}
-
-	// 分页查询
-	current := query.Current
-	if current < 1 {
-		current = 1
-	}
-	size := query.Size
-	if size < 1 {
-		size = 10
-	}
-	offset := (current - 1) * size
-
-	err := db.Order("id ASC").Offset(offset).Limit(size).Find(&users).Error
-	return users, total, err
+	return PaginateQuery(db, &query, "id ASC", &users)
 }
 
 // Create 创建用户

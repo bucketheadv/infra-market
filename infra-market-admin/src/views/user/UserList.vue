@@ -266,7 +266,7 @@ const columns = [
 // 获取角色列表
 const fetchRoles = async () => {
   try {
-    const response = await roleApi.getRoles({ current: 1, size: 1000 })
+    const response = await roleApi.getRoles({ page: 1, size: 1000 })
     roles.value = response.data.records
   } catch (error: any) {
     console.error('获取角色列表失败:', error)
@@ -284,7 +284,7 @@ const fetchUsers = async () => {
   loading.value = true
   try {
     const params: PageParams = {
-      current: pagination.current,
+      page: pagination.current,
       size: pagination.pageSize,
       ...searchForm,
     }
@@ -315,7 +315,7 @@ const handleReset = () => {
 
 // 表格变化
 const handleTableChange = (pag: any) => {
-  pagination.current = pag.current
+  pagination.current = pag.page
   pagination.pageSize = pag.pageSize
   fetchUsers()
 }

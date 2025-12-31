@@ -83,11 +83,11 @@ data class RoleQueryDto(
     val status: String? = null,
     
     /**
-     * 当前页码
-     * 分页查询的当前页码，从1开始，默认为1
+     * 页码
+     * 分页查询的页码，从1开始，默认为1
      */
-    @field:Min(value = 1, message = "当前页不能小于1")
-    val current: Int = 1,
+    @field:Min(value = 1, message = "页码不能小于1")
+    val page: Int = 1,
     
     /**
      * 每页大小

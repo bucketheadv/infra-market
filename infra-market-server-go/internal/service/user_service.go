@@ -59,8 +59,8 @@ func (s *UserService) GetUsers(query dto.UserQueryDto) dto.ApiData[dto.PageResul
 	result := dto.PageResult[dto.UserDto]{
 		Records: userDtos,
 		Total:   total,
-		Current: query.Current,
-		Size:    query.Size,
+		Page:    query.GetPage(),
+		Size:    query.GetSize(),
 	}
 
 	return dto.Success(result)

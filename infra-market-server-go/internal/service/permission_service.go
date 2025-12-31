@@ -43,8 +43,8 @@ func (s *PermissionService) GetPermissions(query dto.PermissionQueryDto) dto.Api
 	result := dto.PageResult[dto.PermissionDto]{
 		Records: permissionDtos,
 		Total:   total,
-		Current: query.Current,
-		Size:    query.Size,
+		Page:    query.GetPage(),
+		Size:    query.GetSize(),
 	}
 
 	return dto.Success(result)

@@ -473,7 +473,7 @@ const handleReset = () => {
 }
 
 const handleTableChange = (pag: any) => {
-  pagination.current = pag.current
+  pagination.current = pag.page
   pagination.pageSize = pag.pageSize
   loadData()
 }

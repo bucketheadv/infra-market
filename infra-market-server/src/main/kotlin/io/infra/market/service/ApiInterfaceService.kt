@@ -59,7 +59,7 @@ class ApiInterfaceService(
         return PageResultDto(
             records = interfaceDtos,
             total = page.totalRow,
-            current = page.pageNumber,
+            page = page.pageNumber,
             size = page.pageSize
         )
     }

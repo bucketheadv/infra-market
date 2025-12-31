@@ -47,36 +47,11 @@ func (r *RoleRepository) FindByIDs(ids []uint64) ([]entity.Role, error) {
 // Page 分页查询
 func (r *RoleRepository) Page(query dto.RoleQueryDto) ([]entity.Role, int64, error) {
 	var roles []entity.Role
-	var total int64
 
 	db := r.db.Model(&entity.Role{}).Where("status != ?", "deleted")
+	db = ApplyCommonFilters(db, query.Name, query.Code, query.Status)
 
-	if query.Name != nil && *query.Name != "" {
-		db = db.Where("name LIKE ?", "%"+*query.Name+"%")
-	}
-	if query.Code != nil && *query.Code != "" {
-		db = db.Where("code LIKE ?", "%"+*query.Code+"%")
-	}
-	if query.Status != nil && *query.Status != "" {
-		db = db.Where("status = ?", *query.Status)
-	}
-
-	if err := db.Count(&total).Error; err != nil {
-		return nil, 0, err
-	}
-
-	current := query.Current
-	if current < 1 {
-		current = 1
-	}
-	size := query.Size
-	if size < 1 {
-		size = 10
-	}
-	offset := (current - 1) * size
-
-	err := db.Order("id ASC").Offset(offset).Limit(size).Find(&roles).Error
-	return roles, total, err
+	return PaginateQuery(db, &query, "id ASC", &roles)
 }
 
 // Create 创建角色

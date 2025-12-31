@@ -27,7 +27,7 @@ class PermissionService(
         val result = PageResultDto(
             records = permissionDtos,
             total = page.totalRow,
-            current = page.pageNumber,
+            page = page.pageNumber,
             size = page.pageSize
         )
         

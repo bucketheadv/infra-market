@@ -77,8 +77,8 @@ func (s *RoleService) GetRoles(query dto.RoleQueryDto) dto.ApiData[dto.PageResul
 	result := dto.PageResult[dto.RoleDto]{
 		Records: roleDtos,
 		Total:   total,
-		Current: query.Current,
-		Size:    query.Size,
+		Page:    query.GetPage(),
+		Size:    query.GetSize(),
 	}
 
 	return dto.Success(result)

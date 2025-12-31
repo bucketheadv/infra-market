@@ -25,6 +25,5 @@ type RoleQueryDto struct {
 	Name    *string `form:"name"`
 	Code    *string `form:"code"`
 	Status  *string `form:"status" binding:"omitempty,oneof=active inactive"`
-	Current int     `form:"current" binding:"omitempty,min=1" default:"1"`
-	Size    int     `form:"size" binding:"omitempty,min=1,max=1000" default:"10"`
+	Pagination
 }

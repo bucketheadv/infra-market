@@ -85,13 +85,13 @@ export interface ApiData<T = any> {
 export interface PageResult<T> {
   records: T[]
   total: number
-  current: number
+  page: number
   size: number
 }
 
 // 分页查询参数
 export interface PageParams {
-  current: number
+  page: number
   size: number
   [key: string]: any
 }

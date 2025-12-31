@@ -129,11 +129,11 @@ data class UserQueryDto(
     val status: String? = null,
     
     /**
-     * 当前页码
-     * 分页查询的当前页码，从1开始，默认为1
+     * 页码
+     * 分页查询的页码，从1开始，默认为1
      */
-    @field:Min(value = 1, message = "当前页不能小于1")
-    val current: Int = 1,
+    @field:Min(value = 1, message = "页码不能小于1")
+    val page: Int = 1,
     
     /**
      * 每页大小
@@ -168,10 +168,10 @@ data class PageResultDto<T>(
     val total: Long,
     
     /**
-     * 当前页码
+     * 页码
      * 当前查询的页码
      */
-    val current: Long,
+    val page: Long,
     
     /**
      * 每页大小

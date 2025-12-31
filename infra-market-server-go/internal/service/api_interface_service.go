@@ -50,8 +50,8 @@ func (s *ApiInterfaceService) FindPage(query dto.ApiInterfaceQueryDto) dto.ApiDa
 	result := dto.PageResult[dto.ApiInterfaceDto]{
 		Records: interfaceDtos,
 		Total:   total,
-		Current: 1,
-		Size:    10,
+		Page:    query.GetPage(),
+		Size:    query.GetSize(),
 	}
 
 	return dto.Success(result)

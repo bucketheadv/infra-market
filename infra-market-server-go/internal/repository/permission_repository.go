@@ -3,6 +3,7 @@ package repository
 import (
 	"github.com/bucketheadv/infra-market/internal/dto"
 	"github.com/bucketheadv/infra-market/internal/entity"
+	"github.com/bucketheadv/infra-market/internal/util"
 	"gorm.io/gorm"
 )
 
@@ -61,39 +62,15 @@ func (r *PermissionRepository) FindAll() ([]entity.Permission, error) {
 // Page 分页查询
 func (r *PermissionRepository) Page(query dto.PermissionQueryDto) ([]entity.Permission, int64, error) {
 	var permissions []entity.Permission
-	var total int64
 
 	db := r.db.Model(&entity.Permission{}).Where("status != ?", "deleted")
-
-	if query.Name != nil && *query.Name != "" {
-		db = db.Where("name LIKE ?", "%"+*query.Name+"%")
-	}
-	if query.Code != nil && *query.Code != "" {
-		db = db.Where("code LIKE ?", "%"+*query.Code+"%")
-	}
-	if query.Type != nil && *query.Type != "" {
+	db = ApplyCommonFilters(db, query.Name, query.Code, query.Status)
+	
+	if util.IsNotBlank(query.Type) {
 		db = db.Where("type = ?", *query.Type)
 	}
-	if query.Status != nil && *query.Status != "" {
-		db = db.Where("status = ?", *query.Status)
-	}
 
-	if err := db.Count(&total).Error; err != nil {
-		return nil, 0, err
-	}
-
-	current := query.Current
-	if current < 1 {
-		current = 1
-	}
-	size := query.Size
-	if size < 1 {
-		size = 10
-	}
-	offset := (current - 1) * size
-
-	err := db.Order("id ASC").Offset(offset).Limit(size).Find(&permissions).Error
-	return permissions, total, err
+	return PaginateQuery(db, &query, "id ASC", &permissions)
 }
 
 // Create 创建权限

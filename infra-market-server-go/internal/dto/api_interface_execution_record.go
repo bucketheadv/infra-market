@@ -34,8 +34,7 @@ type ApiInterfaceExecutionRecordQueryDto struct {
 	EndTime          *int64  `form:"endTime"`
 	MinExecutionTime *int64  `form:"minExecutionTime"`
 	MaxExecutionTime  *int64  `form:"maxExecutionTime"`
-	Page             *int    `form:"page" binding:"omitempty,min=1" default:"1"`
-	Size             *int    `form:"size" binding:"omitempty,min=1,max=1000" default:"10"`
+	Pagination
 }
 
 // ApiInterfaceExecutionRecordStatsDto 执行记录统计DTO

@@ -41,8 +41,7 @@ type ApiInterfaceQueryDto struct {
 	Method      *string `form:"method"`
 	Status      *int    `form:"status"`
 	Environment *string `form:"environment"`
-	Page        *int    `form:"page" binding:"omitempty,min=1" default:"1"`
-	Size        *int    `form:"size" binding:"omitempty,min=1,max=1000" default:"10"`
+	Pagination
 }
 
 // ApiParamDto 接口参数DTO

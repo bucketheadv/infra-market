@@ -82,7 +82,7 @@ class UserDao : ServiceImpl<UserMapper, User>() {
         // 按id排序
         queryBuilder.orderBy("id ASC")
         
-        val page = Page<User>(query.current, query.size)
+        val page = Page<User>(query.page, query.size)
         return page(page, queryBuilder)
     }
     

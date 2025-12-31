@@ -76,7 +76,7 @@ class RoleDao : ServiceImpl<RoleMapper, Role>() {
         // 按id排序
         queryBuilder.orderBy("id ASC")
         
-        val page = Page<Role>(query.current, query.size)
+        val page = Page<Role>(query.page, query.size)
         return page(page, queryBuilder)
     }
     

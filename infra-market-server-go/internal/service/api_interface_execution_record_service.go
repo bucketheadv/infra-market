@@ -29,14 +29,11 @@ func (s *ApiInterfaceExecutionRecordService) FindPage(query dto.ApiInterfaceExec
 		recordDtos[i] = s.convertToDto(&record)
 	}
 
-	page := dto.GetPage(query.Page)
-	size := dto.GetSize(query.Size)
-
 	result := dto.PageResult[dto.ApiInterfaceExecutionRecordDto]{
 		Records: recordDtos,
 		Total:   total,
-		Current: page,
-		Size:    size,
+		Page:    query.GetPage(),
+		Size:    query.GetSize(),
 	}
 
 	return dto.Success(result)

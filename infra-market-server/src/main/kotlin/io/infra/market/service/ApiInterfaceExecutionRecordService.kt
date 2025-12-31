@@ -28,7 +28,7 @@ class ApiInterfaceExecutionRecordService(
         return PageResultDto(
             records = recordDtos,
             total = page.totalRow,
-            current = page.pageNumber,
+            page = page.pageNumber,
             size = page.pageSize
         )
     }

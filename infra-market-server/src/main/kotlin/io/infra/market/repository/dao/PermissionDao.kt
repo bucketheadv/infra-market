@@ -86,7 +86,7 @@ class PermissionDao : ServiceImpl<PermissionMapper, Permission>() {
         // 按id排序
         queryBuilder.orderBy("id ASC")
         
-        val page = Page<Permission>(query.current, query.size)
+        val page = Page<Permission>(query.page, query.size)
         return page(page, queryBuilder)
     }
     

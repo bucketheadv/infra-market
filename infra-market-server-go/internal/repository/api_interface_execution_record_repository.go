@@ -5,6 +5,7 @@ import (
 
 	"github.com/bucketheadv/infra-market/internal/dto"
 	"github.com/bucketheadv/infra-market/internal/entity"
+	"github.com/bucketheadv/infra-market/internal/util"
 	"gorm.io/gorm"
 )
 
@@ -37,7 +38,7 @@ func (r *ApiInterfaceExecutionRecordRepository) Page(query dto.ApiInterfaceExecu
 	}
 
 	// 关键字查询：在执行人姓名、错误信息、备注等字段中搜索
-	if query.Keyword != nil && *query.Keyword != "" {
+	if util.IsNotBlank(query.Keyword) {
 		keyword := "%" + *query.Keyword + "%"
 		db = db.Where("executor_name LIKE ? OR error_message LIKE ? OR remark LIKE ?", keyword, keyword, keyword)
 	}
@@ -45,7 +46,7 @@ func (r *ApiInterfaceExecutionRecordRepository) Page(query dto.ApiInterfaceExecu
 	if query.ExecutorID != nil {
 		db = db.Where("executor_id = ?", *query.ExecutorID)
 	}
-	if query.ExecutorName != nil && *query.ExecutorName != "" {
+	if util.IsNotBlank(query.ExecutorName) {
 		db = db.Where("executor_name LIKE ?", "%"+*query.ExecutorName+"%")
 	}
 	if query.Success != nil {
@@ -64,7 +65,7 @@ func (r *ApiInterfaceExecutionRecordRepository) Page(query dto.ApiInterfaceExecu
 		db = db.Where("create_time <= ?", *query.EndTime)
 	}
 
-	return PaginateQuery(db, query.Page, query.Size, "id DESC", &records)
+	return PaginateQuery(db, &query, "id DESC", &records)
 }
 
 // FindByExecutorID 根据执行人ID查询
