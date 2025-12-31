@@ -20,23 +20,7 @@ func NewApiInterfaceExecutionRecordService(repo *repository.ApiInterfaceExecutio
 // FindPage 分页查询
 func (s *ApiInterfaceExecutionRecordService) FindPage(query dto.ApiInterfaceExecutionRecordQueryDto) dto.ApiData[dto.PageResult[dto.ApiInterfaceExecutionRecordDto]] {
 	records, total, err := s.repo.Page(query)
-	if err != nil {
-		return dto.Error[dto.PageResult[dto.ApiInterfaceExecutionRecordDto]]("查询失败", http.StatusInternalServerError)
-	}
-
-	recordDtos := make([]dto.ApiInterfaceExecutionRecordDto, len(records))
-	for i, record := range records {
-		recordDtos[i] = s.convertToDto(&record)
-	}
-
-	result := dto.PageResult[dto.ApiInterfaceExecutionRecordDto]{
-		Records: recordDtos,
-		Total:   total,
-		Page:    query.GetPage(),
-		Size:    query.GetSize(),
-	}
-
-	return dto.Success(result)
+	return PageResultBuilder(records, total, err, s.convertToDto, &query)
 }
 
 // GetByID 根据ID查询

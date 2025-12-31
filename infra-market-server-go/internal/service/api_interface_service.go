@@ -38,23 +38,7 @@ func NewApiInterfaceService(
 // FindPage 分页查询接口
 func (s *ApiInterfaceService) FindPage(query dto.ApiInterfaceQueryDto) dto.ApiData[dto.PageResult[dto.ApiInterfaceDto]] {
 	interfaces, total, err := s.apiInterfaceRepo.Page(query)
-	if err != nil {
-		return dto.Error[dto.PageResult[dto.ApiInterfaceDto]]("查询失败", http.StatusInternalServerError)
-	}
-
-	interfaceDtos := make([]dto.ApiInterfaceDto, len(interfaces))
-	for i, iface := range interfaces {
-		interfaceDtos[i] = s.convertToDto(&iface)
-	}
-
-	result := dto.PageResult[dto.ApiInterfaceDto]{
-		Records: interfaceDtos,
-		Total:   total,
-		Page:    query.GetPage(),
-		Size:    query.GetSize(),
-	}
-
-	return dto.Success(result)
+	return PageResultBuilder(interfaces, total, err, s.convertToDto, &query)
 }
 
 // FindMostUsedInterfaces 获取最近最热门的接口
