@@ -656,7 +656,7 @@ const handleReset = () => {
 
 // 表格变化
 const handleTableChange = (pag: any) => {
-  pagination.current = pag.page
+  pagination.current = pag.current
   pagination.pageSize = pag.pageSize
   loadData()
 }
