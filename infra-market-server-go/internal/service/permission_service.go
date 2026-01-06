@@ -35,9 +35,64 @@ func (s *PermissionService) GetPermissions(query dto.PermissionQueryDto) dto.Api
 		return dto.Error[dto.PageResult[dto.PermissionDto]]("查询失败", http.StatusInternalServerError)
 	}
 
+	// 收集所有需要查询的权限ID（包括当前权限和它们的祖先权限）
+	allPermissionIDSet := make(map[uint64]bool)
+
+	// 先添加当前列表中的所有权限ID
+	for _, p := range permissions {
+		allPermissionIDSet[p.ID] = true
+	}
+
+	// 递归收集所有祖先权限ID（迭代查询直到没有新的父权限）
+	parentIDsToQuery := make([]uint64, 0)
+	for _, p := range permissions {
+		if p.ParentID != nil && !allPermissionIDSet[*p.ParentID] {
+			parentIDsToQuery = append(parentIDsToQuery, *p.ParentID)
+			allPermissionIDSet[*p.ParentID] = true
+		}
+	}
+
+	// 迭代查询所有祖先权限
+	allQueriedPermissions := make([]entity.Permission, 0)
+	for len(parentIDsToQuery) > 0 {
+		parentPermissions, _ := s.permissionRepo.FindByIDs(parentIDsToQuery)
+		allQueriedPermissions = append(allQueriedPermissions, parentPermissions...)
+
+		// 收集下一层父权限ID
+		parentIDsToQuery = make([]uint64, 0)
+		for _, p := range parentPermissions {
+			if p.ParentID != nil && !allPermissionIDSet[*p.ParentID] {
+				parentIDsToQuery = append(parentIDsToQuery, *p.ParentID)
+				allPermissionIDSet[*p.ParentID] = true
+			}
+		}
+	}
+
+	// 构建完整的权限Map（包括当前列表中的权限和查询到的所有祖先权限）
+	allPermissionMap := make(map[uint64]*entity.Permission)
+	// 先添加当前列表中的权限
+	for i := range permissions {
+		allPermissionMap[permissions[i].ID] = &permissions[i]
+	}
+	// 再添加查询到的所有祖先权限
+	for i := range allQueriedPermissions {
+		allPermissionMap[allQueriedPermissions[i].ID] = &allQueriedPermissions[i]
+	}
+
+	// 构建父权限Map（仅包含直接父权限）
+	parentPermissionMap := make(map[uint64]*entity.Permission)
+	for _, p := range permissions {
+		if p.ParentID != nil {
+			if parent, exists := allPermissionMap[*p.ParentID]; exists {
+				parentPermissionMap[*p.ParentID] = parent
+			}
+		}
+	}
+
+	// 转换权限列表，使用缓存的父权限数据
 	permissionDtos := make([]dto.PermissionDto, len(permissions))
 	for i, p := range permissions {
-		permissionDtos[i] = s.convertPermissionToDtoWithParent(&p)
+		permissionDtos[i] = s.convertPermissionToDtoWithParentCached(&p, parentPermissionMap, allPermissionMap)
 	}
 
 	result := dto.PageResult[dto.PermissionDto]{
@@ -305,4 +360,51 @@ func (s *PermissionService) buildAccessPath(permission *entity.Permission) []str
 	}
 
 	return path
+}
+
+// buildAccessPathCached 构建访问路径（使用缓存的权限Map）
+func (s *PermissionService) buildAccessPathCached(permission *entity.Permission, allPermissionMap map[uint64]*entity.Permission) []string {
+	var path []string
+	current := permission
+
+	// 向上遍历到根节点，收集权限名称
+	for current != nil {
+		path = append([]string{current.Name}, path...)
+		if current.ParentID != nil {
+			if parent, exists := allPermissionMap[*current.ParentID]; exists {
+				current = parent
+			} else {
+				break
+			}
+		} else {
+			break
+		}
+	}
+
+	return path
+}
+
+// convertPermissionToDtoWithParentCached 转换权限实体为DTO，使用缓存的父权限数据
+func (s *PermissionService) convertPermissionToDtoWithParentCached(
+	permission *entity.Permission,
+	parentPermissionMap map[uint64]*entity.Permission,
+	allPermissionMap map[uint64]*entity.Permission,
+) dto.PermissionDto {
+	permissionDto := s.convertPermissionToDto(permission, nil)
+
+	// 获取父级权限信息（从缓存中获取）
+	if permission.ParentID != nil {
+		if parentPermission, exists := parentPermissionMap[*permission.ParentID]; exists {
+			permissionDto.ParentPermission = &dto.ParentPermissionDto{
+				ID:   parentPermission.ID,
+				Name: parentPermission.Name,
+				Code: parentPermission.Code,
+			}
+		}
+	}
+
+	// 构建访问路径（使用缓存的权限Map）
+	permissionDto.AccessPath = s.buildAccessPathCached(permission, allPermissionMap)
+
+	return permissionDto
 }
