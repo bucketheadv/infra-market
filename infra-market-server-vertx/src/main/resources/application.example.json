@@ -1,0 +1,27 @@
+{
+  "server": {
+    "port": 8080
+  },
+  "database": {
+    "host": "localhost",
+    "port": 3306,
+    "database": "infra_market",
+    "username": "root",
+    "password": "your_password",
+    "maxPoolSize": 10,
+    "charset": "utf8mb4",
+    "collation": "utf8mb4_unicode_ci"
+  },
+  "redis": {
+    "host": "localhost",
+    "port": 6379
+  },
+  "jwt": {
+    "secretKey": "your-jwt-secret-key-change-this-in-production",
+    "expirationTime": 259200000
+  },
+  "aes": {
+    "defaultKey": "your-aes-key-change-this-in-production"
+  }
+}
+

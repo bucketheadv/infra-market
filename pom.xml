@@ -14,7 +14,8 @@
 
     <modules>
         <module>infra-market-server</module>
-<!--        <module>infra-market-admin</module>-->
+        <module>infra-market-server-vertx</module>
+        <!--        <module>infra-market-admin</module>-->
     </modules>
 
     <properties>

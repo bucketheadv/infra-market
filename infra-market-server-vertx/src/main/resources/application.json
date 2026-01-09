@@ -1,0 +1,27 @@
+{
+  "server": {
+    "port": 8080
+  },
+  "database": {
+    "host": "localhost",
+    "port": 3306,
+    "database": "infra_market",
+    "username": "root",
+    "password": "123456",
+    "maxPoolSize": 10,
+    "charset": "utf8mb4",
+    "collation": "utf8mb4_unicode_ci"
+  },
+  "redis": {
+    "host": "localhost",
+    "port": 6379
+  },
+  "jwt": {
+    "secretKey": "infra-market-jwt-secret-key-2024-very-long-secret-key-for-security",
+    "expirationTime": 259200000
+  },
+  "aes": {
+    "defaultKey": "InfraMarketSecretKey2024"
+  }
+}
+

@@ -1,0 +1,164 @@
+package io.infra.market.vertx.repository
+
+import io.infra.market.vertx.entity.Permission
+import io.vertx.core.Future
+import io.vertx.sqlclient.Pool
+import io.vertx.sqlclient.Row
+import io.vertx.sqlclient.Tuple
+
+/**
+ * 权限数据访问对象
+ */
+class PermissionDao(private val pool: Pool) {
+    
+    fun findById(id: Long): Future<Permission?> {
+        return pool.preparedQuery("SELECT * FROM permission_info WHERE id = ? AND status != 'deleted'")
+            .execute(Tuple.of(id))
+            .map { rows ->
+                if (rows.size() > 0) {
+                    rowToPermission(rows.first())
+                } else {
+                    null
+                }
+            }
+    }
+    
+    fun findByCode(code: String): Future<Permission?> {
+        return pool.preparedQuery("SELECT * FROM permission_info WHERE code = ? AND status != 'deleted'")
+            .execute(Tuple.of(code))
+            .map { rows ->
+                if (rows.size() > 0) {
+                    rowToPermission(rows.first())
+                } else {
+                    null
+                }
+            }
+    }
+    
+    fun findByStatus(status: String): Future<List<Permission>> {
+        return pool.preparedQuery("SELECT * FROM permission_info WHERE status = ? ORDER BY id ASC")
+            .execute(Tuple.of(status))
+            .map { rows ->
+                rows.map { rowToPermission(it) }
+            }
+    }
+    
+    fun findByIds(ids: List<Long>): Future<List<Permission>> {
+        if (ids.isEmpty()) {
+            return Future.succeededFuture(emptyList())
+        }
+        
+        val placeholders = ids.joinToString(",") { "?" }
+        return pool.preparedQuery("SELECT * FROM permission_info WHERE id IN ($placeholders) ORDER BY id ASC")
+            .execute(Tuple.from(ids))
+            .map { rows ->
+                rows.map { rowToPermission(it) }
+            }
+    }
+    
+    fun findByParentId(parentId: Long): Future<List<Permission>> {
+        return pool.preparedQuery("SELECT * FROM permission_info WHERE parent_id = ? AND status != 'deleted' ORDER BY id ASC")
+            .execute(Tuple.of(parentId))
+            .map { rows ->
+                rows.map { rowToPermission(it) }
+            }
+    }
+    
+    fun page(name: String?, code: String?, type: String?, status: String?, page: Int, size: Int): Future<Pair<List<Permission>, Long>> {
+        val offset = (page - 1) * size
+        val conditions = mutableListOf<String>()
+        val params = mutableListOf<Any>()
+        
+        conditions.add("status != 'deleted'")
+        
+        if (!name.isNullOrBlank()) {
+            conditions.add("name LIKE ?")
+            params.add("%$name%")
+        }
+        
+        if (!code.isNullOrBlank()) {
+            conditions.add("code LIKE ?")
+            params.add("%$code%")
+        }
+        
+        if (!type.isNullOrBlank()) {
+            conditions.add("type = ?")
+            params.add(type)
+        }
+        
+        if (!status.isNullOrBlank()) {
+            conditions.add("status = ?")
+            params.add(status)
+        }
+        
+        val whereClause = conditions.joinToString(" AND ")
+        
+        val countQuery = "SELECT COUNT(*) as total FROM permission_info WHERE $whereClause"
+        val dataQuery = "SELECT * FROM permission_info WHERE $whereClause ORDER BY id ASC LIMIT ? OFFSET ?"
+        
+        return pool.preparedQuery(countQuery)
+            .execute(Tuple.from(params))
+            .compose { countRows ->
+                val total = countRows.first().getLong("total")
+                pool.preparedQuery(dataQuery)
+                    .execute(Tuple.from(params + size + offset))
+                    .map { dataRows ->
+                        Pair(dataRows.map { rowToPermission(it) }, total)
+                    }
+            }
+    }
+    
+    fun save(permission: Permission): Future<Long> {
+        val now = System.currentTimeMillis()
+        permission.createTime = now
+        permission.updateTime = now
+        
+        return pool.preparedQuery(
+            "INSERT INTO permission_info (name, code, type, parent_id, path, icon, sort, status, create_time, update_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        )
+            .execute(Tuple.of(
+                permission.name, permission.code, permission.type, permission.parentId,
+                permission.path, permission.icon, permission.sort, permission.status,
+                permission.createTime, permission.updateTime
+            ))
+            .map { rows ->
+                rows.iterator().next().getLong(0)
+            }
+    }
+    
+    fun updateById(permission: Permission): Future<Void> {
+        permission.updateTime = System.currentTimeMillis()
+        return pool.preparedQuery(
+            "UPDATE permission_info SET name = ?, code = ?, type = ?, parent_id = ?, path = ?, icon = ?, sort = ?, status = ?, update_time = ? WHERE id = ?"
+        )
+            .execute(Tuple.of(
+                permission.name, permission.code, permission.type, permission.parentId,
+                permission.path, permission.icon, permission.sort, permission.status,
+                permission.updateTime, permission.id
+            ))
+            .map { null }
+    }
+    
+    fun count(): Future<Long> {
+        return pool.preparedQuery("SELECT COUNT(*) as total FROM permission_info WHERE status != 'deleted'")
+            .execute()
+            .map { rows -> rows.first().getLong("total") }
+    }
+    
+    private fun rowToPermission(row: Row): Permission {
+        return Permission(
+            id = row.getLong("id"),
+            name = row.getString("name"),
+            code = row.getString("code"),
+            type = row.getString("type") ?: "menu",
+            parentId = row.getLong("parent_id"),
+            path = row.getString("path"),
+            icon = row.getString("icon"),
+            sort = row.getInteger("sort") ?: 0,
+            status = row.getString("status") ?: "active",
+            createTime = row.getLong("create_time"),
+            updateTime = row.getLong("update_time")
+        )
+    }
+}
+
