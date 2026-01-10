@@ -4,6 +4,7 @@ import io.infra.market.vertx.entity.Permission
 import io.infra.market.vertx.extensions.awaitForResult
 import io.vertx.sqlclient.Pool
 import io.vertx.sqlclient.Row
+import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Tuple
 
 /**
@@ -11,7 +12,7 @@ import io.vertx.sqlclient.Tuple
  * 
  * 规则1：任何调用 xxx.awaitForResult() 的函数，必须用 suspend 修饰
  */
-class PermissionDao(private val pool: Pool) {
+class PermissionDao(pool: Pool) : BaseDao(pool) {
     
     suspend fun findById(id: Long): Permission? {
         val rows = pool.preparedQuery("SELECT * FROM permission_info WHERE id = ? AND status != 'deleted'")
@@ -61,78 +62,73 @@ class PermissionDao(private val pool: Pool) {
         return rows.map { rowToPermission(it) }
     }
     
-    suspend fun page(name: String?, code: String?, type: String?, status: String?, page: Int, size: Int): Pair<List<Permission>, Long> {
-        val offset = (page - 1) * size
-        val conditions = mutableListOf<String>()
-        val params = mutableListOf<Any>()
-        
-        conditions.add("status != 'deleted'")
-        
-        if (!name.isNullOrBlank()) {
-            conditions.add("name LIKE ?")
-            params.add("%$name%")
-        }
-        
-        if (!code.isNullOrBlank()) {
-            conditions.add("code LIKE ?")
-            params.add("%$code%")
-        }
-        
-        if (!type.isNullOrBlank()) {
-            conditions.add("type = ?")
-            params.add(type)
-        }
-        
-        if (!status.isNullOrBlank()) {
-            conditions.add("status = ?")
-            params.add(status)
-        }
-        
-        val whereClause = conditions.joinToString(" AND ")
-        
-        val countQuery = "SELECT COUNT(*) as total FROM permission_info WHERE $whereClause"
-        val dataQuery = "SELECT * FROM permission_info WHERE $whereClause ORDER BY id ASC LIMIT ? OFFSET ?"
-        
-        val countRows = pool.preparedQuery(countQuery)
-            .execute(Tuple.from(params))
-            .awaitForResult()
-        val total = countRows.first().getLong("total")
-        
-        val dataRows = pool.preparedQuery(dataQuery)
-            .execute(Tuple.from(params + size + offset))
-            .awaitForResult()
-        
-        return Pair(dataRows.map { rowToPermission(it) }, total)
+    suspend fun page(name: String?, code: String?, type: String?, status: String?, page: Int, size: Int): PageWrapper<Permission> {
+        return page(
+            tableName = "permission_info",
+            page = page,
+            size = size,
+            fixedConditions = listOf("status != 'deleted'"),
+            dynamicConditions = listOf(
+                "name LIKE ?" to name?.let { "%$it%" },
+                "code LIKE ?" to code?.let { "%$it%" },
+                "type = ?" to type,
+                "status = ?" to status
+            ),
+            orderBy = "id ASC",
+            rowMapper = { rowToPermission(it) }
+        )
     }
     
     suspend fun save(permission: Permission): Long {
-        val now = System.currentTimeMillis()
-        permission.createTime = now
-        permission.updateTime = now
-        
-        val rows = pool.preparedQuery(
-            "INSERT INTO permission_info (name, code, type, parent_id, path, icon, sort, status, create_time, update_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        setCreateTime(permission)
+        return execute(
+            "INSERT INTO permission_info (name, code, type, parent_id, path, icon, sort, status, create_time, update_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            permission.name,
+            permission.code,
+            permission.type,
+            permission.parentId,
+            permission.path,
+            permission.icon,
+            permission.sort,
+            permission.status,
+            permission.createTime,
+            permission.updateTime
         )
-            .execute(Tuple.of(
-                permission.name, permission.code, permission.type, permission.parentId,
-                permission.path, permission.icon, permission.sort, permission.status,
-                permission.createTime, permission.updateTime
-            ))
-            .awaitForResult()
-        return rows.iterator().next().getLong(0)
     }
     
     suspend fun updateById(permission: Permission) {
-        permission.updateTime = System.currentTimeMillis()
-        pool.preparedQuery(
-            "UPDATE permission_info SET name = ?, code = ?, type = ?, parent_id = ?, path = ?, icon = ?, sort = ?, status = ?, update_time = ? WHERE id = ?"
+        setUpdateTime(permission)
+        execute(
+            "UPDATE permission_info SET name = ?, code = ?, type = ?, parent_id = ?, path = ?, icon = ?, sort = ?, status = ?, update_time = ? WHERE id = ?",
+            permission.name,
+            permission.code,
+            permission.type,
+            permission.parentId,
+            permission.path,
+            permission.icon,
+            permission.sort,
+            permission.status,
+            permission.updateTime,
+            permission.id
         )
-            .execute(Tuple.of(
-                permission.name, permission.code, permission.type, permission.parentId,
-                permission.path, permission.icon, permission.sort, permission.status,
-                permission.updateTime, permission.id
-            ))
-            .awaitForResult()
+    }
+    
+    suspend fun updateById(permission: Permission, connection: SqlConnection) {
+        setUpdateTime(permission)
+        execute(
+            connection,
+            "UPDATE permission_info SET name = ?, code = ?, type = ?, parent_id = ?, path = ?, icon = ?, sort = ?, status = ?, update_time = ? WHERE id = ?",
+            permission.name,
+            permission.code,
+            permission.type,
+            permission.parentId,
+            permission.path,
+            permission.icon,
+            permission.sort,
+            permission.status,
+            permission.updateTime,
+            permission.id
+        )
     }
     
     suspend fun count(): Long {

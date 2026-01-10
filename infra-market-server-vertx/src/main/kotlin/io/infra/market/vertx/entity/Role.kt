@@ -9,7 +9,7 @@ data class Role(
     var code: String? = null,
     var description: String? = null,
     var status: String = "active",
-    var createTime: Long? = null,
-    var updateTime: Long? = null
-)
+    override var createTime: Long? = null,
+    override var updateTime: Long? = null
+) : TimestampedEntity
 

@@ -14,7 +14,8 @@ object QueryParamUtil {
      * 从 RoutingContext 获取字符串查询参数
      */
     fun getString(ctx: RoutingContext, key: String): String? {
-        return ctx.queryParams().get(key)?.takeIf { it.isNotBlank() }
+        val value: String? = ctx.queryParams().get(key)
+        return value?.takeIf { it.isNotBlank() }
     }
     
     /**

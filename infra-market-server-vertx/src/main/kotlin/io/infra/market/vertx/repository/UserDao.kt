@@ -4,6 +4,7 @@ import io.infra.market.vertx.entity.User
 import io.infra.market.vertx.extensions.awaitForResult
 import io.vertx.sqlclient.Pool
 import io.vertx.sqlclient.Row
+import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Tuple
 
 /**
@@ -11,7 +12,7 @@ import io.vertx.sqlclient.Tuple
  * 
  * 规则1：任何调用 xxx.awaitForResult() 的函数，必须用 suspend 修饰
  */
-class UserDao(private val pool: Pool) {
+class UserDao(pool: Pool) : BaseDao(pool) {
     
     suspend fun findByUsername(username: String): User? {
         val rows = pool.preparedQuery("SELECT * FROM user_info WHERE username = ?")
@@ -57,94 +58,88 @@ class UserDao(private val pool: Pool) {
         }
     }
     
-    suspend fun findPage(username: String?, status: String?, page: Int, size: Int): Pair<List<User>, Long> {
-        val offset = (page - 1) * size
-        val conditions = mutableListOf<String>()
-        val params = mutableListOf<Any>()
-        
-        if (!username.isNullOrBlank()) {
-            conditions.add("username LIKE ?")
-            params.add("%$username%")
-        }
-        
-        if (!status.isNullOrBlank()) {
-            conditions.add("status = ?")
-            params.add(status)
-        }
-        
-        val whereClause = if (conditions.isNotEmpty()) {
-            "WHERE ${conditions.joinToString(" AND ")}"
-        } else {
-            ""
-        }
-        
-        val countQuery = "SELECT COUNT(*) as total FROM user_info $whereClause"
-        val dataQuery = "SELECT * FROM user_info $whereClause ORDER BY create_time DESC LIMIT ? OFFSET ?"
-        
-        val countRows = pool.preparedQuery(countQuery)
-            .execute(if (params.isNotEmpty()) Tuple.from(params) else Tuple.tuple())
-            .awaitForResult()
-        val total = countRows.first().getLong("total")
-        
-        val dataParams = params.toMutableList()
-        dataParams.add(size)
-        dataParams.add(offset)
-        
-        val dataRows = pool.preparedQuery(dataQuery)
-            .execute(Tuple.from(dataParams))
-            .awaitForResult()
-        val users = dataRows.map { rowToUser(it) }
-        
-        return Pair(users, total)
+    suspend fun findPage(username: String?, status: String?, page: Int, size: Int): PageWrapper<User> {
+        return page(
+            tableName = "user_info",
+            page = page,
+            size = size,
+            dynamicConditions = listOf(
+                "username LIKE ?" to username?.let { "%$it%" },
+                "status = ?" to status
+            ),
+            orderBy = "create_time DESC",
+            rowMapper = { rowToUser(it) }
+        )
     }
     
     suspend fun save(user: User): Long {
-        val now = System.currentTimeMillis()
-        user.createTime = now
-        user.updateTime = now
-        
-        val rows = pool.preparedQuery(
-            "INSERT INTO user_info (username, password, email, phone, status, last_login_time, create_time, update_time) " +
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+        setCreateTime(user)
+        return execute(
+            "INSERT INTO user_info (username, password, email, phone, status, last_login_time, create_time, update_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            user.username,
+            user.password,
+            user.email,
+            user.phone,
+            user.status,
+            user.lastLoginTime,
+            user.createTime,
+            user.updateTime
         )
-            .execute(Tuple.of(
-                user.username,
-                user.password,
-                user.email,
-                user.phone,
-                user.status,
-                user.lastLoginTime,
-                user.createTime,
-                user.updateTime
-            ))
-            .awaitForResult()
-        return rows.iterator().next().getLong(0)
+    }
+    
+    suspend fun save(user: User, connection: SqlConnection): Long {
+        setCreateTime(user)
+        return execute(
+            connection,
+            "INSERT INTO user_info (username, password, email, phone, status, last_login_time, create_time, update_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            user.username,
+            user.password,
+            user.email,
+            user.phone,
+            user.status,
+            user.lastLoginTime,
+            user.createTime,
+            user.updateTime
+        )
     }
     
     suspend fun updateById(user: User) {
-        user.updateTime = System.currentTimeMillis()
-        
-        pool.preparedQuery(
-            "UPDATE user_info SET username = ?, password = ?, email = ?, phone = ?, status = ?, " +
-            "last_login_time = ?, update_time = ? WHERE id = ?"
+        setUpdateTime(user)
+        execute(
+            "UPDATE user_info SET username = ?, password = ?, email = ?, phone = ?, status = ?, last_login_time = ?, update_time = ? WHERE id = ?",
+            user.username,
+            user.password,
+            user.email,
+            user.phone,
+            user.status,
+            user.lastLoginTime,
+            user.updateTime,
+            user.id
         )
-            .execute(Tuple.of(
-                user.username,
-                user.password,
-                user.email,
-                user.phone,
-                user.status,
-                user.lastLoginTime,
-                user.updateTime,
-                user.id
-            ))
-            .awaitForResult()
+    }
+    
+    suspend fun updateById(user: User, connection: SqlConnection) {
+        setUpdateTime(user)
+        execute(
+            connection,
+            "UPDATE user_info SET username = ?, password = ?, email = ?, phone = ?, status = ?, last_login_time = ?, update_time = ? WHERE id = ?",
+            user.username,
+            user.password,
+            user.email,
+            user.phone,
+            user.status,
+            user.lastLoginTime,
+            user.updateTime,
+            user.id
+        )
     }
     
     suspend fun deleteById(id: Long) {
-        pool.preparedQuery("DELETE FROM user_info WHERE id = ?")
-            .execute(Tuple.of(id))
-            .awaitForResult()
+        execute("DELETE FROM user_info WHERE id = ?", id)
+    }
+    
+    suspend fun deleteById(id: Long, connection: SqlConnection) {
+        execute(connection, "DELETE FROM user_info WHERE id = ?", id)
     }
     
     suspend fun findByIds(ids: List<Long>): List<User> {

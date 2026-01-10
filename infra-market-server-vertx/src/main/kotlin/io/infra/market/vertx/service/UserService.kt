@@ -12,9 +12,6 @@ import io.infra.market.vertx.enums.StatusEnum
 import io.infra.market.vertx.repository.UserDao
 import io.infra.market.vertx.repository.UserRoleDao
 import io.infra.market.vertx.util.AesUtil
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 
 /**
  * 用户服务
@@ -27,19 +24,19 @@ class UserService(
 ) {
     
     suspend fun getUsers(query: UserQueryDto): ApiData<PageResultDto<UserDto>> {
-        val (users, total) = userDao.findPage(query.username, query.status, query.page, query.size)
-        val userRoles = userRoleDao.findByUids(users.mapNotNull { it.id })
+        val page = userDao.findPage(query.username, query.status, query.page, query.size)
+        val userRoles = userRoleDao.findByUids(page.records.mapNotNull { it.id })
         
         val userRoleMap = userRoles.groupBy { it.uid }
             .mapValues { (_, roles) -> roles.mapNotNull { it.roleId } }
             .mapKeys { (key, _) -> key ?: 0L }
         
-        val userDtos = UserDto.fromEntityList(users, userRoleMap)
+        val userDtos = UserDto.fromEntityList(page.records, userRoleMap)
         val result = PageResultDto(
             records = userDtos,
-            total = total,
-            page = query.page.toLong(),
-            size = query.size.toLong()
+            total = page.total,
+            page = page.page,
+            size = page.size
         )
         return ApiData.success(result)
     }
@@ -73,65 +70,83 @@ class UserService(
             }
         }
         
-        return createUserInternal(form)
-    }
-    
-    private suspend fun createUserInternal(form: UserFormDto): ApiData<UserDto> {
-        val encodedPassword = AesUtil.encrypt(form.password ?: "123456")
-        val user = User(
-            username = form.username,
-            password = encodedPassword,
-            email = form.email,
-            phone = form.phone,
-            status = StatusEnum.ACTIVE.code
-        )
-        
-        val userId = userDao.save(user)
-        user.id = userId
-        
-        coroutineScope {
-            form.roleIds.map { roleId ->
-                async {
-                    val userRole = UserRole(
-                        uid = userId,
-                        roleId = roleId
-                    )
-                    userRoleDao.save(userRole)
-                }
-            }.awaitAll()
+        // 使用事务
+        val result = userDao.withTransaction { conn ->
+            val encodedPassword = AesUtil.encrypt(form.password ?: "123456")
+            val user = User(
+                username = form.username,
+                password = encodedPassword,
+                email = form.email,
+                phone = form.phone,
+                status = StatusEnum.ACTIVE.code
+            )
+            
+            val userId = userDao.save(user, conn)
+            user.id = userId
+            
+            form.roleIds.forEach { roleId ->
+                val userRole = UserRole(
+                    uid = userId,
+                    roleId = roleId
+                )
+                userRoleDao.save(userRole, conn)
+            }
+            
+            UserDto.fromEntity(user, form.roleIds)
         }
         
-        val userDto = UserDto.fromEntity(user, form.roleIds)
-        return ApiData.success(userDto)
+        return ApiData.success(result)
     }
     
     suspend fun updateUser(id: Long, form: UserUpdateDto): ApiData<UserDto> {
         val user = userDao.findByUid(id) ?: return ApiData.error("用户不存在")
 
-        user.username = form.username
-        user.email = form.email
-        user.phone = form.phone
-        if (!form.password.isNullOrBlank()) {
-            user.password = AesUtil.encrypt(form.password)
+        // 检查用户名是否已被其他用户使用
+        val existingUser = userDao.findByUsername(form.username)
+        if (existingUser != null && existingUser.id != user.id) {
+            return ApiData.error("用户名已存在")
         }
         
-        userDao.updateById(user)
-        userRoleDao.deleteByUid(id)
-        
-        coroutineScope {
-            form.roleIds.map { roleId ->
-                async {
-                    val userRole = UserRole(
-                        uid = id,
-                        roleId = roleId
-                    )
-                    userRoleDao.save(userRole)
-                }
-            }.awaitAll()
+        // 检查邮箱是否已被其他用户使用
+        if (!form.email.isNullOrBlank()) {
+            val existingEmail = userDao.findByEmail(form.email)
+            if (existingEmail != null && existingEmail.id != user.id) {
+                return ApiData.error("邮箱已存在")
+            }
         }
         
-        val userDto = UserDto.fromEntity(user, form.roleIds)
-        return ApiData.success(userDto)
+        // 检查手机号是否已被其他用户使用
+        if (!form.phone.isNullOrBlank()) {
+            val existingPhone = userDao.findByPhone(form.phone)
+            if (existingPhone != null && existingPhone.id != user.id) {
+                return ApiData.error("手机号已存在")
+            }
+        }
+        
+        // 使用事务
+        val result = userDao.withTransaction { conn ->
+            user.username = form.username
+            user.email = form.email
+            user.phone = form.phone
+            if (!form.password.isNullOrBlank()) {
+                user.password = AesUtil.encrypt(form.password)
+            }
+            
+            userDao.updateById(user, conn)
+            userRoleDao.deleteByUid(id, conn)
+            
+            form.roleIds.forEach { roleId ->
+                val userRole = UserRole(
+                    uid = id,
+                    roleId = roleId
+                )
+                userRoleDao.save(userRole, conn)
+            }
+            
+            UserDto.fromEntity(user, form.roleIds)
+        }
+        
+        return ApiData.success(result)
     }
     
     suspend fun deleteUser(id: Long): ApiData<Unit> {
@@ -167,16 +182,12 @@ class UserService(
             return ApiData.error("请选择要删除的用户")
         }
         
-        coroutineScope {
-            ids.map { id ->
-                async {
-                    val user = userDao.findByUid(id)
-                    if (user != null) {
-                        userRoleDao.deleteByUid(id)
-                        userDao.deleteById(id)
-                    }
-                }
-            }.awaitAll()
+        // 使用事务
+        userDao.withTransaction { conn ->
+            ids.forEach { id ->
+                userRoleDao.deleteByUid(id, conn)
+                userDao.deleteById(id, conn)
+            }
         }
         
         return ApiData.success()

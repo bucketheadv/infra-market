@@ -23,9 +23,9 @@ class PermissionService(
 ) {
     
     suspend fun getPermissions(query: PermissionQueryDto): ApiData<PageResultDto<PermissionDto>> {
-        val (permissions, total) = permissionDao.page(query.name, query.code, query.type, query.status, query.page, query.size)
-        val permissionDtos = PermissionDto.fromEntityList(permissions)
-        return ApiData.success(PageResultDto(permissionDtos, total, query.page.toLong(), query.size.toLong()))
+        val page = permissionDao.page(query.name, query.code, query.type, query.status, query.page, query.size)
+        val permissionDtos = PermissionDto.fromEntityList(page.records)
+        return ApiData.success(PageResultDto(permissionDtos, page.total, page.page, page.size))
     }
     
     suspend fun getPermissionTree(): ApiData<List<PermissionDto>> {
@@ -178,13 +178,12 @@ class PermissionService(
             return ApiData.error("权限 ${permissionWithRoles.first.name} 下还有角色，无法删除")
         }
         
-        coroutineScope {
-            permissions.map { permission ->
-                async {
-                    permission.status = "deleted"
-                    permissionDao.updateById(permission)
-                }
-            }.awaitAll()
+        // 使用事务
+        permissionDao.withTransaction { conn ->
+            permissions.forEach { permission ->
+                permission.status = "deleted"
+                permissionDao.updateById(permission, conn)
+            }
         }
         
         return ApiData.success(Unit)

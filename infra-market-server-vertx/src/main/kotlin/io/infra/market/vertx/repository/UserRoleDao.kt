@@ -4,6 +4,7 @@ import io.infra.market.vertx.entity.UserRole
 import io.infra.market.vertx.extensions.awaitForResult
 import io.vertx.sqlclient.Pool
 import io.vertx.sqlclient.Row
+import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Tuple
 
 /**
@@ -11,7 +12,7 @@ import io.vertx.sqlclient.Tuple
  * 
  * 规则1：任何调用 xxx.awaitForResult() 的函数，必须用 suspend 修饰
  */
-class UserRoleDao(private val pool: Pool) {
+class UserRoleDao(pool: Pool) : BaseDao(pool) {
     
     suspend fun findByUid(uid: Long): List<UserRole> {
         val rows = pool.preparedQuery("SELECT * FROM user_role WHERE uid = ?")
@@ -40,22 +41,34 @@ class UserRoleDao(private val pool: Pool) {
     }
     
     suspend fun save(userRole: UserRole): Long {
-        val now = System.currentTimeMillis()
-        userRole.createTime = now
-        userRole.updateTime = now
-        
-        val rows = pool.preparedQuery(
-            "INSERT INTO user_role (uid, role_id, create_time, update_time) VALUES (?, ?, ?, ?)"
+        setCreateTime(userRole)
+        return execute(
+            "INSERT INTO user_role (uid, role_id, create_time, update_time) VALUES (?, ?, ?, ?)",
+            userRole.uid,
+            userRole.roleId,
+            userRole.createTime,
+            userRole.updateTime
         )
-            .execute(Tuple.of(userRole.uid, userRole.roleId, userRole.createTime, userRole.updateTime))
-            .awaitForResult()
-        return rows.iterator().next().getLong(0)
+    }
+    
+    suspend fun save(userRole: UserRole, connection: SqlConnection): Long {
+        setCreateTime(userRole)
+        return execute(
+            connection,
+            "INSERT INTO user_role (uid, role_id, create_time, update_time) VALUES (?, ?, ?, ?)",
+            userRole.uid,
+            userRole.roleId,
+            userRole.createTime,
+            userRole.updateTime
+        )
     }
     
     suspend fun deleteByUid(uid: Long) {
-        pool.preparedQuery("DELETE FROM user_role WHERE uid = ?")
-            .execute(Tuple.of(uid))
-            .awaitForResult()
+        execute("DELETE FROM user_role WHERE uid = ?", uid)
+    }
+    
+    suspend fun deleteByUid(uid: Long, connection: SqlConnection) {
+        execute(connection, "DELETE FROM user_role WHERE uid = ?", uid)
     }
     
     suspend fun deleteByRoleId(roleId: Long) {

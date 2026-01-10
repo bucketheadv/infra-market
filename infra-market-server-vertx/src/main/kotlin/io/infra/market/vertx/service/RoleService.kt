@@ -26,19 +26,19 @@ class RoleService(
 ) {
     
     suspend fun getRoles(query: RoleQueryDto): ApiData<PageResultDto<RoleDto>> {
-        val (roles, total) = roleDao.page(query.name, query.code, query.status, query.page, query.size)
-        val roleIds = roles.mapNotNull { it.id }
+        val page = roleDao.page(query.name, query.code, query.status, query.page, query.size)
+        val roleIds = page.records.mapNotNull { it.id }
         
         if (roleIds.isEmpty()) {
-            return ApiData.success(PageResultDto(emptyList(), total, query.page.toLong(), query.size.toLong()))
+            return ApiData.success(PageResultDto(emptyList(), page.total, page.page, page.size))
         }
         
         val rolePermissions = rolePermissionDao.findByRoleIds(roleIds)
         val rolePermissionsMap = rolePermissions.groupBy { it.roleId ?: 0L }
             .mapValues { (_, permissions) -> permissions.mapNotNull { it.permissionId } }
         
-        val roleDtos = RoleDto.fromEntityList(roles, rolePermissionsMap)
-        return ApiData.success(PageResultDto(roleDtos, total, query.page.toLong(), query.size.toLong()))
+        val roleDtos = RoleDto.fromEntityList(page.records, rolePermissionsMap)
+        return ApiData.success(PageResultDto(roleDtos, page.total, page.page, page.size))
     }
     
     suspend fun getAllRoles(): ApiData<List<RoleDto>> {
@@ -72,33 +72,33 @@ class RoleService(
             return ApiData.error("角色编码已存在")
         }
         
-        val now = System.currentTimeMillis()
-        val role = Role(
-            name = form.name,
-            code = form.code,
-            description = form.description,
-            status = "active"
-        )
-        role.createTime = now
-        role.updateTime = now
-        
-        val roleId = roleDao.save(role)
-        role.id = roleId
-        
-        coroutineScope {
-            form.permissionIds.map { permissionId ->
-                async {
-                    val rolePermission = RolePermission(
-                        roleId = roleId,
-                        permissionId = permissionId
-                    )
-                    rolePermissionDao.save(rolePermission)
-                }
-            }.awaitAll()
+        // 使用事务
+        val result = roleDao.withTransaction { conn ->
+            val now = System.currentTimeMillis()
+            val role = Role(
+                name = form.name,
+                code = form.code,
+                description = form.description,
+                status = "active"
+            )
+            role.createTime = now
+            role.updateTime = now
+            
+            val roleId = roleDao.save(role, conn)
+            role.id = roleId
+            
+            form.permissionIds.forEach { permissionId ->
+                val rolePermission = RolePermission(
+                    roleId = roleId,
+                    permissionId = permissionId
+                )
+                rolePermissionDao.save(rolePermission, conn)
+            }
+            
+            RoleDto.fromEntity(role, form.permissionIds)
         }
         
-        val roleDto = RoleDto.fromEntity(role, form.permissionIds)
-        return ApiData.success(roleDto)
+        return ApiData.success(result)
     }
     
     suspend fun updateRole(id: Long, form: RoleFormDto): ApiData<RoleDto> {
@@ -109,28 +109,28 @@ class RoleService(
             return ApiData.error("角色编码已存在")
         }
         
-        role.name = form.name
-        role.code = form.code
-        role.description = form.description
-        role.updateTime = System.currentTimeMillis()
-        
-        roleDao.updateById(role)
-        rolePermissionDao.deleteByRoleId(id)
-        
-        coroutineScope {
-            form.permissionIds.map { permissionId ->
-                async {
-                    val rolePermission = RolePermission(
-                        roleId = id,
-                        permissionId = permissionId
-                    )
-                    rolePermissionDao.save(rolePermission)
-                }
-            }.awaitAll()
+        // 使用事务
+        val result = roleDao.withTransaction { conn ->
+            role.name = form.name
+            role.code = form.code
+            role.description = form.description
+            role.updateTime = System.currentTimeMillis()
+            
+            roleDao.updateById(role, conn)
+            rolePermissionDao.deleteByRoleId(id, conn)
+            
+            form.permissionIds.forEach { permissionId ->
+                val rolePermission = RolePermission(
+                    roleId = id,
+                    permissionId = permissionId
+                )
+                rolePermissionDao.save(rolePermission, conn)
+            }
+            
+            RoleDto.fromEntity(role, form.permissionIds)
         }
         
-        val roleDto = RoleDto.fromEntity(role, form.permissionIds)
-        return ApiData.success(roleDto)
+        return ApiData.success(result)
     }
     
     suspend fun deleteRole(id: Long): ApiData<Unit> {
@@ -209,13 +209,13 @@ class RoleService(
             return ApiData.error("角色 ${roleWithUsers.first.name} 下还有用户，无法删除")
         }
         
-        coroutineScope {
-            roles.map { role ->
-                async {
-                    role.status = "deleted"
-                    roleDao.updateById(role)
-                }
-            }.awaitAll()
+        // 使用事务
+        roleDao.withTransaction { conn ->
+            roles.forEach { role ->
+                role.status = "deleted"
+                roleDao.updateById(role, conn)
+            }
+            Unit
         }
         
         return ApiData.success(Unit)

@@ -15,7 +15,7 @@ data class ApiInterface(
     var environment: String? = null,
     var timeout: Long? = null,
     var valuePath: String? = null,
-    var createTime: Long? = null,
-    var updateTime: Long? = null
-)
+    override var createTime: Long? = null,
+    override var updateTime: Long? = null
+) : TimestampedEntity
 

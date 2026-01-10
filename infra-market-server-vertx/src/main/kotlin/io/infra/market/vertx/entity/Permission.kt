@@ -13,7 +13,7 @@ data class Permission(
     var icon: String? = null,
     var sort: Int = 0,
     var status: String = "active",
-    var createTime: Long? = null,
-    var updateTime: Long? = null
-)
+    override var createTime: Long? = null,
+    override var updateTime: Long? = null
+) : TimestampedEntity
 

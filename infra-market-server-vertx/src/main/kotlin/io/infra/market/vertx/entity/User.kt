@@ -11,7 +11,7 @@ data class User(
     var phone: String? = null,
     var status: String = "active",
     var lastLoginTime: Long? = null,
-    var createTime: Long? = null,
-    var updateTime: Long? = null
-)
+    override var createTime: Long? = null,
+    override var updateTime: Long? = null
+) : TimestampedEntity
 

@@ -4,6 +4,7 @@ import io.infra.market.vertx.entity.RolePermission
 import io.infra.market.vertx.extensions.awaitForResult
 import io.vertx.sqlclient.Pool
 import io.vertx.sqlclient.Row
+import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Tuple
 
 /**
@@ -11,7 +12,7 @@ import io.vertx.sqlclient.Tuple
  * 
  * 规则1：任何调用 xxx.awaitForResult() 的函数，必须用 suspend 修饰
  */
-class RolePermissionDao(private val pool: Pool) {
+class RolePermissionDao(pool: Pool) : BaseDao(pool) {
     
     suspend fun findByRoleIds(roleIds: List<Long>): List<RolePermission> {
         if (roleIds.isEmpty()) {
@@ -47,22 +48,34 @@ class RolePermissionDao(private val pool: Pool) {
     }
     
     suspend fun save(rolePermission: RolePermission): Long {
-        val now = System.currentTimeMillis()
-        rolePermission.createTime = now
-        rolePermission.updateTime = now
-        
-        val rows = pool.preparedQuery(
-            "INSERT INTO role_permission (role_id, permission_id, create_time, update_time) VALUES (?, ?, ?, ?)"
+        setCreateTime(rolePermission)
+        return execute(
+            "INSERT INTO role_permission (role_id, permission_id, create_time, update_time) VALUES (?, ?, ?, ?)",
+            rolePermission.roleId,
+            rolePermission.permissionId,
+            rolePermission.createTime,
+            rolePermission.updateTime
         )
-            .execute(Tuple.of(rolePermission.roleId, rolePermission.permissionId, rolePermission.createTime, rolePermission.updateTime))
-            .awaitForResult()
-        return rows.iterator().next().getLong(0)
+    }
+    
+    suspend fun save(rolePermission: RolePermission, connection: SqlConnection): Long {
+        setCreateTime(rolePermission)
+        return execute(
+            connection,
+            "INSERT INTO role_permission (role_id, permission_id, create_time, update_time) VALUES (?, ?, ?, ?)",
+            rolePermission.roleId,
+            rolePermission.permissionId,
+            rolePermission.createTime,
+            rolePermission.updateTime
+        )
     }
     
     suspend fun deleteByRoleId(roleId: Long) {
-        pool.preparedQuery("DELETE FROM role_permission WHERE role_id = ?")
-            .execute(Tuple.of(roleId))
-            .awaitForResult()
+        execute("DELETE FROM role_permission WHERE role_id = ?", roleId)
+    }
+    
+    suspend fun deleteByRoleId(roleId: Long, connection: SqlConnection) {
+        execute(connection, "DELETE FROM role_permission WHERE role_id = ?", roleId)
     }
     
     private fun rowToRolePermission(row: Row): RolePermission {

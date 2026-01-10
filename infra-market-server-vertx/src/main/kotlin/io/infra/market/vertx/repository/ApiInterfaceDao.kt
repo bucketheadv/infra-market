@@ -4,6 +4,7 @@ import io.infra.market.vertx.entity.ApiInterface
 import io.infra.market.vertx.extensions.awaitForResult
 import io.vertx.sqlclient.Pool
 import io.vertx.sqlclient.Row
+import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Tuple
 
 /**
@@ -11,7 +12,7 @@ import io.vertx.sqlclient.Tuple
  * 
  * 规则1：任何调用 xxx.awaitForResult() 的函数，必须用 suspend 修饰
  */
-class ApiInterfaceDao(private val pool: Pool) {
+class ApiInterfaceDao(pool: Pool) : BaseDao(pool) {
     
     suspend fun findById(id: Long): ApiInterface? {
         val rows = pool.preparedQuery("SELECT * FROM api_interface WHERE id = ?")
@@ -35,86 +36,106 @@ class ApiInterfaceDao(private val pool: Pool) {
         return rows.map { rowToApiInterface(it) }
     }
     
-    suspend fun page(name: String?, method: String?, status: Int?, environment: String?, page: Int, size: Int): Pair<List<ApiInterface>, Long> {
-        val offset = (page - 1) * size
-        val conditions = mutableListOf<String>()
-        val params = mutableListOf<Any>()
-        
-        if (!name.isNullOrBlank()) {
-            conditions.add("name LIKE ?")
-            params.add("%$name%")
-        }
-        
-        if (!method.isNullOrBlank()) {
-            conditions.add("method = ?")
-            params.add(method)
-        }
-        
-        if (status != null) {
-            conditions.add("status = ?")
-            params.add(status)
-        }
-        
-        if (!environment.isNullOrBlank()) {
-            conditions.add("environment = ?")
-            params.add(environment)
-        }
-        
-        val whereClause = if (conditions.isNotEmpty()) {
-            "WHERE ${conditions.joinToString(" AND ")}"
-        } else {
-            ""
-        }
-        
-        val countQuery = "SELECT COUNT(*) as total FROM api_interface $whereClause"
-        val dataQuery = "SELECT * FROM api_interface $whereClause ORDER BY id DESC LIMIT ? OFFSET ?"
-        
-        val countRows = pool.preparedQuery(countQuery)
-            .execute(if (params.isNotEmpty()) Tuple.from(params) else Tuple.tuple())
-            .awaitForResult()
-        val total = countRows.first().getLong("total")
-        
-        val dataRows = pool.preparedQuery(dataQuery)
-            .execute(Tuple.from(params + size + offset))
-            .awaitForResult()
-        
-        return Pair(dataRows.map { rowToApiInterface(it) }, total)
+    suspend fun page(name: String?, method: String?, status: Int?, environment: String?, page: Int, size: Int): PageWrapper<ApiInterface> {
+        return page(
+            tableName = "api_interface",
+            page = page,
+            size = size,
+            dynamicConditions = listOf(
+                "name LIKE ?" to name?.let { "%$it%" },
+                "method = ?" to method,
+                "status = ?" to status,
+                "environment = ?" to environment
+            ),
+            orderBy = "id DESC",
+            rowMapper = { rowToApiInterface(it) }
+        )
     }
     
     suspend fun save(apiInterface: ApiInterface): Long {
-        val now = System.currentTimeMillis()
-        apiInterface.createTime = now
-        apiInterface.updateTime = now
-        
-        val rows = pool.preparedQuery(
-            "INSERT INTO api_interface (name, method, url, description, post_type, params, status, environment, timeout, value_path, create_time, update_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        setCreateTime(apiInterface)
+        return execute(
+            "INSERT INTO api_interface (name, method, url, description, post_type, params, status, environment, timeout, value_path, create_time, update_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            apiInterface.name,
+            apiInterface.method,
+            apiInterface.url,
+            apiInterface.description,
+            apiInterface.postType,
+            apiInterface.params,
+            apiInterface.status,
+            apiInterface.environment,
+            apiInterface.timeout,
+            apiInterface.valuePath,
+            apiInterface.createTime,
+            apiInterface.updateTime
         )
-            .execute(Tuple.of(
-                apiInterface.name, apiInterface.method, apiInterface.url, apiInterface.description,
-                apiInterface.postType, apiInterface.params, apiInterface.status, apiInterface.environment,
-                apiInterface.timeout, apiInterface.valuePath, apiInterface.createTime, apiInterface.updateTime
-            ))
-            .awaitForResult()
-        return rows.iterator().next().getLong(0)
+    }
+    
+    suspend fun save(apiInterface: ApiInterface, connection: SqlConnection): Long {
+        setCreateTime(apiInterface)
+        return execute(
+            connection,
+            "INSERT INTO api_interface (name, method, url, description, post_type, params, status, environment, timeout, value_path, create_time, update_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            apiInterface.name,
+            apiInterface.method,
+            apiInterface.url,
+            apiInterface.description,
+            apiInterface.postType,
+            apiInterface.params,
+            apiInterface.status,
+            apiInterface.environment,
+            apiInterface.timeout,
+            apiInterface.valuePath,
+            apiInterface.createTime,
+            apiInterface.updateTime
+        )
     }
     
     suspend fun updateById(apiInterface: ApiInterface) {
-        apiInterface.updateTime = System.currentTimeMillis()
-        pool.preparedQuery(
-            "UPDATE api_interface SET name = ?, method = ?, url = ?, description = ?, post_type = ?, params = ?, status = ?, environment = ?, timeout = ?, value_path = ?, update_time = ? WHERE id = ?"
+        setUpdateTime(apiInterface)
+        execute(
+            "UPDATE api_interface SET name = ?, method = ?, url = ?, description = ?, post_type = ?, params = ?, status = ?, environment = ?, timeout = ?, value_path = ?, update_time = ? WHERE id = ?",
+            apiInterface.name,
+            apiInterface.method,
+            apiInterface.url,
+            apiInterface.description,
+            apiInterface.postType,
+            apiInterface.params,
+            apiInterface.status,
+            apiInterface.environment,
+            apiInterface.timeout,
+            apiInterface.valuePath,
+            apiInterface.updateTime,
+            apiInterface.id
         )
-            .execute(Tuple.of(
-                apiInterface.name, apiInterface.method, apiInterface.url, apiInterface.description,
-                apiInterface.postType, apiInterface.params, apiInterface.status, apiInterface.environment,
-                apiInterface.timeout, apiInterface.valuePath, apiInterface.updateTime, apiInterface.id
-            ))
-            .awaitForResult()
+    }
+    
+    suspend fun updateById(apiInterface: ApiInterface, connection: SqlConnection) {
+        setUpdateTime(apiInterface)
+        execute(
+            connection,
+            "UPDATE api_interface SET name = ?, method = ?, url = ?, description = ?, post_type = ?, params = ?, status = ?, environment = ?, timeout = ?, value_path = ?, update_time = ? WHERE id = ?",
+            apiInterface.name,
+            apiInterface.method,
+            apiInterface.url,
+            apiInterface.description,
+            apiInterface.postType,
+            apiInterface.params,
+            apiInterface.status,
+            apiInterface.environment,
+            apiInterface.timeout,
+            apiInterface.valuePath,
+            apiInterface.updateTime,
+            apiInterface.id
+        )
     }
     
     suspend fun deleteById(id: Long) {
-        pool.preparedQuery("DELETE FROM api_interface WHERE id = ?")
-            .execute(Tuple.of(id))
-            .awaitForResult()
+        execute("DELETE FROM api_interface WHERE id = ?", id)
+    }
+    
+    suspend fun deleteById(id: Long, connection: SqlConnection) {
+        execute(connection, "DELETE FROM api_interface WHERE id = ?", id)
     }
     
     suspend fun findMostUsedInterfaceIds(days: Int, limit: Int): List<Long> {

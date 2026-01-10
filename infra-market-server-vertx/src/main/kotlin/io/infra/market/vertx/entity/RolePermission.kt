@@ -7,7 +7,7 @@ data class RolePermission(
     var id: Long? = null,
     var roleId: Long? = null,
     var permissionId: Long? = null,
-    var createTime: Long? = null,
-    var updateTime: Long? = null
-)
+    override var createTime: Long? = null,
+    override var updateTime: Long? = null
+) : TimestampedEntity
 

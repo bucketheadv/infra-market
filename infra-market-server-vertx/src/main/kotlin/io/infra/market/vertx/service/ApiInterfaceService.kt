@@ -33,9 +33,9 @@ class ApiInterfaceService(
 ) {
     
     suspend fun list(name: String?, method: String?, status: Int?, environment: String?, page: Int, size: Int): ApiData<PageResultDto<ApiInterfaceDto>> {
-        val (interfaces, total) = apiInterfaceDao.page(name, method, status, environment, page, size)
-        val interfaceDtos = interfaces.map { convertToDto(it) }
-        return ApiData.success(PageResultDto(interfaceDtos, total, page.toLong(), size.toLong()))
+        val pageResult = apiInterfaceDao.page(name, method, status, environment, page, size)
+        val interfaceDtos = pageResult.records.map { convertToDto(it) }
+        return ApiData.success(PageResultDto(interfaceDtos, pageResult.total, pageResult.page, pageResult.size))
     }
     
     suspend fun getMostUsedInterfaces(days: Int, limit: Int): ApiData<List<ApiInterfaceDto>> {
@@ -64,7 +64,7 @@ class ApiInterfaceService(
         apiInterface.createTime = System.currentTimeMillis()
         apiInterface.updateTime = System.currentTimeMillis()
         apiInterface.status = 1
-        
+
         val id = apiInterfaceDao.save(apiInterface)
         apiInterface.id = id
         return ApiData.success(convertToDto(apiInterface))

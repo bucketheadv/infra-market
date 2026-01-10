@@ -21,9 +21,9 @@ class ApiInterfaceExecutionRecordService(
         val page = query.page ?: 1
         val size = query.size ?: 10
         
-        val (records, total) = apiInterfaceExecutionRecordDao.page(query.interfaceId, query.executorId, query.keyword, page, size)
-        val recordDtos = records.map { convertToDto(it) }
-        return ApiData.success(PageResultDto(recordDtos, total, page.toLong(), size.toLong()))
+        val pageResult = apiInterfaceExecutionRecordDao.page(query.interfaceId, query.executorId, query.keyword, page, size)
+        val recordDtos = pageResult.records.map { convertToDto(it) }
+        return ApiData.success(PageResultDto(recordDtos, pageResult.total, pageResult.page, pageResult.size))
     }
     
     suspend fun detail(id: Long): ApiData<ApiInterfaceExecutionRecordDto?> {

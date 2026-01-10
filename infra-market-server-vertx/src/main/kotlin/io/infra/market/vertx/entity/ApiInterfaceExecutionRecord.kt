@@ -20,7 +20,7 @@ data class ApiInterfaceExecutionRecord(
     var remark: String? = null,
     var clientIp: String? = null,
     var userAgent: String? = null,
-    var createTime: Long? = null,
-    var updateTime: Long? = null
-)
+    override var createTime: Long? = null,
+    override var updateTime: Long? = null
+) : TimestampedEntity
 

@@ -171,6 +171,13 @@
             <version>${jsonpath.version}</version>
         </dependency>
 
+        <!-- JetBrains Annotations (for @Language SQL highlighting) -->
+        <dependency>
+            <groupId>org.jetbrains</groupId>
+            <artifactId>annotations</artifactId>
+            <version>24.1.0</version>
+        </dependency>
+
         <!-- Logging -->
         <dependency>
             <groupId>org.slf4j</groupId>

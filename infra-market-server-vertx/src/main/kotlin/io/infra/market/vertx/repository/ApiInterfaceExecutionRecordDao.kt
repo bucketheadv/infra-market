@@ -12,7 +12,7 @@ import io.vertx.sqlclient.Tuple
  * 
  * 规则1：任何调用 xxx.awaitForResult() 的函数，必须用 suspend 修饰
  */
-class ApiInterfaceExecutionRecordDao(private val pool: Pool) {
+class ApiInterfaceExecutionRecordDao(pool: Pool) : BaseDao(pool) {
     
     suspend fun findById(id: Long): ApiInterfaceExecutionRecord? {
         val rows = pool.preparedQuery("SELECT * FROM api_interface_execution_record WHERE id = ?")
@@ -32,47 +32,28 @@ class ApiInterfaceExecutionRecordDao(private val pool: Pool) {
         return rows.map { rowToRecord(it) }
     }
     
-    suspend fun page(interfaceId: Long?, executorId: Long?, keyword: String?, page: Int, size: Int): Pair<List<ApiInterfaceExecutionRecord>, Long> {
-        val offset = (page - 1) * size
-        val conditions = mutableListOf<String>()
-        val params = mutableListOf<Any>()
-        
-        if (interfaceId != null) {
-            conditions.add("interface_id = ?")
-            params.add(interfaceId)
+    suspend fun page(interfaceId: Long?, executorId: Long?, keyword: String?, page: Int, size: Int): PageWrapper<ApiInterfaceExecutionRecord> {
+        val dynamicConditions = mutableListOf<Pair<String, Any?>>().apply {
+            interfaceId?.let { add("interface_id = ?" to it) }
+            executorId?.let { add("executor_id = ?" to it) }
         }
         
-        if (executorId != null) {
-            conditions.add("executor_id = ?")
-            params.add(executorId)
-        }
-        
-        if (!keyword.isNullOrBlank()) {
-            conditions.add("(executor_name LIKE ? OR error_message LIKE ? OR remark LIKE ?)")
-            params.add("%$keyword%")
-            params.add("%$keyword%")
-            params.add("%$keyword%")
-        }
-        
-        val whereClause = if (conditions.isNotEmpty()) {
-            "WHERE ${conditions.joinToString(" AND ")}"
+        val multiParamConditions = if (!keyword.isNullOrBlank()) {
+            val pattern = "%$keyword%"
+            listOf("(executor_name LIKE ? OR error_message LIKE ? OR remark LIKE ?)" to listOf(pattern, pattern, pattern))
         } else {
-            ""
+            emptyList()
         }
         
-        val countQuery = "SELECT COUNT(*) as total FROM api_interface_execution_record $whereClause"
-        val dataQuery = "SELECT * FROM api_interface_execution_record $whereClause ORDER BY id DESC LIMIT ? OFFSET ?"
-        
-        val countRows = pool.preparedQuery(countQuery)
-            .execute(if (params.isNotEmpty()) Tuple.from(params) else Tuple.tuple())
-            .awaitForResult()
-        val total = countRows.first().getLong("total")
-        
-        val dataRows = pool.preparedQuery(dataQuery)
-            .execute(Tuple.from(params + size + offset))
-            .awaitForResult()
-        
-        return Pair(dataRows.map { rowToRecord(it) }, total)
+        return page(
+            tableName = "api_interface_execution_record",
+            page = page,
+            size = size,
+            dynamicConditions = dynamicConditions,
+            multiParamConditions = multiParamConditions,
+            orderBy = "id DESC",
+            rowMapper = { rowToRecord(it) }
+        )
     }
     
     suspend fun getExecutionStats(interfaceId: Long): ApiInterfaceExecutionRecordStatsDto? {
@@ -123,23 +104,27 @@ class ApiInterfaceExecutionRecordDao(private val pool: Pool) {
     }
     
     suspend fun save(record: ApiInterfaceExecutionRecord): Long {
-        val now = System.currentTimeMillis()
-        record.createTime = now
-        record.updateTime = now
-        
-        val rows = pool.preparedQuery(
-            "INSERT INTO api_interface_execution_record (interface_id, executor_id, executor_name, request_params, request_headers, request_body, response_status, response_headers, response_body, execution_time, success, error_message, remark, client_ip, user_agent, create_time, update_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        setCreateTime(record)
+        return execute(
+            "INSERT INTO api_interface_execution_record (interface_id, executor_id, executor_name, request_params, request_headers, request_body, response_status, response_headers, response_body, execution_time, success, error_message, remark, client_ip, user_agent, create_time, update_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            record.interfaceId,
+            record.executorId,
+            record.executorName,
+            record.requestParams,
+            record.requestHeaders,
+            record.requestBody,
+            record.responseStatus,
+            record.responseHeaders,
+            record.responseBody,
+            record.executionTime,
+            record.success,
+            record.errorMessage,
+            record.remark,
+            record.clientIp,
+            record.userAgent,
+            record.createTime,
+            record.updateTime
         )
-            .execute(Tuple.of(
-                record.interfaceId, record.executorId, record.executorName,
-                record.requestParams, record.requestHeaders, record.requestBody,
-                record.responseStatus, record.responseHeaders, record.responseBody,
-                record.executionTime, record.success, record.errorMessage,
-                record.remark, record.clientIp, record.userAgent,
-                record.createTime, record.updateTime
-            ))
-            .awaitForResult()
-        return rows.iterator().next().getLong(0)
     }
     
     private fun rowToRecord(row: Row): ApiInterfaceExecutionRecord {

@@ -21,8 +21,8 @@ data class ApiData<T>(
 data class PageResultDto<T>(
     val records: List<T>,
     val total: Long,
-    val page: Long,
-    val size: Long
+    val page: Int,
+    val size: Int
 )
 
 /**

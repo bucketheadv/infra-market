@@ -4,6 +4,7 @@ import io.infra.market.vertx.entity.Role
 import io.infra.market.vertx.extensions.awaitForResult
 import io.vertx.sqlclient.Pool
 import io.vertx.sqlclient.Row
+import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Tuple
 
 /**
@@ -11,7 +12,7 @@ import io.vertx.sqlclient.Tuple
  * 
  * 规则1：任何调用 xxx.awaitForResult() 的函数，必须用 suspend 修饰
  */
-class RoleDao(private val pool: Pool) {
+class RoleDao(pool: Pool) : BaseDao(pool) {
     
     suspend fun findById(id: Long): Role? {
         val rows = pool.preparedQuery("SELECT * FROM role_info WHERE id = ? AND status != 'deleted'")
@@ -53,65 +54,74 @@ class RoleDao(private val pool: Pool) {
         return rows.map { rowToRole(it) }
     }
     
-    suspend fun page(name: String?, code: String?, status: String?, page: Int, size: Int): Pair<List<Role>, Long> {
-        val offset = (page - 1) * size
-        val conditions = mutableListOf<String>()
-        val params = mutableListOf<Any>()
-        
-        conditions.add("status != 'deleted'")
-        
-        if (!name.isNullOrBlank()) {
-            conditions.add("name LIKE ?")
-            params.add("%$name%")
-        }
-        
-        if (!code.isNullOrBlank()) {
-            conditions.add("code LIKE ?")
-            params.add("%$code%")
-        }
-        
-        if (!status.isNullOrBlank()) {
-            conditions.add("status = ?")
-            params.add(status)
-        }
-        
-        val whereClause = conditions.joinToString(" AND ")
-        
-        val countQuery = "SELECT COUNT(*) as total FROM role_info WHERE $whereClause"
-        val dataQuery = "SELECT * FROM role_info WHERE $whereClause ORDER BY id ASC LIMIT ? OFFSET ?"
-        
-        val countRows = pool.preparedQuery(countQuery)
-            .execute(Tuple.from(params))
-            .awaitForResult()
-        val total = countRows.first().getLong("total")
-        
-        val dataRows = pool.preparedQuery(dataQuery)
-            .execute(Tuple.from(params + size + offset))
-            .awaitForResult()
-        
-        return Pair(dataRows.map { rowToRole(it) }, total)
+    suspend fun page(name: String?, code: String?, status: String?, page: Int, size: Int): PageWrapper<Role> {
+        return page(
+            tableName = "role_info",
+            page = page,
+            size = size,
+            fixedConditions = listOf("status != 'deleted'"),
+            dynamicConditions = listOf(
+                "name LIKE ?" to name?.let { "%$it%" },
+                "code LIKE ?" to code?.let { "%$it%" },
+                "status = ?" to status
+            ),
+            orderBy = "id ASC",
+            rowMapper = { rowToRole(it) }
+        )
     }
     
     suspend fun save(role: Role): Long {
-        val now = System.currentTimeMillis()
-        role.createTime = now
-        role.updateTime = now
-        
-        val rows = pool.preparedQuery(
-            "INSERT INTO role_info (name, code, description, status, create_time, update_time) VALUES (?, ?, ?, ?, ?, ?)"
+        setCreateTime(role)
+        return execute(
+            "INSERT INTO role_info (name, code, description, status, create_time, update_time) VALUES (?, ?, ?, ?, ?, ?)",
+            role.name,
+            role.code,
+            role.description,
+            role.status,
+            role.createTime,
+            role.updateTime
         )
-            .execute(Tuple.of(role.name, role.code, role.description, role.status, role.createTime, role.updateTime))
-            .awaitForResult()
-        return rows.iterator().next().getLong(0)
+    }
+    
+    suspend fun save(role: Role, connection: SqlConnection): Long {
+        setCreateTime(role)
+        return execute(
+            connection,
+            "INSERT INTO role_info (name, code, description, status, create_time, update_time) VALUES (?, ?, ?, ?, ?, ?)",
+            role.name,
+            role.code,
+            role.description,
+            role.status,
+            role.createTime,
+            role.updateTime
+        )
     }
     
     suspend fun updateById(role: Role) {
-        role.updateTime = System.currentTimeMillis()
-        pool.preparedQuery(
-            "UPDATE role_info SET name = ?, code = ?, description = ?, status = ?, update_time = ? WHERE id = ?"
+        setUpdateTime(role)
+        execute(
+            "UPDATE role_info SET name = ?, code = ?, description = ?, status = ?, update_time = ? WHERE id = ?",
+            role.name,
+            role.code,
+            role.description,
+            role.status,
+            role.updateTime,
+            role.id
         )
-            .execute(Tuple.of(role.name, role.code, role.description, role.status, role.updateTime, role.id))
-            .awaitForResult()
+    }
+    
+    suspend fun updateById(role: Role, connection: SqlConnection) {
+        setUpdateTime(role)
+        execute(
+            connection,
+            "UPDATE role_info SET name = ?, code = ?, description = ?, status = ?, update_time = ? WHERE id = ?",
+            role.name,
+            role.code,
+            role.description,
+            role.status,
+            role.updateTime,
+            role.id
+        )
     }
     
     suspend fun count(): Long {
