@@ -12,7 +12,6 @@ import io.infra.market.vertx.extensions.coroutineHandler
 import io.vertx.core.Vertx
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.RoutingContext
-import org.slf4j.LoggerFactory
 
 /**
  * 用户路由
@@ -20,8 +19,6 @@ import org.slf4j.LoggerFactory
  * 规则2：路由处理请求，必须用 coroutineHandler 替代原生的 handler
  */
 class UserRouter(private val userService: UserService) {
-    
-    private val logger = LoggerFactory.getLogger(UserRouter::class.java)
     
     fun mount(router: Router, vertx: Vertx) {
         val userRouter = Router.router(vertx)
@@ -40,123 +37,68 @@ class UserRouter(private val userService: UserService) {
     }
     
     private suspend fun handleGetUsers(ctx: RoutingContext) {
-        try {
-            val query = QueryParamUtil.buildUserQuery(ctx)
-            val result = userService.getUsers(query)
-            ResponseUtil.sendResponse(ctx, result)
-        } catch (e: Exception) {
-            logger.error("获取用户列表失败", e)
-            ResponseUtil.error(ctx, e.message ?: "获取用户列表失败", 500)
-        }
+        val query = QueryParamUtil.buildUserQuery(ctx)
+        val result = userService.getUsers(query)
+        ResponseUtil.sendResponse(ctx, result)
     }
     
     private suspend fun handleGetUser(ctx: RoutingContext) {
-        try {
-            val id = ctx.pathParam("id").toLongOrNull()
-            if (id == null) {
-                ResponseUtil.error(ctx, "用户ID无效", 400)
-                return
-            }
-            
-            val result = userService.getUser(id)
-            ResponseUtil.sendResponse(ctx, result)
-        } catch (e: Exception) {
-            logger.error("获取用户失败", e)
-            ResponseUtil.error(ctx, e.message ?: "获取用户失败", 500)
-        }
+        val id = ctx.pathParam("id").toLongOrNull()
+            ?: throw IllegalArgumentException("用户ID无效")
+        
+        val result = userService.getUser(id)
+        ResponseUtil.sendResponse(ctx, result)
     }
     
     private suspend fun handleCreateUser(ctx: RoutingContext) {
-        try {
-            val body = ctx.body().asJsonObject()
-            val form = body.mapTo(UserFormDto::class.java)
-            val result = userService.createUser(form)
-            ResponseUtil.sendResponse(ctx, result)
-        } catch (e: Exception) {
-            logger.error("创建用户失败", e)
-            ResponseUtil.error(ctx, e.message ?: "请求参数错误", 400)
-        }
+        val body = ctx.body().asJsonObject()
+        val form = body.mapTo(UserFormDto::class.java)
+        val result = userService.createUser(form)
+        ResponseUtil.sendResponse(ctx, result)
     }
     
     private suspend fun handleUpdateUser(ctx: RoutingContext) {
-        try {
-            val id = ctx.pathParam("id").toLongOrNull()
-            if (id == null) {
-                ResponseUtil.error(ctx, "用户ID无效", 400)
-                return
-            }
-            
-            val body = ctx.body().asJsonObject()
-            val form = body.mapTo(UserUpdateDto::class.java)
-            val result = userService.updateUser(id, form)
-            ResponseUtil.sendResponse(ctx, result)
-        } catch (e: Exception) {
-            logger.error("更新用户失败", e)
-            ResponseUtil.error(ctx, e.message ?: "请求参数错误", 400)
-        }
+        val id = ctx.pathParam("id").toLongOrNull()
+            ?: throw IllegalArgumentException("用户ID无效")
+        
+        val body = ctx.body().asJsonObject()
+        val form = body.mapTo(UserUpdateDto::class.java)
+        val result = userService.updateUser(id, form)
+        ResponseUtil.sendResponse(ctx, result)
     }
     
     private suspend fun handleDeleteUser(ctx: RoutingContext) {
-        try {
-            val id = ctx.pathParam("id").toLongOrNull()
-            if (id == null) {
-                ResponseUtil.error(ctx, "用户ID无效", 400)
-                return
-            }
-            
-            val result = userService.deleteUser(id)
-            ResponseUtil.sendResponse(ctx, result)
-        } catch (e: Exception) {
-            logger.error("删除用户失败", e)
-            ResponseUtil.error(ctx, e.message ?: "删除用户失败", 500)
-        }
+        val id = ctx.pathParam("id").toLongOrNull()
+            ?: throw IllegalArgumentException("用户ID无效")
+        
+        val result = userService.deleteUser(id)
+        ResponseUtil.sendResponse(ctx, result)
     }
     
     private suspend fun handleUpdateStatus(ctx: RoutingContext) {
-        try {
-            val id = ctx.pathParam("id").toLongOrNull()
-            if (id == null) {
-                ResponseUtil.error(ctx, "用户ID无效", 400)
-                return
-            }
-            
-            val body = ctx.body().asJsonObject()
-            val status = body.getString("status") ?: ""
-            
-            val result = userService.updateStatus(id, status)
-            ResponseUtil.sendResponse(ctx, result)
-        } catch (e: Exception) {
-            logger.error("更新用户状态失败", e)
-            ResponseUtil.error(ctx, e.message ?: "请求参数错误", 400)
-        }
+        val id = ctx.pathParam("id").toLongOrNull()
+            ?: throw IllegalArgumentException("用户ID无效")
+        
+        val body = ctx.body().asJsonObject()
+        val status = body.getString("status") ?: throw IllegalArgumentException("状态参数不能为空")
+        
+        val result = userService.updateStatus(id, status)
+        ResponseUtil.sendResponse(ctx, result)
     }
     
     private suspend fun handleResetPassword(ctx: RoutingContext) {
-        try {
-            val id = ctx.pathParam("id").toLongOrNull()
-            if (id == null) {
-                ResponseUtil.error(ctx, "用户ID无效", 400)
-                return
-            }
-            
-            val result = userService.resetPassword(id)
-            ResponseUtil.sendResponse(ctx, result)
-        } catch (e: Exception) {
-            logger.error("重置密码失败", e)
-            ResponseUtil.error(ctx, e.message ?: "重置密码失败", 500)
-        }
+        val id = ctx.pathParam("id").toLongOrNull()
+            ?: throw IllegalArgumentException("用户ID无效")
+        
+        val result = userService.resetPassword(id)
+        ResponseUtil.sendResponse(ctx, result)
     }
     
     private suspend fun handleBatchDelete(ctx: RoutingContext) {
-        try {
-            val body = ctx.body().asJsonObject()
-            val request = body.mapTo(BatchRequest::class.java)
-            val result = userService.batchDeleteUsers(request.ids)
-            ResponseUtil.sendResponse(ctx, result)
-        } catch (e: Exception) {
-            logger.error("批量删除用户失败", e)
-            ResponseUtil.error(ctx, e.message ?: "请求参数错误", 400)
-        }
+        val body = ctx.body().asJsonObject()
+        val request = body.mapTo(BatchRequest::class.java)
+        val result = userService.batchDeleteUsers(request.ids)
+        ResponseUtil.sendResponse(ctx, result)
     }
 }
 

@@ -15,6 +15,7 @@ import io.infra.market.vertx.service.PermissionService
 import io.infra.market.vertx.service.RoleService
 import io.infra.market.vertx.service.TokenService
 import io.infra.market.vertx.service.UserService
+import io.infra.market.vertx.exception.GlobalExceptionHandler
 import io.vertx.core.Vertx
 import io.vertx.core.http.HttpMethod
 import io.vertx.ext.web.Router
@@ -41,6 +42,9 @@ object MainRouter {
         
         // Body 处理
         router.route().handler(BodyHandler.create())
+        
+        // 注册全局异常处理器（必须在路由注册之前）
+        GlobalExceptionHandler.register(router)
         
         // 初始化 DAO
         val userDao = UserDao(dbPool)
