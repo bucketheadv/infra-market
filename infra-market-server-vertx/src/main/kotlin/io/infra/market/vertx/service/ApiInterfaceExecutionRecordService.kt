@@ -3,76 +3,60 @@ package io.infra.market.vertx.service
 import io.infra.market.vertx.dto.ApiData
 import io.infra.market.vertx.dto.PageResultDto
 import io.infra.market.vertx.repository.ApiInterfaceExecutionRecordDao
-import io.vertx.core.Future
 import io.vertx.core.json.JsonObject
 
 /**
  * 接口执行记录服务
+ * 
+ * 规则1：任何调用 xxx.awaitForResult() 的函数，必须用 suspend 修饰
  */
 class ApiInterfaceExecutionRecordService(
     private val apiInterfaceExecutionRecordDao: ApiInterfaceExecutionRecordDao
 ) {
     
-    fun list(body: JsonObject): Future<ApiData<PageResultDto<JsonObject>>> {
+    suspend fun list(body: JsonObject): ApiData<PageResultDto<JsonObject>> {
         val interfaceId = body.getLong("interfaceId")
         val executorId = body.getLong("executorId")
         val keyword = body.getString("keyword")
         val page = body.getInteger("page") ?: 1
         val size = body.getInteger("size") ?: 10
         
-        return apiInterfaceExecutionRecordDao.page(interfaceId, executorId, keyword, page, size)
-            .map { (records, total) ->
-                val recordDtos = records.map { it.toJsonObject() }
-                ApiData.success(PageResultDto(recordDtos, total, page.toLong(), size.toLong()))
-            }
+        val (records, total) = apiInterfaceExecutionRecordDao.page(interfaceId, executorId, keyword, page, size)
+        val recordDtos = records.map { it.toJsonObject() }
+        return ApiData.success(PageResultDto(recordDtos, total, page.toLong(), size.toLong()))
     }
     
-    fun detail(id: Long): Future<ApiData<JsonObject?>> {
-        return apiInterfaceExecutionRecordDao.findById(id)
-            .map { record ->
-                if (record == null) {
-                    ApiData.error<JsonObject?>("执行记录不存在")
-                } else {
-                    ApiData.success(record.toJsonObject())
-                }
-            }
+    suspend fun detail(id: Long): ApiData<JsonObject?> {
+        val record = apiInterfaceExecutionRecordDao.findById(id) ?: return ApiData.error("执行记录不存在")
+
+        return ApiData.success(record.toJsonObject())
     }
     
-    fun getByExecutorId(executorId: Long, limit: Int): Future<ApiData<List<JsonObject>>> {
-        return apiInterfaceExecutionRecordDao.findByExecutorId(executorId, limit)
-            .map { records ->
-                val recordDtos = records.map { it.toJsonObject() }
-                ApiData.success(recordDtos)
-            }
+    suspend fun getByExecutorId(executorId: Long, limit: Int): ApiData<List<JsonObject>> {
+        val records = apiInterfaceExecutionRecordDao.findByExecutorId(executorId, limit)
+        val recordDtos = records.map { it.toJsonObject() }
+        return ApiData.success(recordDtos)
     }
     
-    fun getExecutionStats(interfaceId: Long): Future<ApiData<JsonObject?>> {
-        return apiInterfaceExecutionRecordDao.getExecutionStats(interfaceId)
-            .map { stats ->
-                if (stats == null) {
-                    ApiData.error<JsonObject?>("未找到执行统计信息")
-                } else {
-                    val statsJson = JsonObject()
-                    stats.forEach { (key, value) ->
-                        statsJson.put(key, value)
-                    }
-                    ApiData.success(statsJson)
-                }
-            }
+    suspend fun getExecutionStats(interfaceId: Long): ApiData<JsonObject?> {
+        val stats = apiInterfaceExecutionRecordDao.getExecutionStats(interfaceId)
+            ?: return ApiData.error("未找到执行统计信息")
+
+        val statsJson = JsonObject()
+        stats.forEach { (key, value) ->
+            statsJson.put(key, value)
+        }
+        return ApiData.success(statsJson)
     }
     
-    fun getExecutionCount(startTime: Long, endTime: Long): Future<ApiData<Long>> {
-        return apiInterfaceExecutionRecordDao.countByTimeRange(startTime, endTime)
-            .map { count ->
-                ApiData.success(count)
-            }
+    suspend fun getExecutionCount(startTime: Long, endTime: Long): ApiData<Long> {
+        val count = apiInterfaceExecutionRecordDao.countByTimeRange(startTime, endTime)
+        return ApiData.success(count)
     }
     
-    fun cleanup(beforeTime: Long): Future<ApiData<Int>> {
-        return apiInterfaceExecutionRecordDao.deleteByTimeBefore(beforeTime)
-            .map { deletedCount ->
-                ApiData.success(deletedCount)
-            }
+    suspend fun cleanup(beforeTime: Long): ApiData<Int> {
+        val deletedCount = apiInterfaceExecutionRecordDao.deleteByTimeBefore(beforeTime)
+        return ApiData.success(deletedCount)
     }
     
     private fun io.infra.market.vertx.entity.ApiInterfaceExecutionRecord.toJsonObject(): JsonObject {

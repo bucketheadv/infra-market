@@ -1,66 +1,63 @@
 package io.infra.market.vertx.repository
 
 import io.infra.market.vertx.entity.User
-import io.infra.market.vertx.util.TimeUtil
-import io.vertx.core.Future
+import io.infra.market.vertx.extensions.awaitForResult
 import io.vertx.sqlclient.Pool
 import io.vertx.sqlclient.Row
 import io.vertx.sqlclient.Tuple
 
 /**
  * 用户数据访问对象
+ * 
+ * 规则1：任何调用 xxx.awaitForResult() 的函数，必须用 suspend 修饰
  */
 class UserDao(private val pool: Pool) {
     
-    fun findByUsername(username: String): Future<User?> {
-        return pool.preparedQuery("SELECT * FROM user_info WHERE username = ?")
+    suspend fun findByUsername(username: String): User? {
+        val rows = pool.preparedQuery("SELECT * FROM user_info WHERE username = ?")
             .execute(Tuple.of(username))
-            .map { rows ->
-                if (rows.size() > 0) {
-                    rowToUser(rows.first())
-                } else {
-                    null
-                }
-            }
+            .awaitForResult()
+        return if (rows.size() > 0) {
+            rowToUser(rows.first())
+        } else {
+            null
+        }
     }
     
-    fun findByUid(uid: Long): Future<User?> {
-        return pool.preparedQuery("SELECT * FROM user_info WHERE id = ?")
+    suspend fun findByUid(uid: Long): User? {
+        val rows = pool.preparedQuery("SELECT * FROM user_info WHERE id = ?")
             .execute(Tuple.of(uid))
-            .map { rows ->
-                if (rows.size() > 0) {
-                    rowToUser(rows.first())
-                } else {
-                    null
-                }
-            }
+            .awaitForResult()
+        return if (rows.size() > 0) {
+            rowToUser(rows.first())
+        } else {
+            null
+        }
     }
     
-    fun findByEmail(email: String): Future<User?> {
-        return pool.preparedQuery("SELECT * FROM user_info WHERE email = ?")
+    suspend fun findByEmail(email: String): User? {
+        val rows = pool.preparedQuery("SELECT * FROM user_info WHERE email = ?")
             .execute(Tuple.of(email))
-            .map { rows ->
-                if (rows.size() > 0) {
-                    rowToUser(rows.first())
-                } else {
-                    null
-                }
-            }
+            .awaitForResult()
+        return if (rows.size() > 0) {
+            rowToUser(rows.first())
+        } else {
+            null
+        }
     }
     
-    fun findByPhone(phone: String): Future<User?> {
-        return pool.preparedQuery("SELECT * FROM user_info WHERE phone = ?")
+    suspend fun findByPhone(phone: String): User? {
+        val rows = pool.preparedQuery("SELECT * FROM user_info WHERE phone = ?")
             .execute(Tuple.of(phone))
-            .map { rows ->
-                if (rows.size() > 0) {
-                    rowToUser(rows.first())
-                } else {
-                    null
-                }
-            }
+            .awaitForResult()
+        return if (rows.size() > 0) {
+            rowToUser(rows.first())
+        } else {
+            null
+        }
     }
     
-    fun findPage(username: String?, status: String?, page: Int, size: Int): Future<Pair<List<User>, Long>> {
+    suspend fun findPage(username: String?, status: String?, page: Int, size: Int): Pair<List<User>, Long> {
         val offset = (page - 1) * size
         val conditions = mutableListOf<String>()
         val params = mutableListOf<Any>()
@@ -84,29 +81,29 @@ class UserDao(private val pool: Pool) {
         val countQuery = "SELECT COUNT(*) as total FROM user_info $whereClause"
         val dataQuery = "SELECT * FROM user_info $whereClause ORDER BY create_time DESC LIMIT ? OFFSET ?"
         
-        return pool.preparedQuery(countQuery)
+        val countRows = pool.preparedQuery(countQuery)
             .execute(if (params.isNotEmpty()) Tuple.from(params) else Tuple.tuple())
-            .compose { countRows ->
-                val total = countRows.first().getLong("total")
-                val dataParams = params.toMutableList()
-                dataParams.add(size)
-                dataParams.add(offset)
-                
-                pool.preparedQuery(dataQuery)
-                    .execute(Tuple.from(dataParams))
-                    .map { dataRows ->
-                        val users = dataRows.map { rowToUser(it) }
-                        Pair(users, total)
-                    }
-            }
+            .awaitForResult()
+        val total = countRows.first().getLong("total")
+        
+        val dataParams = params.toMutableList()
+        dataParams.add(size)
+        dataParams.add(offset)
+        
+        val dataRows = pool.preparedQuery(dataQuery)
+            .execute(Tuple.from(dataParams))
+            .awaitForResult()
+        val users = dataRows.map { rowToUser(it) }
+        
+        return Pair(users, total)
     }
     
-    fun save(user: User): Future<Long> {
+    suspend fun save(user: User): Long {
         val now = System.currentTimeMillis()
         user.createTime = now
         user.updateTime = now
         
-        return pool.preparedQuery(
+        val rows = pool.preparedQuery(
             "INSERT INTO user_info (username, password, email, phone, status, last_login_time, create_time, update_time) " +
             "VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
         )
@@ -120,15 +117,14 @@ class UserDao(private val pool: Pool) {
                 user.createTime,
                 user.updateTime
             ))
-            .map { rows ->
-                rows.iterator().next().getLong(0)
-            }
+            .awaitForResult()
+        return rows.iterator().next().getLong(0)
     }
     
-    fun updateById(user: User): Future<Void> {
+    suspend fun updateById(user: User) {
         user.updateTime = System.currentTimeMillis()
         
-        return pool.preparedQuery(
+        pool.preparedQuery(
             "UPDATE user_info SET username = ?, password = ?, email = ?, phone = ?, status = ?, " +
             "last_login_time = ?, update_time = ? WHERE id = ?"
         )
@@ -142,49 +138,48 @@ class UserDao(private val pool: Pool) {
                 user.updateTime,
                 user.id
             ))
-            .map { null }
+            .awaitForResult()
     }
     
-    fun deleteById(id: Long): Future<Void> {
-        return pool.preparedQuery("DELETE FROM user_info WHERE id = ?")
+    suspend fun deleteById(id: Long) {
+        pool.preparedQuery("DELETE FROM user_info WHERE id = ?")
             .execute(Tuple.of(id))
-            .map { null }
+            .awaitForResult()
     }
     
-    fun findByIds(ids: List<Long>): Future<List<User>> {
+    suspend fun findByIds(ids: List<Long>): List<User> {
         if (ids.isEmpty()) {
-            return Future.succeededFuture(emptyList())
+            return emptyList()
         }
         
         val placeholders = ids.joinToString(",") { "?" }
-        return pool.preparedQuery("SELECT * FROM user_info WHERE id IN ($placeholders)")
+        val rows = pool.preparedQuery("SELECT * FROM user_info WHERE id IN ($placeholders)")
             .execute(Tuple.from(ids))
-            .map { rows ->
-                rows.map { rowToUser(it) }
-            }
+            .awaitForResult()
+        return rows.map { rowToUser(it) }
     }
     
-    fun countByStatus(status: String?): Future<Long> {
-        return if (status != null) {
+    suspend fun countByStatus(status: String?): Long {
+        val rows = if (status != null) {
             pool.preparedQuery("SELECT COUNT(*) as total FROM user_info WHERE status = ?")
                 .execute(Tuple.of(status))
-                .map { rows -> rows.first().getLong("total") }
+                .awaitForResult()
         } else {
             pool.preparedQuery("SELECT COUNT(*) as total FROM user_info")
                 .execute()
-                .map { rows -> rows.first().getLong("total") }
+                .awaitForResult()
         }
+        return rows.first().getLong("total")
     }
     
-    fun findRecentUsers(limit: Int): Future<List<User>> {
-        return pool.preparedQuery(
+    suspend fun findRecentUsers(limit: Int): List<User> {
+        val rows = pool.preparedQuery(
             "SELECT * FROM user_info WHERE last_login_time IS NOT NULL " +
             "ORDER BY last_login_time DESC LIMIT ?"
         )
             .execute(Tuple.of(limit))
-            .map { rows ->
-                rows.map { rowToUser(it) }
-            }
+            .awaitForResult()
+        return rows.map { rowToUser(it) }
     }
     
     private fun rowToUser(row: Row): User {

@@ -9,98 +9,71 @@ import io.infra.market.vertx.enums.StatusEnum
 import io.infra.market.vertx.repository.UserDao
 import io.infra.market.vertx.repository.UserRoleDao
 import io.infra.market.vertx.util.AesUtil
-import io.infra.market.vertx.util.FutureUtil
-import io.vertx.core.Future
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 
 /**
  * 用户服务
+ * 
+ * 规则1：任何调用 xxx.awaitForResult() 的函数，必须用 suspend 修饰
  */
 class UserService(
     private val userDao: UserDao,
     private val userRoleDao: UserRoleDao
 ) {
     
-    fun getUsers(username: String?, status: String?, page: Int, size: Int): Future<ApiData<PageResultDto<UserDto>>> {
-        return userDao.findPage(username, status, page, size)
-            .map { (users, total) ->
-                userRoleDao.findByUids(users.mapNotNull { it.id })
-                    .map { userRoles ->
-                        val userRoleMap = userRoles.groupBy { it.uid }
-                            .mapValues { (_, roles) -> roles.mapNotNull { it.roleId } }
-                            .mapKeys { (key, _) -> key ?: 0L }
-                        
-                        val userDtos = UserDto.fromEntityList(users, userRoleMap)
-                        val result = PageResultDto(
-                            records = userDtos,
-                            total = total,
-                            page = page.toLong(),
-                            size = size.toLong()
-                        )
-                        ApiData.success(result)
-                    }
-            }
-            .compose { it }
+    suspend fun getUsers(username: String?, status: String?, page: Int, size: Int): ApiData<PageResultDto<UserDto>> {
+        val (users, total) = userDao.findPage(username, status, page, size)
+        val userRoles = userRoleDao.findByUids(users.mapNotNull { it.id })
+        
+        val userRoleMap = userRoles.groupBy { it.uid }
+            .mapValues { (_, roles) -> roles.mapNotNull { it.roleId } }
+            .mapKeys { (key, _) -> key ?: 0L }
+        
+        val userDtos = UserDto.fromEntityList(users, userRoleMap)
+        val result = PageResultDto(
+            records = userDtos,
+            total = total,
+            page = page.toLong(),
+            size = size.toLong()
+        )
+        return ApiData.success(result)
     }
     
-    fun getUser(id: Long): Future<ApiData<UserDto>> {
-        return userDao.findByUid(id)
-            .compose { user ->
-                if (user == null) {
-                    return@compose Future.succeededFuture(ApiData.error<UserDto>("用户不存在"))
-                }
-                
-                userRoleDao.findByUid(id)
-                    .map { userRoles ->
-                        val roleIds = userRoles.mapNotNull { it.roleId }
-                        val userDto = UserDto.fromEntity(user, roleIds)
-                        ApiData.success(userDto)
-                    }
-            }
+    suspend fun getUser(id: Long): ApiData<UserDto> {
+        val user = userDao.findByUid(id) ?: return ApiData.error("用户不存在")
+
+        val userRoles = userRoleDao.findByUid(id)
+        val roleIds = userRoles.mapNotNull { it.roleId }
+        val userDto = UserDto.fromEntity(user, roleIds)
+        return ApiData.success(userDto)
     }
     
-    fun createUser(username: String, email: String?, phone: String?, password: String?, roleIds: List<Long>): Future<ApiData<UserDto>> {
-        return userDao.findByUsername(username)
-            .compose { existingUser ->
-                if (existingUser != null) {
-                    return@compose Future.succeededFuture(ApiData.error<UserDto>("用户名已存在"))
-                }
-                
-                if (!email.isNullOrBlank()) {
-                    userDao.findByEmail(email)
-                        .compose { existingEmail ->
-                            if (existingEmail != null) {
-                                return@compose Future.succeededFuture(ApiData.error<UserDto>("邮箱已存在"))
-                            }
-                            
-                            if (!phone.isNullOrBlank()) {
-                                userDao.findByPhone(phone)
-                                    .compose { existingPhone ->
-                                        if (existingPhone != null) {
-                                            return@compose Future.succeededFuture(ApiData.error<UserDto>("手机号已存在"))
-                                        }
-                                        createUserInternal(username, email, phone, password, roleIds)
-                                    }
-                            } else {
-                                createUserInternal(username, email, phone, password, roleIds)
-                            }
-                        }
-                } else {
-                    if (!phone.isNullOrBlank()) {
-                        userDao.findByPhone(phone)
-                            .compose { existingPhone ->
-                                if (existingPhone != null) {
-                                    return@compose Future.succeededFuture(ApiData.error<UserDto>("手机号已存在"))
-                                }
-                                createUserInternal(username, email, phone, password, roleIds)
-                            }
-                    } else {
-                        createUserInternal(username, email, phone, password, roleIds)
-                    }
-                }
+    suspend fun createUser(username: String, email: String?, phone: String?, password: String?, roleIds: List<Long>): ApiData<UserDto> {
+        val existingUser = userDao.findByUsername(username)
+        if (existingUser != null) {
+            return ApiData.error("用户名已存在")
+        }
+        
+        if (!email.isNullOrBlank()) {
+            val existingEmail = userDao.findByEmail(email)
+            if (existingEmail != null) {
+                return ApiData.error("邮箱已存在")
             }
+        }
+        
+        if (!phone.isNullOrBlank()) {
+            val existingPhone = userDao.findByPhone(phone)
+            if (existingPhone != null) {
+                return ApiData.error("手机号已存在")
+            }
+        }
+        
+        return createUserInternal(username, email, phone, password, roleIds)
     }
     
-    private fun createUserInternal(username: String, email: String?, phone: String?, password: String?, roleIds: List<Long>): Future<ApiData<UserDto>> {
+    private suspend fun createUserInternal(username: String, email: String?, phone: String?, password: String?, roleIds: List<Long>): ApiData<UserDto> {
         val encodedPassword = AesUtil.encrypt(password ?: "123456")
         val user = User(
             username = username,
@@ -110,127 +83,100 @@ class UserService(
             status = StatusEnum.ACTIVE.code
         )
         
-        return userDao.save(user)
-            .compose { userId ->
-                user.id = userId
-                val now = System.currentTimeMillis()
-                val futures = roleIds.map { roleId ->
+        val userId = userDao.save(user)
+        user.id = userId
+        
+        coroutineScope {
+            roleIds.map { roleId ->
+                async {
                     val userRole = UserRole(
                         uid = userId,
                         roleId = roleId
                     )
                     userRoleDao.save(userRole)
                 }
-                
-                FutureUtil.all(futures)
-                    .map {
-                        val userDto = UserDto.fromEntity(user, roleIds)
-                        ApiData.success(userDto)
-                    }
-            }
+            }.awaitAll()
+        }
+        
+        val userDto = UserDto.fromEntity(user, roleIds)
+        return ApiData.success(userDto)
     }
     
-    fun updateUser(id: Long, username: String, email: String?, phone: String?, password: String?, roleIds: List<Long>): Future<ApiData<UserDto>> {
-        return userDao.findByUid(id)
-            .compose { user ->
-                if (user == null) {
-                    return@compose Future.succeededFuture(ApiData.error<UserDto>("用户不存在"))
+    suspend fun updateUser(id: Long, username: String, email: String?, phone: String?, password: String?, roleIds: List<Long>): ApiData<UserDto> {
+        val user = userDao.findByUid(id) ?: return ApiData.error("用户不存在")
+
+        user.username = username
+        user.email = email
+        user.phone = phone
+        if (!password.isNullOrBlank()) {
+            user.password = AesUtil.encrypt(password)
+        }
+        
+        userDao.updateById(user)
+        userRoleDao.deleteByUid(id)
+        
+        coroutineScope {
+            roleIds.map { roleId ->
+                async {
+                    val userRole = UserRole(
+                        uid = id,
+                        roleId = roleId
+                    )
+                    userRoleDao.save(userRole)
                 }
-                
-                user.username = username
-                user.email = email
-                user.phone = phone
-                if (!password.isNullOrBlank()) {
-                    user.password = AesUtil.encrypt(password)
-                }
-                
-                userDao.updateById(user)
-                    .compose {
-                        userRoleDao.deleteByUid(id)
-                            .compose {
-                                val now = System.currentTimeMillis()
-                                val futures = roleIds.map { roleId ->
-                                    val userRole = UserRole(
-                                        uid = id,
-                                        roleId = roleId
-                                    )
-                                    userRoleDao.save(userRole)
-                                }
-                                
-                                FutureUtil.all(futures)
-                                    .map {
-                                        val userDto = UserDto.fromEntity(user, roleIds)
-                                        ApiData.success(userDto)
-                                    }
-                            }
-                    }
-            }
+            }.awaitAll()
+        }
+        
+        val userDto = UserDto.fromEntity(user, roleIds)
+        return ApiData.success(userDto)
     }
     
-    fun deleteUser(id: Long): Future<ApiData<Unit>> {
-        return userDao.findByUid(id)
-            .compose { user ->
-                if (user == null) {
-                    return@compose Future.succeededFuture(ApiData.error<Unit>("用户不存在"))
-                }
-                
-                userRoleDao.deleteByUid(id)
-                    .compose {
-                        userDao.deleteById(id)
-                            .map { ApiData.success<Unit>() }
-                    }
-            }
+    suspend fun deleteUser(id: Long): ApiData<Unit> {
+        val user = userDao.findByUid(id) ?: return ApiData.error("用户不存在")
+
+        userRoleDao.deleteByUid(id)
+        userDao.deleteById(id)
+        
+        return ApiData.success()
     }
     
-    fun updateStatus(id: Long, status: String): Future<ApiData<Unit>> {
-        return userDao.findByUid(id)
-            .compose { user ->
-                if (user == null) {
-                    return@compose Future.succeededFuture(ApiData.error<Unit>("用户不存在"))
-                }
-                
-                user.status = status
-                userDao.updateById(user)
-                    .map { ApiData.success<Unit>() }
-            }
+    suspend fun updateStatus(id: Long, status: String): ApiData<Unit> {
+        val user = userDao.findByUid(id) ?: return ApiData.error("用户不存在")
+
+        user.status = status
+        userDao.updateById(user)
+        
+        return ApiData.success()
     }
     
-    fun resetPassword(id: Long): Future<ApiData<Unit>> {
-        return userDao.findByUid(id)
-            .compose { user ->
-                if (user == null) {
-                    return@compose Future.succeededFuture(ApiData.error<Unit>("用户不存在"))
-                }
-                
-                val defaultPassword = "123456"
-                user.password = AesUtil.encrypt(defaultPassword)
-                userDao.updateById(user)
-                    .map { ApiData.success<Unit>() }
-            }
+    suspend fun resetPassword(id: Long): ApiData<Unit> {
+        val user = userDao.findByUid(id) ?: return ApiData.error("用户不存在")
+
+        val defaultPassword = "123456"
+        user.password = AesUtil.encrypt(defaultPassword)
+        userDao.updateById(user)
+        
+        return ApiData.success()
     }
     
-    fun batchDeleteUsers(ids: List<Long>): Future<ApiData<Unit>> {
+    suspend fun batchDeleteUsers(ids: List<Long>): ApiData<Unit> {
         if (ids.isEmpty()) {
-            return Future.succeededFuture(ApiData.error<Unit>("请选择要删除的用户"))
+            return ApiData.error("请选择要删除的用户")
         }
         
-        val futures: List<Future<Unit>> = ids.map { id ->
-            userDao.findByUid(id)
-                .compose { user ->
-                    if (user == null) {
-                        Future.succeededFuture<Unit>()
-                    } else {
+        coroutineScope {
+            ids.map { id ->
+                async {
+                    val user = userDao.findByUid(id)
+                    if (user != null) {
                         userRoleDao.deleteByUid(id)
-                            .compose {
-                                userDao.deleteById(id)
-                                    .map { null }
-                            }
+                        userDao.deleteById(id)
                     }
                 }
+            }.awaitAll()
         }
         
-        return FutureUtil.all<Unit>(futures)
-            .map { ApiData.success() }
+        return ApiData.success()
     }
 }
 

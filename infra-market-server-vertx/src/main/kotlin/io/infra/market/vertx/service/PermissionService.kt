@@ -6,216 +6,196 @@ import io.infra.market.vertx.dto.PermissionDto
 import io.infra.market.vertx.entity.Permission
 import io.infra.market.vertx.repository.PermissionDao
 import io.infra.market.vertx.repository.RolePermissionDao
-import io.vertx.core.Future
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 
 /**
  * 权限服务
+ * 
+ * 规则1：任何调用 xxx.awaitForResult() 的函数，必须用 suspend 修饰
  */
 class PermissionService(
     private val permissionDao: PermissionDao,
     private val rolePermissionDao: RolePermissionDao
 ) {
     
-    fun getPermissions(name: String?, code: String?, type: String?, status: String?, page: Int, size: Int): Future<ApiData<PageResultDto<PermissionDto>>> {
-        return permissionDao.page(name, code, type, status, page, size)
-            .map { (permissions, total) ->
-                val permissionDtos = PermissionDto.fromEntityList(permissions)
-                ApiData.success(PageResultDto(permissionDtos, total, page.toLong(), size.toLong()))
-            }
+    suspend fun getPermissions(name: String?, code: String?, type: String?, status: String?, page: Int, size: Int): ApiData<PageResultDto<PermissionDto>> {
+        val (permissions, total) = permissionDao.page(name, code, type, status, page, size)
+        val permissionDtos = PermissionDto.fromEntityList(permissions)
+        return ApiData.success(PageResultDto(permissionDtos, total, page.toLong(), size.toLong()))
     }
     
-    fun getPermissionTree(): Future<ApiData<List<PermissionDto>>> {
-        return permissionDao.findByStatus("active")
-            .map { permissions ->
-                val tree = PermissionDto.buildTree(permissions)
-                ApiData.success(tree)
-            }
+    suspend fun getPermissionTree(): ApiData<List<PermissionDto>> {
+        val permissions = permissionDao.findByStatus("active")
+        val tree = PermissionDto.buildTree(permissions)
+        return ApiData.success(tree)
     }
     
-    fun getPermission(id: Long): Future<ApiData<PermissionDto>> {
-        return permissionDao.findById(id)
-            .map { permission ->
-                if (permission == null) {
-                    ApiData.error<PermissionDto>("权限不存在")
-                } else {
-                    val permissionDto = PermissionDto.fromEntity(permission)
-                    ApiData.success(permissionDto)
-                }
-            }
+    suspend fun getPermission(id: Long): ApiData<PermissionDto> {
+        val permission = permissionDao.findById(id) ?: return ApiData.error("权限不存在")
+
+        val permissionDto = PermissionDto.fromEntity(permission)
+        return ApiData.success(permissionDto)
     }
     
-    fun createPermission(name: String, code: String, type: String, parentId: Long?, path: String?, icon: String?, sort: Int): Future<ApiData<PermissionDto>> {
-        return permissionDao.findByCode(code)
-            .compose { existingPermission ->
-                if (existingPermission != null) {
-                    return@compose Future.succeededFuture(ApiData.error<PermissionDto>("权限编码已存在"))
-                }
-                
-                val now = System.currentTimeMillis()
-                val permission = Permission(
-                    name = name,
-                    code = code,
-                    type = type,
-                    parentId = parentId,
-                    path = path,
-                    icon = icon,
-                    sort = sort,
-                    status = "active"
-                )
-                permission.createTime = now
-                permission.updateTime = now
-                
-                permissionDao.save(permission)
-                    .map { permissionId ->
-                        permission.id = permissionId
-                        val permissionDto = PermissionDto.fromEntity(permission)
-                        ApiData.success(permissionDto)
-                    }
-            }
+    suspend fun createPermission(name: String, code: String, type: String, parentId: Long?, path: String?, icon: String?, sort: Int): ApiData<PermissionDto> {
+        val existingPermission = permissionDao.findByCode(code)
+        if (existingPermission != null) {
+            return ApiData.error("权限编码已存在")
+        }
+        
+        val now = System.currentTimeMillis()
+        val permission = Permission(
+            name = name,
+            code = code,
+            type = type,
+            parentId = parentId,
+            path = path,
+            icon = icon,
+            sort = sort,
+            status = "active"
+        )
+        permission.createTime = now
+        permission.updateTime = now
+        
+        val permissionId = permissionDao.save(permission)
+        permission.id = permissionId
+        
+        val permissionDto = PermissionDto.fromEntity(permission)
+        return ApiData.success(permissionDto)
     }
     
-    fun updatePermission(id: Long, name: String, code: String, type: String, parentId: Long?, path: String?, icon: String?, sort: Int): Future<ApiData<PermissionDto>> {
-        return permissionDao.findById(id)
-            .compose { permission ->
-                if (permission == null) {
-                    return@compose Future.succeededFuture(ApiData.error<PermissionDto>("权限不存在"))
-                }
-                
-                permissionDao.findByCode(code)
-                    .compose { existingPermission ->
-                        if (existingPermission != null && existingPermission.id != permission.id) {
-                            return@compose Future.succeededFuture(ApiData.error<PermissionDto>("权限编码已存在"))
-                        }
-                        
-                        permission.name = name
-                        permission.type = type
-                        permission.parentId = parentId
-                        permission.path = path
-                        permission.icon = icon
-                        permission.sort = sort
-                        permission.updateTime = System.currentTimeMillis()
-                        
-                        permissionDao.updateById(permission)
-                            .map {
-                                val permissionDto = PermissionDto.fromEntity(permission)
-                                ApiData.success(permissionDto)
-                            }
-                    }
-            }
+    suspend fun updatePermission(id: Long, name: String, code: String, type: String, parentId: Long?, path: String?, icon: String?, sort: Int): ApiData<PermissionDto> {
+        val permission = permissionDao.findById(id)
+        
+        if (permission == null) {
+            return ApiData.error("权限不存在")
+        }
+        
+        val existingPermission = permissionDao.findByCode(code)
+        if (existingPermission != null && existingPermission.id != permission.id) {
+            return ApiData.error("权限编码已存在")
+        }
+        
+        permission.name = name
+        permission.type = type
+        permission.parentId = parentId
+        permission.path = path
+        permission.icon = icon
+        permission.sort = sort
+        permission.updateTime = System.currentTimeMillis()
+        
+        permissionDao.updateById(permission)
+        
+        val permissionDto = PermissionDto.fromEntity(permission)
+        return ApiData.success(permissionDto)
     }
     
-    fun deletePermission(id: Long): Future<ApiData<Unit>> {
-        return permissionDao.findById(id)
-            .compose { permission ->
-                if (permission == null) {
-                    return@compose Future.succeededFuture(ApiData.error<Unit>("权限不存在"))
-                }
-                
-                if (permission.code == "system") {
-                    return@compose Future.succeededFuture(ApiData.error<Unit>("不能删除系统权限"))
-                }
-                
-                if (permission.status == "deleted") {
-                    return@compose Future.succeededFuture(ApiData.error<Unit>("权限已被删除"))
-                }
-                
-                permissionDao.findByParentId(id)
-                    .compose { childPermissions ->
-                        if (childPermissions.isNotEmpty()) {
-                            return@compose Future.succeededFuture(ApiData.error<Unit>("该权限下还有子权限，无法删除"))
-                        }
-                        
-                        rolePermissionDao.countByPermissionId(id)
-                            .compose { roleCount ->
-                                if (roleCount > 0) {
-                                    return@compose Future.succeededFuture(ApiData.error<Unit>("该权限下还有角色，无法删除"))
-                                }
-                                
-                                permission.status = "deleted"
-                                permissionDao.updateById(permission)
-                                    .map { ApiData.success(Unit) }
-                            }
-                    }
-            }
+    suspend fun deletePermission(id: Long): ApiData<Unit> {
+        val permission = permissionDao.findById(id)
+        
+        if (permission == null) {
+            return ApiData.error("权限不存在")
+        }
+        
+        if (permission.code == "system") {
+            return ApiData.error("不能删除系统权限")
+        }
+        
+        if (permission.status == "deleted") {
+            return ApiData.error("权限已被删除")
+        }
+        
+        val childPermissions = permissionDao.findByParentId(id)
+        if (childPermissions.isNotEmpty()) {
+            return ApiData.error("该权限下还有子权限，无法删除")
+        }
+        
+        val roleCount = rolePermissionDao.countByPermissionId(id)
+        if (roleCount > 0) {
+            return ApiData.error("该权限下还有角色，无法删除")
+        }
+        
+        permission.status = "deleted"
+        permissionDao.updateById(permission)
+        
+        return ApiData.success(Unit)
     }
     
-    fun updatePermissionStatus(id: Long, status: String): Future<ApiData<Unit>> {
+    suspend fun updatePermissionStatus(id: Long, status: String): ApiData<Unit> {
         if (status !in listOf("active", "inactive", "deleted")) {
-            return Future.succeededFuture(ApiData.error<Unit>("无效的状态值"))
+            return ApiData.error("无效的状态值")
         }
         
-        return permissionDao.findById(id)
-            .compose { permission ->
-                if (permission == null) {
-                    return@compose Future.succeededFuture(ApiData.error<Unit>("权限不存在"))
-                }
-                
-                if (permission.code == "system" && status == "deleted") {
-                    return@compose Future.succeededFuture(ApiData.error<Unit>("不能删除系统权限"))
-                }
-                
-                if (permission.status == "deleted" && status != "deleted") {
-                    return@compose Future.succeededFuture(ApiData.error<Unit>("已删除的权限不能重新启用"))
-                }
-                
-                if (status == "deleted") {
-                    return@compose deletePermission(id)
-                }
-                
-                permission.status = status
-                permissionDao.updateById(permission)
-                    .map { ApiData.success(Unit) }
-            }
+        val permission = permissionDao.findById(id)
+        
+        if (permission == null) {
+            return ApiData.error("权限不存在")
+        }
+        
+        if (permission.code == "system" && status == "deleted") {
+            return ApiData.error("不能删除系统权限")
+        }
+        
+        if (permission.status == "deleted" && status != "deleted") {
+            return ApiData.error("已删除的权限不能重新启用")
+        }
+        
+        if (status == "deleted") {
+            return deletePermission(id)
+        }
+        
+        permission.status = status
+        permissionDao.updateById(permission)
+        
+        return ApiData.success(Unit)
     }
     
-    fun batchDeletePermissions(ids: List<Long>): Future<ApiData<Unit>> {
+    suspend fun batchDeletePermissions(ids: List<Long>): ApiData<Unit> {
         if (ids.isEmpty()) {
-            return Future.succeededFuture(ApiData.error<Unit>("请选择要删除的权限"))
+            return ApiData.error("请选择要删除的权限")
         }
         
-        return permissionDao.findByIds(ids)
-            .compose { permissions ->
-                if (permissions.size != ids.size) {
-                    return@compose Future.succeededFuture(ApiData.error<Unit>("部分权限不存在"))
+        val permissions = permissionDao.findByIds(ids)
+        if (permissions.size != ids.size) {
+            return ApiData.error("部分权限不存在")
+        }
+        
+        val systemPermission = permissions.find { it.code == "system" }
+        if (systemPermission != null) {
+            return ApiData.error("不能删除系统权限")
+        }
+        
+        val results = coroutineScope {
+            permissions.map { permission ->
+                async {
+                    val childPermissions = permissionDao.findByParentId(permission.id ?: 0)
+                    val roleCount = rolePermissionDao.countByPermissionId(permission.id ?: 0)
+                    Triple(permission, childPermissions, roleCount)
                 }
-                
-                val systemPermission = permissions.find { it.code == "system" }
-                if (systemPermission != null) {
-                    return@compose Future.succeededFuture(ApiData.error<Unit>("不能删除系统权限"))
+            }.awaitAll()
+        }
+        
+        val permissionWithChildren = results.find { it.second.isNotEmpty() }
+        if (permissionWithChildren != null) {
+            return ApiData.error("权限 ${permissionWithChildren.first.name} 下还有子权限，无法删除")
+        }
+        
+        val permissionWithRoles = results.find { it.third > 0 }
+        if (permissionWithRoles != null) {
+            return ApiData.error("权限 ${permissionWithRoles.first.name} 下还有角色，无法删除")
+        }
+        
+        coroutineScope {
+            permissions.map { permission ->
+                async {
+                    permission.status = "deleted"
+                    permissionDao.updateById(permission)
                 }
-                
-                val checkFutures = permissions.map { permission ->
-                    permissionDao.findByParentId(permission.id ?: 0)
-                        .compose { childPermissions ->
-                            rolePermissionDao.countByPermissionId(permission.id ?: 0)
-                                .map { roleCount -> Triple(permission, childPermissions, roleCount) }
-                        }
-                }
-                
-                io.infra.market.vertx.util.FutureUtil.all(checkFutures)
-                    .compose { results ->
-                        val permissionWithChildren = results.find { it.second.isNotEmpty() }
-                        if (permissionWithChildren != null) {
-                            return@compose Future.succeededFuture(
-                                ApiData.error<Unit>("权限 ${permissionWithChildren.first.name} 下还有子权限，无法删除")
-                            )
-                        }
-                        
-                        val permissionWithRoles = results.find { it.third > 0 }
-                        if (permissionWithRoles != null) {
-                            return@compose Future.succeededFuture(
-                                ApiData.error<Unit>("权限 ${permissionWithRoles.first.name} 下还有角色，无法删除")
-                            )
-                        }
-                        
-                        val updateFutures = permissions.map { permission ->
-                            permission.status = "deleted"
-                            permissionDao.updateById(permission).map { null }
-                        }
-                        
-                        io.infra.market.vertx.util.FutureUtil.all(updateFutures)
-                            .map { ApiData.success(Unit) }
-                    }
-            }
+            }.awaitAll()
+        }
+        
+        return ApiData.success(Unit)
     }
 }

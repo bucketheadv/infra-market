@@ -8,11 +8,14 @@ import io.infra.market.vertx.entity.RolePermission
 import io.infra.market.vertx.repository.RoleDao
 import io.infra.market.vertx.repository.RolePermissionDao
 import io.infra.market.vertx.repository.UserRoleDao
-import io.infra.market.vertx.util.FutureUtil
-import io.vertx.core.Future
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 
 /**
  * 角色服务
+ * 
+ * 规则1：任何调用 xxx.awaitForResult() 的函数，必须用 suspend 修饰
  */
 class RoleService(
     private val roleDao: RoleDao,
@@ -20,234 +23,198 @@ class RoleService(
     private val userRoleDao: UserRoleDao
 ) {
     
-    fun getRoles(name: String?, code: String?, status: String?, page: Int, size: Int): Future<ApiData<PageResultDto<RoleDto>>> {
-        return roleDao.page(name, code, status, page, size)
-            .compose { (roles, total) ->
-                val roleIds = roles.mapNotNull { it.id }
-                if (roleIds.isEmpty()) {
-                    return@compose Future.succeededFuture(
-                        ApiData.success(PageResultDto(emptyList(), total, page.toLong(), size.toLong()))
+    suspend fun getRoles(name: String?, code: String?, status: String?, page: Int, size: Int): ApiData<PageResultDto<RoleDto>> {
+        val (roles, total) = roleDao.page(name, code, status, page, size)
+        val roleIds = roles.mapNotNull { it.id }
+        
+        if (roleIds.isEmpty()) {
+            return ApiData.success(PageResultDto(emptyList(), total, page.toLong(), size.toLong()))
+        }
+        
+        val rolePermissions = rolePermissionDao.findByRoleIds(roleIds)
+        val rolePermissionsMap = rolePermissions.groupBy { it.roleId ?: 0L }
+            .mapValues { (_, permissions) -> permissions.mapNotNull { it.permissionId } }
+        
+        val roleDtos = RoleDto.fromEntityList(roles, rolePermissionsMap)
+        return ApiData.success(PageResultDto(roleDtos, total, page.toLong(), size.toLong()))
+    }
+    
+    suspend fun getAllRoles(): ApiData<List<RoleDto>> {
+        val roles = roleDao.findByStatus("active")
+        val roleIds = roles.mapNotNull { it.id }
+        
+        if (roleIds.isEmpty()) {
+            return ApiData.success(emptyList())
+        }
+        
+        val rolePermissions = rolePermissionDao.findByRoleIds(roleIds)
+        val rolePermissionsMap = rolePermissions.groupBy { it.roleId ?: 0L }
+            .mapValues { (_, permissions) -> permissions.mapNotNull { it.permissionId } }
+        
+        val roleDtos = RoleDto.fromEntityList(roles, rolePermissionsMap)
+        return ApiData.success(roleDtos)
+    }
+    
+    suspend fun getRole(id: Long): ApiData<RoleDto> {
+        val role = roleDao.findById(id) ?: return ApiData.error("角色不存在")
+
+        val rolePermissions = rolePermissionDao.findByRoleId(id)
+        val permissionIds = rolePermissions.mapNotNull { it.permissionId }
+        val roleDto = RoleDto.fromEntity(role, permissionIds)
+        return ApiData.success(roleDto)
+    }
+    
+    suspend fun createRole(name: String, code: String, description: String?, permissionIds: List<Long>): ApiData<RoleDto> {
+        val existingRole = roleDao.findByCode(code)
+        if (existingRole != null) {
+            return ApiData.error("角色编码已存在")
+        }
+        
+        val now = System.currentTimeMillis()
+        val role = Role(
+            name = name,
+            code = code,
+            description = description,
+            status = "active"
+        )
+        role.createTime = now
+        role.updateTime = now
+        
+        val roleId = roleDao.save(role)
+        role.id = roleId
+        
+        coroutineScope {
+            permissionIds.map { permissionId ->
+                async {
+                    val rolePermission = RolePermission(
+                        roleId = roleId,
+                        permissionId = permissionId
                     )
+                    rolePermissionDao.save(rolePermission)
                 }
-                
-                rolePermissionDao.findByRoleIds(roleIds)
-                    .map { rolePermissions ->
-                        val rolePermissionsMap = rolePermissions.groupBy { it.roleId ?: 0L }
-                            .mapValues { (_, permissions) -> permissions.mapNotNull { it.permissionId } }
-                        
-                        val roleDtos = RoleDto.fromEntityList(roles, rolePermissionsMap)
-                        ApiData.success(PageResultDto(roleDtos, total, page.toLong(), size.toLong()))
-                    }
-            }
+            }.awaitAll()
+        }
+        
+        val roleDto = RoleDto.fromEntity(role, permissionIds)
+        return ApiData.success(roleDto)
     }
     
-    fun getAllRoles(): Future<ApiData<List<RoleDto>>> {
-        return roleDao.findByStatus("active")
-            .compose { roles ->
-                val roleIds = roles.mapNotNull { it.id }
-                if (roleIds.isEmpty()) {
-                    return@compose Future.succeededFuture(ApiData.success(emptyList()))
+    suspend fun updateRole(id: Long, name: String, code: String, description: String?, permissionIds: List<Long>): ApiData<RoleDto> {
+        val role = roleDao.findById(id) ?: return ApiData.error("角色不存在")
+
+        val existingRole = roleDao.findByCode(code)
+        if (existingRole != null && existingRole.id != role.id) {
+            return ApiData.error("角色编码已存在")
+        }
+        
+        role.name = name
+        role.description = description
+        role.updateTime = System.currentTimeMillis()
+        
+        roleDao.updateById(role)
+        rolePermissionDao.deleteByRoleId(id)
+        
+        coroutineScope {
+            permissionIds.map { permissionId ->
+                async {
+                    val rolePermission = RolePermission(
+                        roleId = id,
+                        permissionId = permissionId
+                    )
+                    rolePermissionDao.save(rolePermission)
                 }
-                
-                rolePermissionDao.findByRoleIds(roleIds)
-                    .map { rolePermissions ->
-                        val rolePermissionsMap = rolePermissions.groupBy { it.roleId ?: 0L }
-                            .mapValues { (_, permissions) -> permissions.mapNotNull { it.permissionId } }
-                        
-                        val roleDtos = RoleDto.fromEntityList(roles, rolePermissionsMap)
-                        ApiData.success(roleDtos)
-                    }
-            }
+            }.awaitAll()
+        }
+        
+        val roleDto = RoleDto.fromEntity(role, permissionIds)
+        return ApiData.success(roleDto)
     }
     
-    fun getRole(id: Long): Future<ApiData<RoleDto>> {
-        return roleDao.findById(id)
-            .compose { role ->
-                if (role == null) {
-                    return@compose Future.succeededFuture(ApiData.error<RoleDto>("角色不存在"))
-                }
-                
-                rolePermissionDao.findByRoleId(id)
-                    .map { rolePermissions ->
-                        val permissionIds = rolePermissions.mapNotNull { it.permissionId }
-                        val roleDto = RoleDto.fromEntity(role, permissionIds)
-                        ApiData.success(roleDto)
-                    }
-            }
+    suspend fun deleteRole(id: Long): ApiData<Unit> {
+        val role = roleDao.findById(id) ?: return ApiData.error("角色不存在")
+
+        if (role.code == "admin") {
+            return ApiData.error("不能删除系统角色")
+        }
+        
+        if (role.status == "deleted") {
+            return ApiData.error("角色已被删除")
+        }
+        
+        val userCount = userRoleDao.countByRoleId(id)
+        if (userCount > 0) {
+            return ApiData.error("该角色下还有用户，无法删除")
+        }
+        
+        role.status = "deleted"
+        roleDao.updateById(role)
+        
+        return ApiData.success(Unit)
     }
     
-    fun createRole(name: String, code: String, description: String?, permissionIds: List<Long>): Future<ApiData<RoleDto>> {
-        return roleDao.findByCode(code)
-            .compose { existingRole ->
-                if (existingRole != null) {
-                    return@compose Future.succeededFuture(ApiData.error<RoleDto>("角色编码已存在"))
-                }
-                
-                val now = System.currentTimeMillis()
-                val role = Role(
-                    name = name,
-                    code = code,
-                    description = description,
-                    status = "active"
-                )
-                role.createTime = now
-                role.updateTime = now
-                
-                roleDao.save(role)
-                    .compose { roleId ->
-                        role.id = roleId
-                        val saveFutures = permissionIds.map { permissionId ->
-                            val rolePermission = RolePermission(
-                                roleId = roleId,
-                                permissionId = permissionId
-                            )
-                            rolePermissionDao.save(rolePermission).map { null }
-                        }
-                        
-                        FutureUtil.all(saveFutures)
-                            .map {
-                                val roleDto = RoleDto.fromEntity(role, permissionIds)
-                                ApiData.success(roleDto)
-                            }
-                    }
-            }
-    }
-    
-    fun updateRole(id: Long, name: String, code: String, description: String?, permissionIds: List<Long>): Future<ApiData<RoleDto>> {
-        return roleDao.findById(id)
-            .compose { role ->
-                if (role == null) {
-                    return@compose Future.succeededFuture(ApiData.error<RoleDto>("角色不存在"))
-                }
-                
-                roleDao.findByCode(code)
-                    .compose { existingRole ->
-                        if (existingRole != null && existingRole.id != role.id) {
-                            return@compose Future.succeededFuture(ApiData.error<RoleDto>("角色编码已存在"))
-                        }
-                        
-                        role.name = name
-                        role.description = description
-                        role.updateTime = System.currentTimeMillis()
-                        
-                        roleDao.updateById(role)
-                            .compose {
-                                rolePermissionDao.deleteByRoleId(id)
-                                    .compose {
-                                        val saveFutures = permissionIds.map { permissionId ->
-                                            val rolePermission = RolePermission(
-                                                roleId = id,
-                                                permissionId = permissionId
-                                            )
-                                            rolePermissionDao.save(rolePermission).map { null }
-                                        }
-                                        
-                                        FutureUtil.all(saveFutures)
-                                            .map {
-                                                val roleDto = RoleDto.fromEntity(role, permissionIds)
-                                                ApiData.success(roleDto)
-                                            }
-                                    }
-                            }
-                    }
-            }
-    }
-    
-    fun deleteRole(id: Long): Future<ApiData<Unit>> {
-        return roleDao.findById(id)
-            .compose { role ->
-                if (role == null) {
-                    return@compose Future.succeededFuture(ApiData.error<Unit>("角色不存在"))
-                }
-                
-                if (role.code == "admin") {
-                    return@compose Future.succeededFuture(ApiData.error<Unit>("不能删除系统角色"))
-                }
-                
-                if (role.status == "deleted") {
-                    return@compose Future.succeededFuture(ApiData.error<Unit>("角色已被删除"))
-                }
-                
-                userRoleDao.countByRoleId(id)
-                    .compose { userCount ->
-                        if (userCount > 0) {
-                            return@compose Future.succeededFuture(ApiData.error<Unit>("该角色下还有用户，无法删除"))
-                        }
-                        
-                        role.status = "deleted"
-                        roleDao.updateById(role)
-                            .map { ApiData.success(Unit) }
-                    }
-            }
-    }
-    
-    fun updateRoleStatus(id: Long, status: String): Future<ApiData<Unit>> {
+    suspend fun updateRoleStatus(id: Long, status: String): ApiData<Unit> {
         if (status !in listOf("active", "inactive", "deleted")) {
-            return Future.succeededFuture(ApiData.error<Unit>("无效的状态值"))
+            return ApiData.error("无效的状态值")
+        }
+
+        val role = roleDao.findById(id) ?: return ApiData.error("角色不存在")
+
+        if (role.code == "admin" && status == "deleted") {
+            return ApiData.error("不能删除系统角色")
         }
         
-        return roleDao.findById(id)
-            .compose { role ->
-                if (role == null) {
-                    return@compose Future.succeededFuture(ApiData.error<Unit>("角色不存在"))
-                }
-                
-                if (role.code == "admin" && status == "deleted") {
-                    return@compose Future.succeededFuture(ApiData.error<Unit>("不能删除系统角色"))
-                }
-                
-                if (role.status == "deleted" && status != "deleted") {
-                    return@compose Future.succeededFuture(ApiData.error<Unit>("已删除的角色不能重新启用"))
-                }
-                
-                if (status == "deleted") {
-                    return@compose deleteRole(id)
-                }
-                
-                role.status = status
-                roleDao.updateById(role)
-                    .map { ApiData.success(Unit) }
-            }
+        if (role.status == "deleted" && status != "deleted") {
+            return ApiData.error("已删除的角色不能重新启用")
+        }
+        
+        if (status == "deleted") {
+            return deleteRole(id)
+        }
+        
+        role.status = status
+        roleDao.updateById(role)
+        
+        return ApiData.success(Unit)
     }
     
-    fun batchDeleteRoles(ids: List<Long>): Future<ApiData<Unit>> {
+    suspend fun batchDeleteRoles(ids: List<Long>): ApiData<Unit> {
         if (ids.isEmpty()) {
-            return Future.succeededFuture(ApiData.error<Unit>("请选择要删除的角色"))
+            return ApiData.error("请选择要删除的角色")
         }
         
-        return roleDao.findByIds(ids)
-            .compose { roles ->
-                if (roles.size != ids.size) {
-                    return@compose Future.succeededFuture(ApiData.error<Unit>("部分角色不存在"))
+        val roles = roleDao.findByIds(ids)
+        if (roles.size != ids.size) {
+            return ApiData.error("部分角色不存在")
+        }
+        
+        val systemRole = roles.find { it.code == "admin" }
+        if (systemRole != null) {
+            return ApiData.error("不能删除系统角色")
+        }
+        
+        val roleCounts = coroutineScope {
+            roles.map { role ->
+                async {
+                    val count = userRoleDao.countByRoleId(role.id ?: 0)
+                    Pair(role, count)
                 }
-                
-                val systemRole = roles.find { it.code == "admin" }
-                if (systemRole != null) {
-                    return@compose Future.succeededFuture(ApiData.error<Unit>("不能删除系统角色"))
+            }.awaitAll()
+        }
+        
+        val roleWithUsers = roleCounts.find { it.second > 0 }
+        if (roleWithUsers != null) {
+            return ApiData.error("角色 ${roleWithUsers.first.name} 下还有用户，无法删除")
+        }
+        
+        coroutineScope {
+            roles.map { role ->
+                async {
+                    role.status = "deleted"
+                    roleDao.updateById(role)
                 }
-                
-                val checkFutures = roles.map { role ->
-                    userRoleDao.countByRoleId(role.id ?: 0)
-                        .map { count -> Pair(role, count) }
-                }
-                
-                FutureUtil.all(checkFutures)
-                    .compose { roleCounts ->
-                        val roleWithUsers = roleCounts.find { it.second > 0 }
-                        if (roleWithUsers != null) {
-                            return@compose Future.succeededFuture(
-                                ApiData.error<Unit>("角色 ${roleWithUsers.first.name} 下还有用户，无法删除")
-                            )
-                        }
-                        
-                        val updateFutures = roles.map { role ->
-                            role.status = "deleted"
-                            roleDao.updateById(role).map { null }
-                        }
-                        
-                        FutureUtil.all(updateFutures)
-                            .map { ApiData.success(Unit) }
-                    }
-            }
+            }.awaitAll()
+        }
+        
+        return ApiData.success(Unit)
     }
 }

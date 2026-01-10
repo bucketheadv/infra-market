@@ -19,8 +19,12 @@ object ResponseUtil {
      * 发送成功响应
      */
     fun <T> success(ctx: RoutingContext, data: T, statusCode: Int = 200) {
-        val result = ApiData.success(data)
-        sendResponse(ctx, result, statusCode)
+        val result = if (statusCode == 200) {
+            ApiData.success(data)
+        } else {
+            ApiData(code = statusCode, message = "success", data = data)
+        }
+        sendResponse(ctx, result)
     }
     
     /**
@@ -28,7 +32,7 @@ object ResponseUtil {
      */
     fun error(ctx: RoutingContext, message: String, statusCode: Int = 500) {
         val result = ApiData.error<Any?>(message, statusCode)
-        sendResponse(ctx, result, statusCode)
+        sendResponse(ctx, result)
     }
     
     /**
@@ -42,8 +46,7 @@ object ResponseUtil {
     ) {
         future
             .onSuccess { result ->
-                val statusCode = if (result.code != 200) result.code else 200
-                sendResponse(ctx, result, statusCode)
+                sendResponse(ctx, result)
             }
             .onFailure { error ->
                 logger?.error(errorMessage, error)
@@ -65,11 +68,11 @@ object ResponseUtil {
     }
     
     /**
-     * 发送响应（内部方法）
+     * 发送响应（自动从 ApiData 中获取状态码）
      */
-    private fun <T> sendResponse(ctx: RoutingContext, result: ApiData<T>, statusCode: Int) {
+    fun <T> sendResponse(ctx: RoutingContext, result: ApiData<T>) {
         ctx.response()
-            .setStatusCode(statusCode)
+            .setStatusCode(result.code)
             .putHeader("Content-Type", CONTENT_TYPE_JSON)
             .end(JsonObject.mapFrom(result).encode())
     }

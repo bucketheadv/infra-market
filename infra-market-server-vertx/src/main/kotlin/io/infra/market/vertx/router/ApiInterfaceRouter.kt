@@ -3,6 +3,7 @@ package io.infra.market.vertx.router
 import io.infra.market.vertx.middleware.AuthMiddleware
 import io.infra.market.vertx.service.ApiInterfaceService
 import io.infra.market.vertx.util.ResponseUtil
+import io.infra.market.vertx.util.coroutineHandler
 import io.vertx.core.Vertx
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.RoutingContext
@@ -10,6 +11,8 @@ import org.slf4j.LoggerFactory
 
 /**
  * 接口管理路由
+ * 
+ * 规则2：路由处理请求，必须用 coroutineHandler 替代原生的 handler
  */
 class ApiInterfaceRouter(private val apiInterfaceService: ApiInterfaceService) {
     
@@ -19,57 +22,77 @@ class ApiInterfaceRouter(private val apiInterfaceService: ApiInterfaceService) {
         val apiInterfaceRouter = Router.router(vertx)
         apiInterfaceRouter.route().handler(AuthMiddleware.create())
         
-        apiInterfaceRouter.get("/api/interface/list").handler(::handleList)
-        apiInterfaceRouter.get("/api/interface/most/used").handler(::handleGetMostUsed)
-        apiInterfaceRouter.get("/api/interface/:id").handler(::handleDetail)
-        apiInterfaceRouter.post("/api/interface").handler(::handleCreate)
-        apiInterfaceRouter.put("/api/interface/:id").handler(::handleUpdate)
-        apiInterfaceRouter.delete("/api/interface/:id").handler(::handleDelete)
-        apiInterfaceRouter.put("/api/interface/:id/status").handler(::handleUpdateStatus)
-        apiInterfaceRouter.post("/api/interface/:id/copy").handler(::handleCopy)
-        apiInterfaceRouter.post("/api/interface/execute").handler(::handleExecute)
+        apiInterfaceRouter.get("/api/interface/list").coroutineHandler(vertx) { ctx -> handleList(ctx) }
+        apiInterfaceRouter.get("/api/interface/most/used").coroutineHandler(vertx) { ctx -> handleGetMostUsed(ctx) }
+        apiInterfaceRouter.get("/api/interface/:id").coroutineHandler(vertx) { ctx -> handleDetail(ctx) }
+        apiInterfaceRouter.post("/api/interface").coroutineHandler(vertx) { ctx -> handleCreate(ctx) }
+        apiInterfaceRouter.put("/api/interface/:id").coroutineHandler(vertx) { ctx -> handleUpdate(ctx) }
+        apiInterfaceRouter.delete("/api/interface/:id").coroutineHandler(vertx) { ctx -> handleDelete(ctx) }
+        apiInterfaceRouter.put("/api/interface/:id/status").coroutineHandler(vertx) { ctx -> handleUpdateStatus(ctx) }
+        apiInterfaceRouter.post("/api/interface/:id/copy").coroutineHandler(vertx) { ctx -> handleCopy(ctx) }
+        apiInterfaceRouter.post("/api/interface/execute").coroutineHandler(vertx) { ctx -> handleExecute(ctx) }
         
         router.route("/*").subRouter(apiInterfaceRouter)
     }
     
-    private fun handleList(ctx: RoutingContext) {
-        val name = ctx.queryParams().get("name")
-        val method = ctx.queryParams().get("method")
-        val status = ctx.queryParams().get("status")?.toIntOrNull()
-        val environment = ctx.queryParams().get("environment")
-        val page = ctx.queryParams().get("page")?.toIntOrNull() ?: 1
-        val size = ctx.queryParams().get("size")?.toIntOrNull() ?: 10
-        
-        ResponseUtil.handleFuture(ctx, apiInterfaceService.list(name, method, status, environment, page, size), "获取接口列表失败", logger)
-    }
-    
-    private fun handleGetMostUsed(ctx: RoutingContext) {
-        val days = ctx.queryParams().get("days")?.toIntOrNull() ?: 30
-        val limit = ctx.queryParams().get("limit")?.toIntOrNull() ?: 5
-        
-        ResponseUtil.handleFuture(ctx, apiInterfaceService.getMostUsedInterfaces(days, limit), "获取热门接口失败", logger)
-    }
-    
-    private fun handleDetail(ctx: RoutingContext) {
-        val id = ctx.pathParam("id").toLongOrNull()
-        if (id == null) {
-            ResponseUtil.error(ctx, "接口ID无效", 400)
-            return
+    private suspend fun handleList(ctx: RoutingContext) {
+        try {
+            val name = ctx.queryParams().get("name")
+            val method = ctx.queryParams().get("method")
+            val status = ctx.queryParams().get("status")?.toIntOrNull()
+            val environment = ctx.queryParams().get("environment")
+            val page = ctx.queryParams().get("page")?.toIntOrNull() ?: 1
+            val size = ctx.queryParams().get("size")?.toIntOrNull() ?: 10
+            
+            val result = apiInterfaceService.list(name, method, status, environment, page, size)
+            ResponseUtil.sendResponse(ctx, result)
+        } catch (e: Exception) {
+            logger.error("获取接口列表失败", e)
+            ResponseUtil.error(ctx, e.message ?: "获取接口列表失败", 500)
         }
-        
-        ResponseUtil.handleFuture(ctx, apiInterfaceService.detail(id), "获取接口详情失败", logger)
     }
     
-    private fun handleCreate(ctx: RoutingContext) {
+    private suspend fun handleGetMostUsed(ctx: RoutingContext) {
+        try {
+            val days = ctx.queryParams().get("days")?.toIntOrNull() ?: 30
+            val limit = ctx.queryParams().get("limit")?.toIntOrNull() ?: 5
+            
+            val result = apiInterfaceService.getMostUsedInterfaces(days, limit)
+            ResponseUtil.sendResponse(ctx, result)
+        } catch (e: Exception) {
+            logger.error("获取热门接口失败", e)
+            ResponseUtil.error(ctx, e.message ?: "获取热门接口失败", 500)
+        }
+    }
+    
+    private suspend fun handleDetail(ctx: RoutingContext) {
+        try {
+            val id = ctx.pathParam("id").toLongOrNull()
+            if (id == null) {
+                ResponseUtil.error(ctx, "接口ID无效", 400)
+                return
+            }
+            
+            val result = apiInterfaceService.detail(id)
+            ResponseUtil.sendResponse(ctx, result)
+        } catch (e: Exception) {
+            logger.error("获取接口详情失败", e)
+            ResponseUtil.error(ctx, e.message ?: "获取接口详情失败", 500)
+        }
+    }
+    
+    private suspend fun handleCreate(ctx: RoutingContext) {
         try {
             val body = ctx.body().asJsonObject()
-            ResponseUtil.handleFuture(ctx, apiInterfaceService.create(body), "创建接口失败", logger)
+            val result = apiInterfaceService.create(body)
+            ResponseUtil.sendResponse(ctx, result)
         } catch (e: Exception) {
-            ResponseUtil.handleException(ctx, e, "请求参数错误", logger)
+            logger.error("创建接口失败", e)
+            ResponseUtil.error(ctx, e.message ?: "请求参数错误", 400)
         }
     }
     
-    private fun handleUpdate(ctx: RoutingContext) {
+    private suspend fun handleUpdate(ctx: RoutingContext) {
         try {
             val id = ctx.pathParam("id").toLongOrNull()
             if (id == null) {
@@ -78,23 +101,31 @@ class ApiInterfaceRouter(private val apiInterfaceService: ApiInterfaceService) {
             }
             
             val body = ctx.body().asJsonObject()
-            ResponseUtil.handleFuture(ctx, apiInterfaceService.update(id, body), "更新接口失败", logger)
+            val result = apiInterfaceService.update(id, body)
+            ResponseUtil.sendResponse(ctx, result)
         } catch (e: Exception) {
-            ResponseUtil.handleException(ctx, e, "请求参数错误", logger)
+            logger.error("更新接口失败", e)
+            ResponseUtil.error(ctx, e.message ?: "请求参数错误", 400)
         }
     }
     
-    private fun handleDelete(ctx: RoutingContext) {
-        val id = ctx.pathParam("id").toLongOrNull()
-        if (id == null) {
-            ResponseUtil.error(ctx, "接口ID无效", 400)
-            return
+    private suspend fun handleDelete(ctx: RoutingContext) {
+        try {
+            val id = ctx.pathParam("id").toLongOrNull()
+            if (id == null) {
+                ResponseUtil.error(ctx, "接口ID无效", 400)
+                return
+            }
+            
+            val result = apiInterfaceService.delete(id)
+            ResponseUtil.sendResponse(ctx, result)
+        } catch (e: Exception) {
+            logger.error("删除接口失败", e)
+            ResponseUtil.error(ctx, e.message ?: "删除接口失败", 500)
         }
-        
-        ResponseUtil.handleFuture(ctx, apiInterfaceService.delete(id), "删除接口失败", logger)
     }
     
-    private fun handleUpdateStatus(ctx: RoutingContext) {
+    private suspend fun handleUpdateStatus(ctx: RoutingContext) {
         try {
             val id = ctx.pathParam("id").toLongOrNull()
             if (id == null) {
@@ -104,28 +135,38 @@ class ApiInterfaceRouter(private val apiInterfaceService: ApiInterfaceService) {
             
             val status = ctx.queryParams().get("status")?.toIntOrNull() ?: 1
             
-            ResponseUtil.handleFuture(ctx, apiInterfaceService.updateStatus(id, status), "更新接口状态失败", logger)
+            val result = apiInterfaceService.updateStatus(id, status)
+            ResponseUtil.sendResponse(ctx, result)
         } catch (e: Exception) {
-            ResponseUtil.handleException(ctx, e, "请求参数错误", logger)
+            logger.error("更新接口状态失败", e)
+            ResponseUtil.error(ctx, e.message ?: "请求参数错误", 400)
         }
     }
     
-    private fun handleCopy(ctx: RoutingContext) {
-        val id = ctx.pathParam("id").toLongOrNull()
-        if (id == null) {
-            ResponseUtil.error(ctx, "接口ID无效", 400)
-            return
+    private suspend fun handleCopy(ctx: RoutingContext) {
+        try {
+            val id = ctx.pathParam("id").toLongOrNull()
+            if (id == null) {
+                ResponseUtil.error(ctx, "接口ID无效", 400)
+                return
+            }
+            
+            val result = apiInterfaceService.copy(id)
+            ResponseUtil.sendResponse(ctx, result)
+        } catch (e: Exception) {
+            logger.error("复制接口失败", e)
+            ResponseUtil.error(ctx, e.message ?: "复制接口失败", 500)
         }
-        
-        ResponseUtil.handleFuture(ctx, apiInterfaceService.copy(id), "复制接口失败", logger)
     }
     
-    private fun handleExecute(ctx: RoutingContext) {
+    private suspend fun handleExecute(ctx: RoutingContext) {
         try {
             val body = ctx.body().asJsonObject()
-            ResponseUtil.handleFuture(ctx, apiInterfaceService.execute(body), "执行接口失败", logger)
+            val result = apiInterfaceService.execute(body)
+            ResponseUtil.sendResponse(ctx, result)
         } catch (e: Exception) {
-            ResponseUtil.handleException(ctx, e, "请求参数错误", logger)
+            logger.error("执行接口失败", e)
+            ResponseUtil.error(ctx, e.message ?: "请求参数错误", 400)
         }
     }
 }

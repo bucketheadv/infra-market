@@ -21,7 +21,25 @@
         <kotlin.version>2.3.0</kotlin.version>
         <jwt.version>0.12.3</jwt.version>
         <mysql.version>8.0.33</mysql.version>
+        <jackson.version>2.15.2</jackson.version>
+        <joda-time.version>2.12.5</joda-time.version>
+        <jsonpath.version>2.8.0</jsonpath.version>
+        <slf4j.version>1.7.36</slf4j.version>
+        <logback.version>1.2.12</logback.version>
+        <maven.compiler.plugin.version>3.11.0</maven.compiler.plugin.version>
+        <maven.shade.plugin.version>3.4.1</maven.shade.plugin.version>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- Netty 版本由 Vert.x 传递，使用 dependencyManagement 确保版本一致 -->
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-resolver-dns-native-macos</artifactId>
+                <version>4.1.100.Final</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <!-- Kotlin -->
@@ -71,6 +89,17 @@
             <version>${vertx.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-lang-kotlin-coroutines</artifactId>
+            <version>${vertx.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-lang-kotlin</artifactId>
+            <version>${vertx.version}</version>
+        </dependency>
+
         <!-- Vert.x JWT -->
         <dependency>
             <groupId>io.vertx</groupId>
@@ -115,48 +144,60 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.15.2</version>
+            <version>${jackson.version}</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.module</groupId>
             <artifactId>jackson-module-kotlin</artifactId>
-            <version>2.15.2</version>
+            <version>${jackson.version}</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-joda</artifactId>
-            <version>2.15.2</version>
+            <version>${jackson.version}</version>
         </dependency>
 
         <!-- Joda Time -->
         <dependency>
             <groupId>joda-time</groupId>
             <artifactId>joda-time</artifactId>
-            <version>2.12.5</version>
+            <version>${joda-time.version}</version>
         </dependency>
 
         <!-- JSONPath -->
         <dependency>
             <groupId>com.jayway.jsonpath</groupId>
             <artifactId>json-path</artifactId>
-            <version>2.8.0</version>
+            <version>${jsonpath.version}</version>
         </dependency>
 
         <!-- Logging -->
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-            <version>1.7.36</version>
+            <version>${slf4j.version}</version>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-core</artifactId>
-            <version>1.2.12</version>
+            <version>${logback.version}</version>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
-            <version>1.2.12</version>
+            <version>${logback.version}</version>
+        </dependency>
+
+        <!-- Netty DNS Resolver for macOS (使用 Vert.x 传递的 Netty 版本) -->
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-resolver-dns-native-macos</artifactId>
+            <classifier>osx-x86_64</classifier>
+        </dependency>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-resolver-dns-native-macos</artifactId>
+            <classifier>osx-aarch_64</classifier>
         </dependency>
     </dependencies>
 
@@ -165,7 +206,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.11.0</version>
+                <version>${maven.compiler.plugin.version}</version>
                 <configuration>
                     <source>17</source>
                     <target>17</target>
@@ -200,7 +241,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>3.4.1</version>
+                <version>${maven.shade.plugin.version}</version>
                 <executions>
                     <execution>
                         <phase>package</phase>

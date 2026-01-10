@@ -1,70 +1,67 @@
 package io.infra.market.vertx.repository
 
 import io.infra.market.vertx.entity.Permission
-import io.vertx.core.Future
+import io.infra.market.vertx.extensions.awaitForResult
 import io.vertx.sqlclient.Pool
 import io.vertx.sqlclient.Row
 import io.vertx.sqlclient.Tuple
 
 /**
  * 权限数据访问对象
+ * 
+ * 规则1：任何调用 xxx.awaitForResult() 的函数，必须用 suspend 修饰
  */
 class PermissionDao(private val pool: Pool) {
     
-    fun findById(id: Long): Future<Permission?> {
-        return pool.preparedQuery("SELECT * FROM permission_info WHERE id = ? AND status != 'deleted'")
+    suspend fun findById(id: Long): Permission? {
+        val rows = pool.preparedQuery("SELECT * FROM permission_info WHERE id = ? AND status != 'deleted'")
             .execute(Tuple.of(id))
-            .map { rows ->
-                if (rows.size() > 0) {
-                    rowToPermission(rows.first())
-                } else {
-                    null
-                }
-            }
+            .awaitForResult()
+        return if (rows.size() > 0) {
+            rowToPermission(rows.first())
+        } else {
+            null
+        }
     }
     
-    fun findByCode(code: String): Future<Permission?> {
-        return pool.preparedQuery("SELECT * FROM permission_info WHERE code = ? AND status != 'deleted'")
+    suspend fun findByCode(code: String): Permission? {
+        val rows = pool.preparedQuery("SELECT * FROM permission_info WHERE code = ? AND status != 'deleted'")
             .execute(Tuple.of(code))
-            .map { rows ->
-                if (rows.size() > 0) {
-                    rowToPermission(rows.first())
-                } else {
-                    null
-                }
-            }
+            .awaitForResult()
+        return if (rows.size() > 0) {
+            rowToPermission(rows.first())
+        } else {
+            null
+        }
     }
     
-    fun findByStatus(status: String): Future<List<Permission>> {
-        return pool.preparedQuery("SELECT * FROM permission_info WHERE status = ? ORDER BY id ASC")
+    suspend fun findByStatus(status: String): List<Permission> {
+        val rows = pool.preparedQuery("SELECT * FROM permission_info WHERE status = ? ORDER BY id ASC")
             .execute(Tuple.of(status))
-            .map { rows ->
-                rows.map { rowToPermission(it) }
-            }
+            .awaitForResult()
+        return rows.map { rowToPermission(it) }
     }
     
-    fun findByIds(ids: List<Long>): Future<List<Permission>> {
+    suspend fun findByIds(ids: List<Long>): List<Permission> {
         if (ids.isEmpty()) {
-            return Future.succeededFuture(emptyList())
+            return emptyList()
         }
         
         val placeholders = ids.joinToString(",") { "?" }
-        return pool.preparedQuery("SELECT * FROM permission_info WHERE id IN ($placeholders) ORDER BY id ASC")
+        val rows = pool.preparedQuery("SELECT * FROM permission_info WHERE id IN ($placeholders) ORDER BY id ASC")
             .execute(Tuple.from(ids))
-            .map { rows ->
-                rows.map { rowToPermission(it) }
-            }
+            .awaitForResult()
+        return rows.map { rowToPermission(it) }
     }
     
-    fun findByParentId(parentId: Long): Future<List<Permission>> {
-        return pool.preparedQuery("SELECT * FROM permission_info WHERE parent_id = ? AND status != 'deleted' ORDER BY id ASC")
+    suspend fun findByParentId(parentId: Long): List<Permission> {
+        val rows = pool.preparedQuery("SELECT * FROM permission_info WHERE parent_id = ? AND status != 'deleted' ORDER BY id ASC")
             .execute(Tuple.of(parentId))
-            .map { rows ->
-                rows.map { rowToPermission(it) }
-            }
+            .awaitForResult()
+        return rows.map { rowToPermission(it) }
     }
     
-    fun page(name: String?, code: String?, type: String?, status: String?, page: Int, size: Int): Future<Pair<List<Permission>, Long>> {
+    suspend fun page(name: String?, code: String?, type: String?, status: String?, page: Int, size: Int): Pair<List<Permission>, Long> {
         val offset = (page - 1) * size
         val conditions = mutableListOf<String>()
         val params = mutableListOf<Any>()
@@ -96,24 +93,24 @@ class PermissionDao(private val pool: Pool) {
         val countQuery = "SELECT COUNT(*) as total FROM permission_info WHERE $whereClause"
         val dataQuery = "SELECT * FROM permission_info WHERE $whereClause ORDER BY id ASC LIMIT ? OFFSET ?"
         
-        return pool.preparedQuery(countQuery)
+        val countRows = pool.preparedQuery(countQuery)
             .execute(Tuple.from(params))
-            .compose { countRows ->
-                val total = countRows.first().getLong("total")
-                pool.preparedQuery(dataQuery)
-                    .execute(Tuple.from(params + size + offset))
-                    .map { dataRows ->
-                        Pair(dataRows.map { rowToPermission(it) }, total)
-                    }
-            }
+            .awaitForResult()
+        val total = countRows.first().getLong("total")
+        
+        val dataRows = pool.preparedQuery(dataQuery)
+            .execute(Tuple.from(params + size + offset))
+            .awaitForResult()
+        
+        return Pair(dataRows.map { rowToPermission(it) }, total)
     }
     
-    fun save(permission: Permission): Future<Long> {
+    suspend fun save(permission: Permission): Long {
         val now = System.currentTimeMillis()
         permission.createTime = now
         permission.updateTime = now
         
-        return pool.preparedQuery(
+        val rows = pool.preparedQuery(
             "INSERT INTO permission_info (name, code, type, parent_id, path, icon, sort, status, create_time, update_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
         )
             .execute(Tuple.of(
@@ -121,14 +118,13 @@ class PermissionDao(private val pool: Pool) {
                 permission.path, permission.icon, permission.sort, permission.status,
                 permission.createTime, permission.updateTime
             ))
-            .map { rows ->
-                rows.iterator().next().getLong(0)
-            }
+            .awaitForResult()
+        return rows.iterator().next().getLong(0)
     }
     
-    fun updateById(permission: Permission): Future<Void> {
+    suspend fun updateById(permission: Permission) {
         permission.updateTime = System.currentTimeMillis()
-        return pool.preparedQuery(
+        pool.preparedQuery(
             "UPDATE permission_info SET name = ?, code = ?, type = ?, parent_id = ?, path = ?, icon = ?, sort = ?, status = ?, update_time = ? WHERE id = ?"
         )
             .execute(Tuple.of(
@@ -136,13 +132,14 @@ class PermissionDao(private val pool: Pool) {
                 permission.path, permission.icon, permission.sort, permission.status,
                 permission.updateTime, permission.id
             ))
-            .map { null }
+            .awaitForResult()
     }
     
-    fun count(): Future<Long> {
-        return pool.preparedQuery("SELECT COUNT(*) as total FROM permission_info WHERE status != 'deleted'")
+    suspend fun count(): Long {
+        val rows = pool.preparedQuery("SELECT COUNT(*) as total FROM permission_info WHERE status != 'deleted'")
             .execute()
-            .map { rows -> rows.first().getLong("total") }
+            .awaitForResult()
+        return rows.first().getLong("total")
     }
     
     private fun rowToPermission(row: Row): Permission {

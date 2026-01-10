@@ -1,62 +1,59 @@
 package io.infra.market.vertx.repository
 
 import io.infra.market.vertx.entity.Role
-import io.vertx.core.Future
+import io.infra.market.vertx.extensions.awaitForResult
 import io.vertx.sqlclient.Pool
 import io.vertx.sqlclient.Row
-import io.vertx.sqlclient.RowSet
 import io.vertx.sqlclient.Tuple
 
 /**
  * 角色数据访问对象
+ * 
+ * 规则1：任何调用 xxx.awaitForResult() 的函数，必须用 suspend 修饰
  */
 class RoleDao(private val pool: Pool) {
     
-    fun findById(id: Long): Future<Role?> {
-        return pool.preparedQuery("SELECT * FROM role_info WHERE id = ? AND status != 'deleted'")
+    suspend fun findById(id: Long): Role? {
+        val rows = pool.preparedQuery("SELECT * FROM role_info WHERE id = ? AND status != 'deleted'")
             .execute(Tuple.of(id))
-            .map { rows ->
-                if (rows.size() > 0) {
-                    rowToRole(rows.first())
-                } else {
-                    null
-                }
-            }
+            .awaitForResult()
+        return if (rows.size() > 0) {
+            rowToRole(rows.first())
+        } else {
+            null
+        }
     }
     
-    fun findByCode(code: String): Future<Role?> {
-        return pool.preparedQuery("SELECT * FROM role_info WHERE code = ? AND status != 'deleted'")
+    suspend fun findByCode(code: String): Role? {
+        val rows = pool.preparedQuery("SELECT * FROM role_info WHERE code = ? AND status != 'deleted'")
             .execute(Tuple.of(code))
-            .map { rows ->
-                if (rows.size() > 0) {
-                    rowToRole(rows.first())
-                } else {
-                    null
-                }
-            }
+            .awaitForResult()
+        return if (rows.size() > 0) {
+            rowToRole(rows.first())
+        } else {
+            null
+        }
     }
     
-    fun findByStatus(status: String): Future<List<Role>> {
-        return pool.preparedQuery("SELECT * FROM role_info WHERE status = ? ORDER BY id ASC")
+    suspend fun findByStatus(status: String): List<Role> {
+        val rows = pool.preparedQuery("SELECT * FROM role_info WHERE status = ? ORDER BY id ASC")
             .execute(Tuple.of(status))
-            .map { rows ->
-                rows.map { rowToRole(it) }
-            }
+            .awaitForResult()
+        return rows.map { rowToRole(it) }
     }
     
-    fun findByIds(ids: List<Long>): Future<List<Role>> {
+    suspend fun findByIds(ids: List<Long>): List<Role> {
         if (ids.isEmpty()) {
-            return Future.succeededFuture(emptyList())
+            return emptyList()
         }
         val placeholders = ids.joinToString(",") { "?" }
-        return pool.preparedQuery("SELECT * FROM role_info WHERE id IN ($placeholders) AND status != 'deleted' ORDER BY id ASC")
+        val rows = pool.preparedQuery("SELECT * FROM role_info WHERE id IN ($placeholders) AND status != 'deleted' ORDER BY id ASC")
             .execute(Tuple.from(ids))
-            .map { rows ->
-                rows.map { rowToRole(it) }
-            }
+            .awaitForResult()
+        return rows.map { rowToRole(it) }
     }
     
-    fun page(name: String?, code: String?, status: String?, page: Int, size: Int): Future<Pair<List<Role>, Long>> {
+    suspend fun page(name: String?, code: String?, status: String?, page: Int, size: Int): Pair<List<Role>, Long> {
         val offset = (page - 1) * size
         val conditions = mutableListOf<String>()
         val params = mutableListOf<Any>()
@@ -83,45 +80,45 @@ class RoleDao(private val pool: Pool) {
         val countQuery = "SELECT COUNT(*) as total FROM role_info WHERE $whereClause"
         val dataQuery = "SELECT * FROM role_info WHERE $whereClause ORDER BY id ASC LIMIT ? OFFSET ?"
         
-        return pool.preparedQuery(countQuery)
+        val countRows = pool.preparedQuery(countQuery)
             .execute(Tuple.from(params))
-            .compose { countRows ->
-                val total = countRows.first().getLong("total")
-                pool.preparedQuery(dataQuery)
-                    .execute(Tuple.from(params + size + offset))
-                    .map { dataRows ->
-                        Pair(dataRows.map { rowToRole(it) }, total)
-                    }
-            }
+            .awaitForResult()
+        val total = countRows.first().getLong("total")
+        
+        val dataRows = pool.preparedQuery(dataQuery)
+            .execute(Tuple.from(params + size + offset))
+            .awaitForResult()
+        
+        return Pair(dataRows.map { rowToRole(it) }, total)
     }
     
-    fun save(role: Role): Future<Long> {
+    suspend fun save(role: Role): Long {
         val now = System.currentTimeMillis()
         role.createTime = now
         role.updateTime = now
         
-        return pool.preparedQuery(
+        val rows = pool.preparedQuery(
             "INSERT INTO role_info (name, code, description, status, create_time, update_time) VALUES (?, ?, ?, ?, ?, ?)"
         )
             .execute(Tuple.of(role.name, role.code, role.description, role.status, role.createTime, role.updateTime))
-            .map { rows ->
-                rows.iterator().next().getLong(0)
-            }
+            .awaitForResult()
+        return rows.iterator().next().getLong(0)
     }
     
-    fun updateById(role: Role): Future<Void> {
+    suspend fun updateById(role: Role) {
         role.updateTime = System.currentTimeMillis()
-        return pool.preparedQuery(
+        pool.preparedQuery(
             "UPDATE role_info SET name = ?, code = ?, description = ?, status = ?, update_time = ? WHERE id = ?"
         )
             .execute(Tuple.of(role.name, role.code, role.description, role.status, role.updateTime, role.id))
-            .map { null }
+            .awaitForResult()
     }
     
-    fun count(): Future<Long> {
-        return pool.preparedQuery("SELECT COUNT(*) as total FROM role_info WHERE status != 'deleted'")
+    suspend fun count(): Long {
+        val rows = pool.preparedQuery("SELECT COUNT(*) as total FROM role_info WHERE status != 'deleted'")
             .execute()
-            .map { rows -> rows.first().getLong("total") }
+            .awaitForResult()
+        return rows.first().getLong("total")
     }
     
     private fun rowToRole(row: Row): Role {
@@ -136,4 +133,3 @@ class RoleDao(private val pool: Pool) {
         )
     }
 }
-

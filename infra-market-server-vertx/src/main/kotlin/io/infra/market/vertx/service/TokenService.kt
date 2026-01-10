@@ -1,43 +1,42 @@
 package io.infra.market.vertx.service
 
 import io.infra.market.vertx.util.JwtUtil
-import io.vertx.core.Future
-import io.vertx.redis.client.Redis
+import io.infra.market.vertx.extensions.awaitForResult
 import io.vertx.redis.client.RedisAPI
 
 /**
  * Token 服务
+ * 
+ * 规则1：任何调用 xxx.awaitForResult() 的函数，必须用 suspend 修饰
  */
 class TokenService(
-    private val redis: Redis,
     private val redisAPI: RedisAPI
 ) {
     
-    fun saveToken(uid: Long, token: String): Future<Void> {
+    suspend fun saveToken(uid: Long, token: String) {
         val key = "token:${uid}"
-        return redisAPI.set(listOf(key, token, "EX", "259200")) // 3天过期
-            .map { null }
+        redisAPI.set(listOf(key, token, "EX", "259200")).awaitForResult() // 3天过期
     }
     
-    fun deleteToken(uid: Long): Future<Void> {
+    suspend fun deleteToken(uid: Long) {
         val key = "token:${uid}"
-        return redisAPI.del(listOf(key))
-            .map { null }
+        redisAPI.del(listOf(key)).awaitForResult()
     }
     
-    fun refreshToken(uid: Long, username: String): Future<String> {
+    suspend fun refreshToken(uid: Long, username: String): String {
         val newToken = JwtUtil.generateToken(uid, username)
-        return saveToken(uid, newToken)
-            .map { newToken }
+        saveToken(uid, newToken)
+        return newToken
     }
     
-    fun validateToken(uid: Long, token: String): Future<Boolean> {
+    suspend fun validateToken(uid: Long, token: String): Boolean {
         val key = "token:${uid}"
-        return redisAPI.get(key)
-            .map { response ->
-                response != null && response.toString() == token && JwtUtil.validateToken(token)
-            }
-            .recover { Future.succeededFuture(false) }
+        return try {
+            val response = redisAPI.get(key).awaitForResult()
+            response != null && response.toString() == token && JwtUtil.validateToken(token)
+        } catch (_: Exception) {
+            false
+        }
     }
 }
 

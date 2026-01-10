@@ -3,6 +3,7 @@ package io.infra.market.vertx.router
 import io.infra.market.vertx.middleware.AuthMiddleware
 import io.infra.market.vertx.service.UserService
 import io.infra.market.vertx.util.ResponseUtil
+import io.infra.market.vertx.util.coroutineHandler
 import io.vertx.core.Vertx
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.RoutingContext
@@ -10,6 +11,8 @@ import org.slf4j.LoggerFactory
 
 /**
  * 用户路由
+ * 
+ * 规则2：路由处理请求，必须用 coroutineHandler 替代原生的 handler
  */
 class UserRouter(private val userService: UserService) {
     
@@ -19,38 +22,50 @@ class UserRouter(private val userService: UserService) {
         val userRouter = Router.router(vertx)
         userRouter.route().handler(AuthMiddleware.create())
         
-        userRouter.get("/users").handler(::handleGetUsers)
-        userRouter.get("/users/:id").handler(::handleGetUser)
-        userRouter.post("/users").handler(::handleCreateUser)
-        userRouter.put("/users/:id").handler(::handleUpdateUser)
-        userRouter.delete("/users/:id").handler(::handleDeleteUser)
-        userRouter.patch("/users/:id/status").handler(::handleUpdateStatus)
-        userRouter.post("/users/:id/reset/password").handler(::handleResetPassword)
-        userRouter.delete("/users/batch").handler(::handleBatchDelete)
+        userRouter.get("/users").coroutineHandler(vertx) { ctx -> handleGetUsers(ctx) }
+        userRouter.get("/users/:id").coroutineHandler(vertx) { ctx -> handleGetUser(ctx) }
+        userRouter.post("/users").coroutineHandler(vertx) { ctx -> handleCreateUser(ctx) }
+        userRouter.put("/users/:id").coroutineHandler(vertx) { ctx -> handleUpdateUser(ctx) }
+        userRouter.delete("/users/:id").coroutineHandler(vertx) { ctx -> handleDeleteUser(ctx) }
+        userRouter.patch("/users/:id/status").coroutineHandler(vertx) { ctx -> handleUpdateStatus(ctx) }
+        userRouter.post("/users/:id/reset/password").coroutineHandler(vertx) { ctx -> handleResetPassword(ctx) }
+        userRouter.delete("/users/batch").coroutineHandler(vertx) { ctx -> handleBatchDelete(ctx) }
         
         router.route("/*").subRouter(userRouter)
     }
     
-    private fun handleGetUsers(ctx: RoutingContext) {
-        val username = ctx.queryParams().get("username")
-        val status = ctx.queryParams().get("status")
-        val page = ctx.queryParams().get("page")?.toIntOrNull() ?: 1
-        val size = ctx.queryParams().get("size")?.toIntOrNull() ?: 10
-        
-        ResponseUtil.handleFuture(ctx, userService.getUsers(username, status, page, size), "获取用户列表失败", logger)
-    }
-    
-    private fun handleGetUser(ctx: RoutingContext) {
-        val id = ctx.pathParam("id").toLongOrNull()
-        if (id == null) {
-            ResponseUtil.error(ctx, "用户ID无效", 400)
-            return
+    private suspend fun handleGetUsers(ctx: RoutingContext) {
+        try {
+            val username = ctx.queryParams().get("username")
+            val status = ctx.queryParams().get("status")
+            val page = ctx.queryParams().get("page")?.toIntOrNull() ?: 1
+            val size = ctx.queryParams().get("size")?.toIntOrNull() ?: 10
+            
+            val result = userService.getUsers(username, status, page, size)
+            ResponseUtil.sendResponse(ctx, result)
+        } catch (e: Exception) {
+            logger.error("获取用户列表失败", e)
+            ResponseUtil.error(ctx, e.message ?: "获取用户列表失败", 500)
         }
-        
-        ResponseUtil.handleFuture(ctx, userService.getUser(id), "获取用户失败", logger)
     }
     
-    private fun handleCreateUser(ctx: RoutingContext) {
+    private suspend fun handleGetUser(ctx: RoutingContext) {
+        try {
+            val id = ctx.pathParam("id").toLongOrNull()
+            if (id == null) {
+                ResponseUtil.error(ctx, "用户ID无效", 400)
+                return
+            }
+            
+            val result = userService.getUser(id)
+            ResponseUtil.sendResponse(ctx, result)
+        } catch (e: Exception) {
+            logger.error("获取用户失败", e)
+            ResponseUtil.error(ctx, e.message ?: "获取用户失败", 500)
+        }
+    }
+    
+    private suspend fun handleCreateUser(ctx: RoutingContext) {
         try {
             val body = ctx.body().asJsonObject()
             val username = body.getString("username") ?: ""
@@ -59,13 +74,15 @@ class UserRouter(private val userService: UserService) {
             val password = body.getString("password")
             val roleIds = body.getJsonArray("roleIds")?.map { (it as Number).toLong() } ?: emptyList()
             
-            ResponseUtil.handleFuture(ctx, userService.createUser(username, email, phone, password, roleIds), "创建用户失败", logger)
+            val result = userService.createUser(username, email, phone, password, roleIds)
+            ResponseUtil.sendResponse(ctx, result)
         } catch (e: Exception) {
-            ResponseUtil.handleException(ctx, e, "请求参数错误", logger)
+            logger.error("创建用户失败", e)
+            ResponseUtil.error(ctx, e.message ?: "请求参数错误", 400)
         }
     }
     
-    private fun handleUpdateUser(ctx: RoutingContext) {
+    private suspend fun handleUpdateUser(ctx: RoutingContext) {
         try {
             val id = ctx.pathParam("id").toLongOrNull()
             if (id == null) {
@@ -80,23 +97,31 @@ class UserRouter(private val userService: UserService) {
             val password = body.getString("password")
             val roleIds = body.getJsonArray("roleIds")?.map { (it as Number).toLong() } ?: emptyList()
             
-            ResponseUtil.handleFuture(ctx, userService.updateUser(id, username, email, phone, password, roleIds), "更新用户失败", logger)
+            val result = userService.updateUser(id, username, email, phone, password, roleIds)
+            ResponseUtil.sendResponse(ctx, result)
         } catch (e: Exception) {
-            ResponseUtil.handleException(ctx, e, "请求参数错误", logger)
+            logger.error("更新用户失败", e)
+            ResponseUtil.error(ctx, e.message ?: "请求参数错误", 400)
         }
     }
     
-    private fun handleDeleteUser(ctx: RoutingContext) {
-        val id = ctx.pathParam("id").toLongOrNull()
-        if (id == null) {
-            ResponseUtil.error(ctx, "用户ID无效", 400)
-            return
+    private suspend fun handleDeleteUser(ctx: RoutingContext) {
+        try {
+            val id = ctx.pathParam("id").toLongOrNull()
+            if (id == null) {
+                ResponseUtil.error(ctx, "用户ID无效", 400)
+                return
+            }
+            
+            val result = userService.deleteUser(id)
+            ResponseUtil.sendResponse(ctx, result)
+        } catch (e: Exception) {
+            logger.error("删除用户失败", e)
+            ResponseUtil.error(ctx, e.message ?: "删除用户失败", 500)
         }
-        
-        ResponseUtil.handleFuture(ctx, userService.deleteUser(id), "删除用户失败", logger)
     }
     
-    private fun handleUpdateStatus(ctx: RoutingContext) {
+    private suspend fun handleUpdateStatus(ctx: RoutingContext) {
         try {
             val id = ctx.pathParam("id").toLongOrNull()
             if (id == null) {
@@ -107,23 +132,31 @@ class UserRouter(private val userService: UserService) {
             val body = ctx.body().asJsonObject()
             val status = body.getString("status") ?: ""
             
-            ResponseUtil.handleFuture(ctx, userService.updateStatus(id, status), "更新用户状态失败", logger)
+            val result = userService.updateStatus(id, status)
+            ResponseUtil.sendResponse(ctx, result)
         } catch (e: Exception) {
-            ResponseUtil.handleException(ctx, e, "请求参数错误", logger)
+            logger.error("更新用户状态失败", e)
+            ResponseUtil.error(ctx, e.message ?: "请求参数错误", 400)
         }
     }
     
-    private fun handleResetPassword(ctx: RoutingContext) {
-        val id = ctx.pathParam("id").toLongOrNull()
-        if (id == null) {
-            ResponseUtil.error(ctx, "用户ID无效", 400)
-            return
+    private suspend fun handleResetPassword(ctx: RoutingContext) {
+        try {
+            val id = ctx.pathParam("id").toLongOrNull()
+            if (id == null) {
+                ResponseUtil.error(ctx, "用户ID无效", 400)
+                return
+            }
+            
+            val result = userService.resetPassword(id)
+            ResponseUtil.sendResponse(ctx, result)
+        } catch (e: Exception) {
+            logger.error("重置密码失败", e)
+            ResponseUtil.error(ctx, e.message ?: "重置密码失败", 500)
         }
-        
-        ResponseUtil.handleFuture(ctx, userService.resetPassword(id), "重置密码失败", logger)
     }
     
-    private fun handleBatchDelete(ctx: RoutingContext) {
+    private suspend fun handleBatchDelete(ctx: RoutingContext) {
         try {
             val body = ctx.body().asJsonObject()
             val idsArray = body.getJsonArray("ids")
@@ -133,9 +166,11 @@ class UserRouter(private val userService: UserService) {
                 emptyList()
             }
             
-            ResponseUtil.handleFuture(ctx, userService.batchDeleteUsers(ids), "批量删除用户失败", logger)
+            val result = userService.batchDeleteUsers(ids)
+            ResponseUtil.sendResponse(ctx, result)
         } catch (e: Exception) {
-            ResponseUtil.handleException(ctx, e, "请求参数错误", logger)
+            logger.error("批量删除用户失败", e)
+            ResponseUtil.error(ctx, e.message ?: "请求参数错误", 400)
         }
     }
 }

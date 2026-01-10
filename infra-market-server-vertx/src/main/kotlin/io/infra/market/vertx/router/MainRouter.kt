@@ -21,7 +21,6 @@ import io.vertx.ext.web.Router
 import io.vertx.ext.web.handler.BodyHandler
 import io.vertx.ext.web.handler.CorsHandler
 import io.vertx.sqlclient.Pool
-import io.vertx.redis.client.Redis
 import io.vertx.redis.client.RedisAPI
 
 /**
@@ -29,7 +28,7 @@ import io.vertx.redis.client.RedisAPI
  */
 object MainRouter {
     
-    fun create(vertx: Vertx, dbPool: Pool, redis: Redis, redisAPI: RedisAPI): Router {
+    fun create(vertx: Vertx, dbPool: Pool, redisAPI: RedisAPI): Router {
         val router = Router.router(vertx)
         
         // CORS 配置
@@ -53,7 +52,7 @@ object MainRouter {
         val apiInterfaceExecutionRecordDao = ApiInterfaceExecutionRecordDao(dbPool)
         
         // 初始化 Service
-        val tokenService = TokenService(redis, redisAPI)
+        val tokenService = TokenService(redisAPI)
         val authService = AuthService(userDao, userRoleDao, rolePermissionDao, permissionDao, tokenService)
         val userService = UserService(userDao, userRoleDao)
         val dashboardService = DashboardService(userDao, roleDao, permissionDao, apiInterfaceDao)
@@ -61,7 +60,7 @@ object MainRouter {
         // 初始化更多 Service
         val roleService = RoleService(roleDao, rolePermissionDao, userRoleDao)
         val permissionService = PermissionService(permissionDao, rolePermissionDao)
-        val apiInterfaceService = ApiInterfaceService(apiInterfaceDao, userDao, apiInterfaceExecutionRecordDao, vertx)
+        val apiInterfaceService = ApiInterfaceService(apiInterfaceDao, vertx)
         val apiInterfaceExecutionRecordService = ApiInterfaceExecutionRecordService(apiInterfaceExecutionRecordDao)
         
         // 直接注册路由到主路由（路由内部已包含完整路径）
