@@ -112,7 +112,7 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 		}
 
 		// 接口管理
-		interfaces := api.Group("/api/interface")
+		interfaces := api.Group("/interface")
 		{
 			apiInterfaceController := controller.NewApiInterfaceController(apiInterfaceService)
 			interfaces.GET("/list", apiInterfaceController.List)
@@ -127,7 +127,7 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 		}
 
 		// 执行记录管理
-		executionRecords := api.Group("/api/interface/execution/record")
+		executionRecords := api.Group("/interface/execution/record")
 		{
 			recordController := controller.NewApiInterfaceExecutionRecordController(apiInterfaceExecutionRecordService)
 			executionRecords.POST("/list", recordController.List)

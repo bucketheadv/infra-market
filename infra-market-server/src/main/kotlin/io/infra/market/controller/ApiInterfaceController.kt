@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.*
  * @since 1.0.0
  */
 @RestController
-@RequestMapping("/api/interface")
+@RequestMapping("/interface")
 class ApiInterfaceController(
     private val apiInterfaceService: ApiInterfaceService
 ) {

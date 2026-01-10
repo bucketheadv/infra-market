@@ -83,37 +83,37 @@ export const interfaceApi = {
     page?: number
     size?: number
   }) => {
-    return request.get<PageResult<ApiInterface>>('/api/interface/list', { params })
+    return request.get<PageResult<ApiInterface>>('/interface/list', { params })
   },
 
   // 获取接口详情
   getById: (id: number) => {
-    return request.get<ApiInterface>(`/api/interface/${id}`)
+    return request.get<ApiInterface>(`/interface/${id}`)
   },
 
   // 创建接口
   create: (data: ApiInterfaceForm) => {
-    return request.post<ApiInterface>('/api/interface', data)
+    return request.post<ApiInterface>('/interface', data)
   },
 
   // 更新接口
   update: (id: number, data: ApiInterfaceForm) => {
-    return request.put<ApiInterface>(`/api/interface/${id}`, data)
+    return request.put<ApiInterface>(`/interface/${id}`, data)
   },
 
   // 删除接口
   delete: (id: number) => {
-    return request.delete<boolean>(`/api/interface/${id}`)
+    return request.delete<boolean>(`/interface/${id}`)
   },
 
   // 更新接口状态
   updateStatus: (id: number, status: number) => {
-    return request.put<ApiInterface>(`/api/interface/${id}/status?status=${status}`)
+    return request.put<ApiInterface>(`/interface/${id}/status?status=${status}`)
   },
 
   // 复制接口
   copy: (id: number) => {
-    return request.post<ApiInterface>(`/api/interface/${id}/copy`)
+    return request.post<ApiInterface>(`/interface/${id}/copy`)
   },
 
   // 执行接口
@@ -122,10 +122,10 @@ export const interfaceApi = {
     if (data.timeout && data.timeout > 0) {
       const customRequest = createRequestWithTimeout(data.timeout)
       setupRequestInterceptors(customRequest)
-      return customRequest.post<ApiExecuteResponse>('/api/interface/execute', data)
+      return customRequest.post<ApiExecuteResponse>('/interface/execute', data)
     }
     // 否则使用默认请求实例
-    return request.post<ApiExecuteResponse>('/api/interface/execute', data)
+    return request.post<ApiExecuteResponse>('/interface/execute', data)
   },
 
   // 获取最近最热门的接口
@@ -133,7 +133,7 @@ export const interfaceApi = {
     days?: number
     limit?: number
   }) => {
-    return request.get<ApiInterface[]>('/api/interface/most/used', { params })
+    return request.get<ApiInterface[]>('/interface/most/used', { params })
   }
 }
 
@@ -265,22 +265,22 @@ export interface PageResult<T> {
 export const executionRecordApi = {
   // 分页查询执行记录
   getList: (query: ApiInterfaceExecutionRecordQuery) => 
-    request.post<PageResult<ApiInterfaceExecutionRecord>>('/api/interface/execution/record/list', query),
+    request.post<PageResult<ApiInterfaceExecutionRecord>>('/interface/execution/record/list', query),
   
   // 根据ID查询执行记录详情
   getById: (id: number) => 
-    request.get<ApiInterfaceExecutionRecord>(`/api/interface/execution/record/${id}`),
+    request.get<ApiInterfaceExecutionRecord>(`/interface/execution/record/${id}`),
   
   
   // 根据执行人ID查询执行记录
   getByExecutorId: (executorId: number, limit: number = 10) => 
-    request.get<ApiInterfaceExecutionRecord[]>(`/api/interface/execution/record/executor/${executorId}?limit=${limit}`),
+    request.get<ApiInterfaceExecutionRecord[]>(`/interface/execution/record/executor/${executorId}?limit=${limit}`),
   
   // 获取执行统计信息
   getExecutionStats: (interfaceId: number) => 
-    request.get<ApiInterfaceExecutionRecordStats>(`/api/interface/execution/record/stats/${interfaceId}`),
+    request.get<ApiInterfaceExecutionRecordStats>(`/interface/execution/record/stats/${interfaceId}`),
   
   // 获取执行记录数量统计
   getExecutionCount: (startTime: number, endTime: number) => 
-    request.get<number>(`/api/interface/execution/record/count?startTime=${startTime}&endTime=${endTime}`)
+    request.get<number>(`/interface/execution/record/count?startTime=${startTime}&endTime=${endTime}`)
 }

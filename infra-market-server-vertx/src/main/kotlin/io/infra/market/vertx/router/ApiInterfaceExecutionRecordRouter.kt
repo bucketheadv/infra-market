@@ -22,12 +22,12 @@ class ApiInterfaceExecutionRecordRouter(private val apiInterfaceExecutionRecordS
         val recordRouter = Router.router(vertx)
         recordRouter.route().handler(AuthMiddleware.create())
         
-        recordRouter.post("/api/interface/execution/record/list").coroutineHandler(vertx) { ctx -> handleList(ctx) }
-        recordRouter.get("/api/interface/execution/record/:id").coroutineHandler(vertx) { ctx -> handleDetail(ctx) }
-        recordRouter.get("/api/interface/execution/record/executor/:executorId").coroutineHandler(vertx) { ctx -> handleGetByExecutorId(ctx) }
-        recordRouter.get("/api/interface/execution/record/stats/:interfaceId").coroutineHandler(vertx) { ctx -> handleGetExecutionStats(ctx) }
-        recordRouter.get("/api/interface/execution/record/count").coroutineHandler(vertx) { ctx -> handleGetExecutionCount(ctx) }
-        recordRouter.delete("/api/interface/execution/record/cleanup").coroutineHandler(vertx) { ctx -> handleCleanup(ctx) }
+        recordRouter.post("/interface/execution/record/list").coroutineHandler(vertx) { ctx -> handleList(ctx) }
+        recordRouter.get("/interface/execution/record/:id").coroutineHandler(vertx) { ctx -> handleDetail(ctx) }
+        recordRouter.get("/interface/execution/record/executor/:executorId").coroutineHandler(vertx) { ctx -> handleGetByExecutorId(ctx) }
+        recordRouter.get("/interface/execution/record/stats/:interfaceId").coroutineHandler(vertx) { ctx -> handleGetExecutionStats(ctx) }
+        recordRouter.get("/interface/execution/record/count").coroutineHandler(vertx) { ctx -> handleGetExecutionCount(ctx) }
+        recordRouter.delete("/interface/execution/record/cleanup").coroutineHandler(vertx) { ctx -> handleCleanup(ctx) }
         
         router.route("/*").subRouter(recordRouter)
     }

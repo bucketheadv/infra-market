@@ -22,15 +22,15 @@ class ApiInterfaceRouter(private val apiInterfaceService: ApiInterfaceService) {
         val apiInterfaceRouter = Router.router(vertx)
         apiInterfaceRouter.route().handler(AuthMiddleware.create())
         
-        apiInterfaceRouter.get("/api/interface/list").coroutineHandler(vertx) { ctx -> handleList(ctx) }
-        apiInterfaceRouter.get("/api/interface/most/used").coroutineHandler(vertx) { ctx -> handleGetMostUsed(ctx) }
-        apiInterfaceRouter.get("/api/interface/:id").coroutineHandler(vertx) { ctx -> handleDetail(ctx) }
-        apiInterfaceRouter.post("/api/interface").coroutineHandler(vertx) { ctx -> handleCreate(ctx) }
-        apiInterfaceRouter.put("/api/interface/:id").coroutineHandler(vertx) { ctx -> handleUpdate(ctx) }
-        apiInterfaceRouter.delete("/api/interface/:id").coroutineHandler(vertx) { ctx -> handleDelete(ctx) }
-        apiInterfaceRouter.put("/api/interface/:id/status").coroutineHandler(vertx) { ctx -> handleUpdateStatus(ctx) }
-        apiInterfaceRouter.post("/api/interface/:id/copy").coroutineHandler(vertx) { ctx -> handleCopy(ctx) }
-        apiInterfaceRouter.post("/api/interface/execute").coroutineHandler(vertx) { ctx -> handleExecute(ctx) }
+        apiInterfaceRouter.get("/interface/list").coroutineHandler(vertx) { ctx -> handleList(ctx) }
+        apiInterfaceRouter.get("/interface/most/used").coroutineHandler(vertx) { ctx -> handleGetMostUsed(ctx) }
+        apiInterfaceRouter.get("/interface/:id").coroutineHandler(vertx) { ctx -> handleDetail(ctx) }
+        apiInterfaceRouter.post("/interface").coroutineHandler(vertx) { ctx -> handleCreate(ctx) }
+        apiInterfaceRouter.put("/interface/:id").coroutineHandler(vertx) { ctx -> handleUpdate(ctx) }
+        apiInterfaceRouter.delete("/interface/:id").coroutineHandler(vertx) { ctx -> handleDelete(ctx) }
+        apiInterfaceRouter.put("/interface/:id/status").coroutineHandler(vertx) { ctx -> handleUpdateStatus(ctx) }
+        apiInterfaceRouter.post("/interface/:id/copy").coroutineHandler(vertx) { ctx -> handleCopy(ctx) }
+        apiInterfaceRouter.post("/interface/execute").coroutineHandler(vertx) { ctx -> handleExecute(ctx) }
         
         router.route("/*").subRouter(apiInterfaceRouter)
     }

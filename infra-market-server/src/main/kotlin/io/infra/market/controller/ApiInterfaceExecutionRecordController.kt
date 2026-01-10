@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.*
  * @since 1.0.0
  */
 @RestController
-@RequestMapping("/api/interface/execution/record")
+@RequestMapping("/interface/execution/record")
 class ApiInterfaceExecutionRecordController(
     private val apiInterfaceExecutionRecordService: ApiInterfaceExecutionRecordService
 ) {
