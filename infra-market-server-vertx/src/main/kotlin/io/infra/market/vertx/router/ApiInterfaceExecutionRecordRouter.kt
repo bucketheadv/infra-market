@@ -1,5 +1,6 @@
 package io.infra.market.vertx.router
 
+import io.infra.market.vertx.dto.ApiInterfaceExecutionRecordQueryDto
 import io.infra.market.vertx.middleware.AuthMiddleware
 import io.infra.market.vertx.service.ApiInterfaceExecutionRecordService
 import io.infra.market.vertx.util.ResponseUtil
@@ -35,7 +36,8 @@ class ApiInterfaceExecutionRecordRouter(private val apiInterfaceExecutionRecordS
     private suspend fun handleList(ctx: RoutingContext) {
         try {
             val body = ctx.body().asJsonObject()
-            val result = apiInterfaceExecutionRecordService.list(body)
+            val query = body.mapTo(ApiInterfaceExecutionRecordQueryDto::class.java)
+            val result = apiInterfaceExecutionRecordService.list(query)
             ResponseUtil.sendResponse(ctx, result)
         } catch (e: Exception) {
             logger.error("获取执行记录列表失败", e)

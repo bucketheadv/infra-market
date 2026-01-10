@@ -20,10 +20,13 @@ private object SqlLogger {
     private val logger: Logger = LoggerFactory.getLogger("io.infra.market.vertx.sql")
     
     /**
-     * 记录 SQL 语句
+     * 记录 SQL 语句（带耗时）
      */
-    fun logSql(sql: String, params: Tuple?) {
+    fun logSql(sql: String, params: Tuple?, startTime: Long) {
         if (logger.isDebugEnabled) {
+            val endTime = System.currentTimeMillis()
+            val duration = endTime - startTime
+            
             val sqlLog = if (params == null || params.size() == 0) {
                 sql
             } else {
@@ -36,8 +39,22 @@ private object SqlLogger {
                 }
                 "$sql, 参数: [$paramsStr]"
             }
-            logger.debug("执行 SQL: {}", sqlLog)
+            
+            val durationStr = when {
+                duration < 1 -> "${duration}ms"
+                duration < 1000 -> "${duration}ms"
+                else -> "${String.format("%.2f", duration / 1000.0)}s"
+            }
+            
+            logger.debug("执行 SQL: {}, [耗时: {}]", sqlLog, durationStr)
         }
+    }
+    
+    /**
+     * 记录 SQL 语句开始时间（不输出日志，仅返回时间戳）
+     */
+    fun logSqlStart(sql: String, params: Tuple?): Long {
+        return System.currentTimeMillis()
     }
 }
 
@@ -48,8 +65,9 @@ private object SqlLogger {
 class SqlLoggingPool(private val delegate: Pool) : Pool by delegate {
     
     override fun query(sql: String): Query<RowSet<Row>> {
-        SqlLogger.logSql(sql, null)
-        return delegate.query(sql)
+        val startTime = SqlLogger.logSqlStart(sql, null)
+        val query = delegate.query(sql)
+        return SqlLoggingQuery(query, sql, startTime)
     }
     
     override fun preparedQuery(sql: String): PreparedQuery<RowSet<Row>> {
@@ -85,6 +103,22 @@ class SqlLoggingPool(private val delegate: Pool) : Pool by delegate {
 }
 
 /**
+ * SQL 日志记录 Query 包装器
+ */
+private class SqlLoggingQuery(
+    private val delegate: Query<RowSet<Row>>,
+    private val sql: String,
+    private val startTime: Long
+) : Query<RowSet<Row>> by delegate {
+    
+    override fun execute(): Future<RowSet<Row>> {
+        return delegate.execute().onComplete { result ->
+            SqlLogger.logSql(sql, null, startTime)
+        }
+    }
+}
+
+/**
  * SQL 日志记录 PreparedQuery 包装器
  */
 class SqlLoggingPreparedQuery<T>(
@@ -93,13 +127,17 @@ class SqlLoggingPreparedQuery<T>(
 ) : PreparedQuery<T> by delegate {
     
     override fun execute(args: Tuple): Future<T> {
-        SqlLogger.logSql(sql, args)
-        return delegate.execute(args)
+        val startTime = SqlLogger.logSqlStart(sql, args)
+        return delegate.execute(args).onComplete { result ->
+            SqlLogger.logSql(sql, args, startTime)
+        }
     }
     
     override fun execute(): Future<T> {
-        SqlLogger.logSql(sql, null)
-        return delegate.execute()
+        val startTime = SqlLogger.logSqlStart(sql, null)
+        return delegate.execute().onComplete { result ->
+            SqlLogger.logSql(sql, null, startTime)
+        }
     }
 }
 
@@ -111,8 +149,9 @@ class SqlLoggingConnection(
 ) : SqlConnection by delegate {
     
     override fun query(sql: String): Query<RowSet<Row>> {
-        SqlLogger.logSql(sql, null)
-        return delegate.query(sql)
+        val startTime = SqlLogger.logSqlStart(sql, null)
+        val query = delegate.query(sql)
+        return SqlLoggingQuery(query, sql, startTime)
     }
     
     override fun preparedQuery(sql: String): PreparedQuery<RowSet<Row>> {

@@ -17,6 +17,7 @@ object JwtUtil {
      */
     private fun getSecretKey(): SecretKey {
         val secretKey = AppConfig.getJwtSecretKey()
+            ?: throw IllegalStateException("JWT secretKey 未配置，请在配置文件中设置 jwt.secretKey")
         return Keys.hmacShaKeyFor(secretKey.toByteArray())
     }
     

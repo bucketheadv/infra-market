@@ -1,6 +1,11 @@
 package io.infra.market.vertx.service
 
 import io.infra.market.vertx.dto.ApiData
+import io.infra.market.vertx.dto.ApiExecuteRequestDto
+import io.infra.market.vertx.dto.ApiExecuteResponseDto
+import io.infra.market.vertx.dto.ApiInterfaceDto
+import io.infra.market.vertx.dto.ApiInterfaceFormDto
+import io.infra.market.vertx.dto.ApiParamDto
 import io.infra.market.vertx.dto.PageResultDto
 import io.infra.market.vertx.entity.ApiInterface
 import io.infra.market.vertx.repository.ApiInterfaceDao
@@ -27,13 +32,13 @@ class ApiInterfaceService(
     private val vertx: Vertx? = null
 ) {
     
-    suspend fun list(name: String?, method: String?, status: Int?, environment: String?, page: Int, size: Int): ApiData<PageResultDto<JsonObject>> {
+    suspend fun list(name: String?, method: String?, status: Int?, environment: String?, page: Int, size: Int): ApiData<PageResultDto<ApiInterfaceDto>> {
         val (interfaces, total) = apiInterfaceDao.page(name, method, status, environment, page, size)
-        val interfaceDtos = interfaces.map { it.toJsonObject() }
+        val interfaceDtos = interfaces.map { convertToDto(it) }
         return ApiData.success(PageResultDto(interfaceDtos, total, page.toLong(), size.toLong()))
     }
     
-    suspend fun getMostUsedInterfaces(days: Int, limit: Int): ApiData<List<JsonObject>> {
+    suspend fun getMostUsedInterfaces(days: Int, limit: Int): ApiData<List<ApiInterfaceDto>> {
         val interfaceIds = apiInterfaceDao.findMostUsedInterfaceIds(days, limit)
         
         if (interfaceIds.isEmpty()) {
@@ -43,56 +48,39 @@ class ApiInterfaceService(
         val interfaces = apiInterfaceDao.findByIds(interfaceIds)
         val interfaceMap = interfaces.associateBy { it.id }
         val result = interfaceIds.mapNotNull { id ->
-            interfaceMap[id]?.toJsonObject()
+            interfaceMap[id]?.let { convertToDto(it) }
         }
         return ApiData.success(result)
     }
     
-    suspend fun detail(id: Long): ApiData<JsonObject?> {
+    suspend fun detail(id: Long): ApiData<ApiInterfaceDto?> {
         val apiInterface = apiInterfaceDao.findById(id) ?: return ApiData.error("接口不存在")
 
-        return ApiData.success(apiInterface.toJsonObject())
+        return ApiData.success(convertToDto(apiInterface))
     }
     
-    suspend fun create(body: JsonObject): ApiData<JsonObject> {
-        val apiInterface = ApiInterface(
-            name = body.getString("name"),
-            method = body.getString("method"),
-            url = body.getString("url"),
-            description = body.getString("description"),
-            postType = body.getString("postType"),
-            params = body.getString("params"),
-            status = body.getInteger("status") ?: 1,
-            environment = body.getString("environment"),
-            timeout = body.getLong("timeout"),
-            valuePath = body.getString("valuePath")
-        )
+    suspend fun create(form: ApiInterfaceFormDto): ApiData<ApiInterfaceDto> {
+        val apiInterface = convertToEntity(form)
+        apiInterface.createTime = System.currentTimeMillis()
+        apiInterface.updateTime = System.currentTimeMillis()
+        apiInterface.status = 1
         
         val id = apiInterfaceDao.save(apiInterface)
         apiInterface.id = id
-        return ApiData.success(apiInterface.toJsonObject())
+        return ApiData.success(convertToDto(apiInterface))
     }
     
-    suspend fun update(id: Long, body: JsonObject): ApiData<JsonObject> {
-        val existingInterface = apiInterfaceDao.findById(id)
+    suspend fun update(id: Long, form: ApiInterfaceFormDto): ApiData<ApiInterfaceDto> {
+        val existingInterface = apiInterfaceDao.findById(id) ?: return ApiData.error("接口不存在")
+
+        val apiInterface = convertToEntity(form)
+        apiInterface.id = id
+        apiInterface.createTime = existingInterface.createTime
+        apiInterface.updateTime = System.currentTimeMillis()
+        apiInterface.status = existingInterface.status
         
-        if (existingInterface == null) {
-            return ApiData.error("接口不存在")
-        }
-        
-        existingInterface.name = body.getString("name") ?: existingInterface.name
-        existingInterface.method = body.getString("method") ?: existingInterface.method
-        existingInterface.url = body.getString("url") ?: existingInterface.url
-        existingInterface.description = body.getString("description") ?: existingInterface.description
-        existingInterface.postType = body.getString("postType") ?: existingInterface.postType
-        existingInterface.params = body.getString("params") ?: existingInterface.params
-        existingInterface.environment = body.getString("environment") ?: existingInterface.environment
-        existingInterface.timeout = body.getLong("timeout") ?: existingInterface.timeout
-        existingInterface.valuePath = body.getString("valuePath") ?: existingInterface.valuePath
-        existingInterface.updateTime = System.currentTimeMillis()
-        
-        apiInterfaceDao.updateById(existingInterface)
-        return ApiData.success(existingInterface.toJsonObject())
+        apiInterfaceDao.updateById(apiInterface)
+        return ApiData.success(convertToDto(apiInterface))
     }
     
     suspend fun delete(id: Long): ApiData<Boolean> {
@@ -100,27 +88,19 @@ class ApiInterfaceService(
         return ApiData.success(true)
     }
     
-    suspend fun updateStatus(id: Long, status: Int): ApiData<JsonObject> {
-        val apiInterface = apiInterfaceDao.findById(id)
-        
-        if (apiInterface == null) {
-            return ApiData.error("接口不存在")
-        }
-        
+    suspend fun updateStatus(id: Long, status: Int): ApiData<ApiInterfaceDto> {
+        val apiInterface = apiInterfaceDao.findById(id) ?: return ApiData.error("接口不存在")
+
         apiInterface.status = status
         apiInterface.updateTime = System.currentTimeMillis()
         
         apiInterfaceDao.updateById(apiInterface)
-        return ApiData.success(apiInterface.toJsonObject())
+        return ApiData.success(convertToDto(apiInterface))
     }
     
-    suspend fun copy(id: Long): ApiData<JsonObject> {
-        val existingInterface = apiInterfaceDao.findById(id)
-        
-        if (existingInterface == null) {
-            return ApiData.error("接口不存在")
-        }
-        
+    suspend fun copy(id: Long): ApiData<ApiInterfaceDto> {
+        val existingInterface = apiInterfaceDao.findById(id) ?: return ApiData.error("接口不存在")
+
         val newInterface = existingInterface.copy()
         newInterface.id = null
         newInterface.name = "${existingInterface.name}_副本"
@@ -130,19 +110,15 @@ class ApiInterfaceService(
         
         val newId = apiInterfaceDao.save(newInterface)
         newInterface.id = newId
-        return ApiData.success(newInterface.toJsonObject())
+        return ApiData.success(convertToDto(newInterface))
     }
     
-    suspend fun execute(body: JsonObject): ApiData<JsonObject> {
+    suspend fun execute(request: ApiExecuteRequestDto): ApiData<ApiExecuteResponseDto> {
         val startTime = System.currentTimeMillis()
-        val interfaceId = body.getLong("interfaceId") ?: return ApiData.error("接口ID不能为空")
-        
-        val apiInterface = apiInterfaceDao.findById(interfaceId)
-        
-        if (apiInterface == null) {
-            return ApiData.error("接口不存在")
-        }
-        
+        val interfaceId = request.interfaceId ?: return ApiData.error("接口ID不能为空")
+
+        val apiInterface = apiInterfaceDao.findById(interfaceId) ?: return ApiData.error("接口不存在")
+
         if (apiInterface.status != 1) {
             return ApiData.error("接口已禁用，无法执行")
         }
@@ -150,12 +126,12 @@ class ApiInterfaceService(
         val url = apiInterface.url ?: return ApiData.error("接口URL不能为空")
         
         val method = HttpMethod.valueOf(apiInterface.method ?: "GET")
-        val timeoutSeconds = body.getLong("timeout") ?: apiInterface.timeout ?: 60L
+        val timeoutSeconds = request.timeout ?: apiInterface.timeout ?: 60L
         val timeoutMillis = timeoutSeconds * 1000L
         
-        val urlParams = body.getJsonObject("urlParams")
-        val headers = body.getJsonObject("headers")
-        val bodyParams = body.getJsonObject("bodyParams")
+        val urlParams = request.urlParams
+        val headers = request.headers
+        val bodyParams = request.bodyParams
         
         // 构建完整的绝对 URL
         val finalUrl = url.trim()
@@ -184,7 +160,7 @@ class ApiInterfaceService(
         val postType = apiInterface.postType ?: "application/json"
         
         // 创建请求对象
-        val request: HttpRequest<Buffer> = when (method) {
+        val httpRequest: HttpRequest<Buffer> = when (method) {
             HttpMethod.GET -> webClient.getAbs(baseUrl)
             HttpMethod.POST -> webClient.postAbs(baseUrl)
             HttpMethod.PUT -> webClient.putAbs(baseUrl)
@@ -198,121 +174,147 @@ class ApiInterfaceService(
             uri.query.split("&").forEach { param ->
                 val parts = param.split("=", limit = 2)
                 if (parts.size == 2) {
-                    request.addQueryParam(parts[0], URLDecoder.decode(parts[1], "UTF-8"))
+                    httpRequest.addQueryParam(parts[0], URLDecoder.decode(parts[1], "UTF-8"))
                 }
             }
         }
         
         // 添加新的 URL 参数
         urlParams?.forEach { (key, value) ->
-            if (value != null && value.toString().isNotBlank()) {
-                request.addQueryParam(key, value.toString())
+            if (value.toString().isNotBlank()) {
+                httpRequest.addQueryParam(key, value.toString())
             }
         }
         
         // 设置请求头
         headers?.forEach { (key, value) ->
-            request.putHeader(key, value.toString())
+            httpRequest.putHeader(key, value)
         }
         
         // 发送请求
         val response = try {
-            if (method != HttpMethod.GET && bodyParams != null) {
+            if (method != HttpMethod.GET && !bodyParams.isNullOrEmpty()) {
                 if (postType == "application/x-www-form-urlencoded") {
-                    val formData = bodyParams.joinToString("&") { (key, value) ->
+                    val formData = bodyParams.entries.joinToString("&") { (key, value) ->
                         "${encodeURIComponent(key)}=${encodeURIComponent(value.toString())}"
                     }
-                    request.putHeader("Content-Type", postType)
+                    httpRequest.putHeader("Content-Type", postType)
                         .sendBuffer(Buffer.buffer(formData))
                         .awaitForResult()
                 } else {
-                    request.putHeader("Content-Type", "application/json")
-                        .sendJsonObject(bodyParams)
+                    val bodyJson = JsonObject()
+                    bodyParams.forEach { (key, value) ->
+                        bodyJson.put(key, value)
+                    }
+                    httpRequest.putHeader("Content-Type", "application/json")
+                        .sendJsonObject(bodyJson)
                         .awaitForResult()
                 }
             } else {
-                request.send().awaitForResult()
+                httpRequest.send().awaitForResult()
             }
         } catch (error: Exception) {
             val endTime = System.currentTimeMillis()
             val responseTime = endTime - startTime
             
-            val responseJson = JsonObject()
-                .put("status", 500)
-                .put("headers", JsonObject())
-                .put("body", null)
-                .put("responseTime", responseTime)
-                .put("success", false)
-                .put("error", error.message ?: "请求失败")
-            
-            return ApiData.success(responseJson)
+            return ApiData.success(ApiExecuteResponseDto(
+                status = 500,
+                headers = emptyMap(),
+                body = null,
+                responseTime = responseTime,
+                success = false,
+                error = error.message ?: "请求失败"
+            ))
         }
         
         val endTime = System.currentTimeMillis()
         val responseTime = endTime - startTime
         val statusCode = response.statusCode()
         
-        val responseJson = JsonObject()
-            .put("status", statusCode)
-            .put("headers", JsonObject())
-            .put("body", response.bodyAsString())
-            .put("responseTime", responseTime)
-            .put("success", statusCode in 200..299)
-        
-        return ApiData.success(responseJson)
+        return ApiData.success(ApiExecuteResponseDto(
+            status = statusCode,
+            headers = emptyMap(),
+            body = response.bodyAsString(),
+            responseTime = responseTime,
+            success = statusCode in 200..299
+        ))
     }
     
-    private fun ApiInterface.toJsonObject(): JsonObject {
-        val result = JsonObject()
-            .put("id", id)
-            .put("name", name)
-            .put("method", method)
-            .put("url", url)
-            .put("description", description)
-            .put("postType", postType)
-            .put("status", status)
-            .put("environment", environment)
-            .put("timeout", timeout)
-            .put("valuePath", valuePath)
-            .put("createTime", createTime)
-            .put("updateTime", updateTime)
+    private fun convertToDto(entity: ApiInterface): ApiInterfaceDto {
+        val (urlParams, headerParams, bodyParams) = parseAndSeparateParams(entity.params)
         
-        // 解析并分离参数
-        val (urlParams, headerParams, bodyParams) = parseAndSeparateParams(params)
-        result.put("urlParams", urlParams)
-        result.put("headerParams", headerParams)
-        result.put("bodyParams", bodyParams)
+        return ApiInterfaceDto(
+            id = entity.id,
+            name = entity.name,
+            method = entity.method,
+            url = entity.url,
+            description = entity.description,
+            status = entity.status,
+            createTime = entity.createTime,
+            updateTime = entity.updateTime,
+            postType = entity.postType,
+            environment = entity.environment,
+            timeout = entity.timeout,
+            valuePath = entity.valuePath,
+            urlParams = urlParams,
+            headerParams = headerParams,
+            bodyParams = bodyParams
+        )
+    }
+    
+    private fun convertToEntity(form: ApiInterfaceFormDto): ApiInterface {
+        val allParams = mutableListOf<ApiParamDto>()
+        form.urlParams?.let { allParams.addAll(it) }
+        form.headerParams?.let { allParams.addAll(it) }
+        form.bodyParams?.let { allParams.addAll(it) }
         
-        return result
+        val paramsJson = try {
+            if (allParams.isEmpty()) {
+                null
+            } else {
+                JsonArray(allParams.map { JsonObject.mapFrom(it) }).encode()
+            }
+        } catch (_: Exception) {
+            null
+        }
+        
+        return ApiInterface(
+            name = form.name,
+            method = form.method,
+            url = form.url,
+            description = form.description,
+            postType = form.postType,
+            environment = form.environment,
+            timeout = form.timeout,
+            valuePath = form.valuePath,
+            params = paramsJson
+        )
     }
     
     /**
      * 解析并分离参数
      */
-    private fun parseAndSeparateParams(paramsJson: String?): Triple<JsonArray, JsonArray, JsonArray> {
-        val urlParams = JsonArray()
-        val headerParams = JsonArray()
-        val bodyParams = JsonArray()
-        
-        if (paramsJson.isNullOrBlank()) {
-            return Triple(urlParams, headerParams, bodyParams)
-        }
-        
-        try {
-            val paramsArray = JsonArray(paramsJson)
-            for (i in 0 until paramsArray.size()) {
-                val param = paramsArray.getJsonObject(i)
-                val paramType = param.getString("paramType")
-                
-                when (paramType) {
-                    "URL_PARAM" -> urlParams.add(param)
-                    "HEADER_PARAM" -> headerParams.add(param)
-                    "BODY_PARAM" -> bodyParams.add(param)
+    private fun parseAndSeparateParams(paramsJson: String?): Triple<List<ApiParamDto>, List<ApiParamDto>, List<ApiParamDto>> {
+        val allParams = try {
+            if (paramsJson.isNullOrBlank()) {
+                emptyList()
+            } else {
+                val paramsArray = JsonArray(paramsJson)
+                (0 until paramsArray.size()).mapNotNull { i ->
+                    try {
+                        paramsArray.getJsonObject(i).mapTo(ApiParamDto::class.java)
+                    } catch (_: Exception) {
+                        null
+                    }
                 }
             }
         } catch (_: Exception) {
-            // 解析失败时返回空数组
+            emptyList()
         }
+        
+        val urlParams = allParams.filter { it.paramType == "URL_PARAM" }
+        val headerParams = allParams.filter { it.paramType == "HEADER_PARAM" }
+        val bodyParams = allParams.filter { it.paramType == "BODY_PARAM" }
         
         return Triple(urlParams, headerParams, bodyParams)
     }

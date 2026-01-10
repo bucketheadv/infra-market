@@ -1,10 +1,10 @@
 package io.infra.market.vertx
 
+import io.infra.market.vertx.config.ApplicationConfig
 import io.infra.market.vertx.config.AppConfig
 import io.infra.market.vertx.config.ConfigLoader
 import io.infra.market.vertx.config.DatabaseConfig
 import io.infra.market.vertx.config.RedisConfig
-import io.infra.market.vertx.config.ServerConfig
 import io.infra.market.vertx.router.MainRouter
 import io.infra.market.vertx.extensions.SqlLoggingPool
 import io.infra.market.vertx.extensions.awaitForResult
@@ -39,25 +39,25 @@ class InfraMarketVertxApplication : CoroutineVerticle() {
             // 加载配置
             val configStartTime = System.currentTimeMillis()
             logger.info("正在加载配置...")
-            val config = loadConfig()
+            val appConfig = loadConfig()
             logger.info("配置加载完成，耗时: {} ms", System.currentTimeMillis() - configStartTime)
             
             // 初始化应用配置管理器
             val appConfigStartTime = System.currentTimeMillis()
             logger.info("正在初始化应用配置...")
-            AppConfig.init(config)
+            AppConfig.init(appConfig)
             logger.info("应用配置初始化完成，耗时: {} ms", System.currentTimeMillis() - appConfigStartTime)
             
             // 初始化数据库连接池
             val dbPoolStartTime = System.currentTimeMillis()
             logger.info("正在初始化数据库连接池...")
-            val dbPool = createDatabasePool(config)
+            val dbPool = createDatabasePool(appConfig.database)
             logger.info("数据库连接池初始化完成，耗时: {} ms", System.currentTimeMillis() - dbPoolStartTime)
             
             // 初始化 Redis 客户端
             val redisStartTime = System.currentTimeMillis()
             logger.info("正在初始化 Redis 客户端...")
-            val redis = createRedisClient(config)
+            val redis = createRedisClient(appConfig.redis)
             val redisAPI = RedisAPI.api(redis)
             logger.info("Redis 客户端初始化完成，耗时: {} ms", System.currentTimeMillis() - redisStartTime)
             
@@ -68,17 +68,16 @@ class InfraMarketVertxApplication : CoroutineVerticle() {
             logger.info("主路由器创建完成，耗时: {} ms", System.currentTimeMillis() - routerStartTime)
             
             // 启动 HTTP 服务器
-            val serverConfig = ServerConfig.fromJson(config.getJsonObject("server", JsonObject()))
-            logger.info("正在启动 HTTP 服务器，端口: {}", serverConfig.port)
+            logger.info("正在启动 HTTP 服务器，端口: {}", appConfig.server.port)
             vertx.createHttpServer()
                 .requestHandler(router)
-                .listen(serverConfig.port)
+                .listen(appConfig.server.port)
                 .awaitForResult()
             
             val elapsedTime = System.currentTimeMillis() - startTime
             logger.info("========================================")
             logger.info("Infra Market Vert.x 服务器启动成功！")
-            logger.info("端口: {}", serverConfig.port)
+            logger.info("端口: {}", appConfig.server.port)
             logger.info("启动耗时: {} ms ({} 秒)", elapsedTime, String.format("%.2f", elapsedTime / 1000.0))
             logger.info("========================================")
         } catch (e: Exception) {
@@ -87,17 +86,17 @@ class InfraMarketVertxApplication : CoroutineVerticle() {
         }
     }
     
-    private fun loadConfig(): JsonObject {
+    private fun loadConfig(): ApplicationConfig {
         // 优先使用 Vert.x 部署配置（如果通过部署配置传入）
-        val vertxConfig = config
+        val vertxConfigJson = config
         
         // 从配置文件加载
-        val fileConfig = ConfigLoader.loadConfig(vertxConfig)
+        val fileConfig = ConfigLoader.loadConfig()
         
         // 如果 Vert.x 配置存在，则合并（Vert.x 配置优先级更高）
-        return if (vertxConfig.size() > 0) {
+        return if (vertxConfigJson.size() > 0) {
             logger.info("使用 Vert.x 部署配置，并合并配置文件")
-            mergeConfig(fileConfig, vertxConfig)
+            mergeConfig(fileConfig, vertxConfigJson)
         } else {
             logger.info("使用配置文件")
             fileConfig
@@ -107,38 +106,40 @@ class InfraMarketVertxApplication : CoroutineVerticle() {
     /**
      * 合并配置，Vert.x 配置优先级更高
      */
-    private fun mergeConfig(fileConfig: JsonObject, vertxConfig: JsonObject): JsonObject {
-        val merged = JsonObject(fileConfig.encode())
+    private fun mergeConfig(fileConfig: ApplicationConfig, vertxConfigJson: JsonObject): ApplicationConfig {
+        val mergedJson = JsonObject.mapFrom(fileConfig)
         
         // 合并各个配置段
-        if (vertxConfig.containsKey("server")) {
-            merged.put("server", vertxConfig.getJsonObject("server"))
+        if (vertxConfigJson.containsKey("server")) {
+            mergedJson.put("server", vertxConfigJson.getJsonObject("server"))
         }
-        if (vertxConfig.containsKey("database")) {
-            merged.put("database", vertxConfig.getJsonObject("database"))
+        if (vertxConfigJson.containsKey("database")) {
+            mergedJson.put("database", vertxConfigJson.getJsonObject("database"))
         }
-        if (vertxConfig.containsKey("redis")) {
-            merged.put("redis", vertxConfig.getJsonObject("redis"))
+        if (vertxConfigJson.containsKey("redis")) {
+            mergedJson.put("redis", vertxConfigJson.getJsonObject("redis"))
         }
-        if (vertxConfig.containsKey("jwt")) {
-            merged.put("jwt", vertxConfig.getJsonObject("jwt"))
+        if (vertxConfigJson.containsKey("jwt")) {
+            mergedJson.put("jwt", vertxConfigJson.getJsonObject("jwt"))
         }
-        if (vertxConfig.containsKey("aes")) {
-            merged.put("aes", vertxConfig.getJsonObject("aes"))
+        if (vertxConfigJson.containsKey("aes")) {
+            mergedJson.put("aes", vertxConfigJson.getJsonObject("aes"))
         }
         
-        return merged
+        return ApplicationConfig.fromJson(mergedJson)
     }
     
-    private fun createDatabasePool(config: JsonObject): Pool {
-        val dbConfig = DatabaseConfig.fromJson(config.getJsonObject("database"))
+    private fun createDatabasePool(dbConfig: DatabaseConfig): Pool {
+        val database = dbConfig.database ?: throw IllegalStateException("数据库名称未配置，请在配置文件中设置 database.database")
+        val username = dbConfig.username ?: throw IllegalStateException("数据库用户名未配置，请在配置文件中设置 database.username")
+        val password = dbConfig.password ?: throw IllegalStateException("数据库密码未配置，请在配置文件中设置 database.password")
         
         val connectOptions = MySQLConnectOptions()
             .setHost(dbConfig.host)
             .setPort(dbConfig.port)
-            .setDatabase(dbConfig.database)
-            .setUser(dbConfig.username)
-            .setPassword(dbConfig.password)
+            .setDatabase(database)
+            .setUser(username)
+            .setPassword(password)
             .setCharset(dbConfig.charset)
             .setCollation(dbConfig.collation)
         
@@ -155,9 +156,7 @@ class InfraMarketVertxApplication : CoroutineVerticle() {
         return SqlLoggingPool(pool)
     }
     
-    private fun createRedisClient(config: JsonObject): Redis {
-        val redisConfig = RedisConfig.fromJson(config.getJsonObject("redis"))
-        
+    private fun createRedisClient(redisConfig: RedisConfig): Redis {
         return Redis.createClient(vertx, "redis://${redisConfig.host}:${redisConfig.port}")
     }
 }

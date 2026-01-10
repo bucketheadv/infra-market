@@ -20,6 +20,7 @@ object AesUtil {
      */
     private fun getDefaultKey(): String {
         return AppConfig.getAesDefaultKey()
+            ?: throw IllegalStateException("AES defaultKey 未配置，请在配置文件中设置 aes.defaultKey")
     }
 
     /**

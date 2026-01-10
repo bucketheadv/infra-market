@@ -53,6 +53,7 @@ class DashboardService(
             roleCount = results[1] as Long
             permissionCount = results[2] as Long
             interfaceCount = results[3] as Long
+            @Suppress("unchecked_cast")
             recentUsers = results[4] as List<User>
         }
         

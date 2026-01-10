@@ -42,24 +42,3 @@ data class RoleDto(
     }
 }
 
-/**
- * 角色创建/更新表单DTO
- */
-data class RoleFormDto(
-    val name: String,
-    val code: String,
-    val description: String?,
-    val permissionIds: List<Long>
-)
-
-/**
- * 角色查询DTO
- */
-data class RoleQueryDto(
-    val name: String? = null,
-    val code: String? = null,
-    val status: String? = null,
-    val page: Int = 1,
-    val size: Int = 10
-)
-

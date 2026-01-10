@@ -1,7 +1,10 @@
 package io.infra.market.vertx.router
 
+import io.infra.market.vertx.dto.BatchRequest
+import io.infra.market.vertx.dto.PermissionFormDto
 import io.infra.market.vertx.middleware.AuthMiddleware
 import io.infra.market.vertx.service.PermissionService
+import io.infra.market.vertx.util.QueryParamUtil
 import io.infra.market.vertx.util.ResponseUtil
 import io.infra.market.vertx.extensions.coroutineHandler
 import io.vertx.core.Vertx
@@ -36,14 +39,8 @@ class PermissionRouter(private val permissionService: PermissionService) {
     
     private suspend fun handleGetPermissions(ctx: RoutingContext) {
         try {
-            val name = ctx.queryParams().get("name")
-            val code = ctx.queryParams().get("code")
-            val type = ctx.queryParams().get("type")
-            val status = ctx.queryParams().get("status")
-            val page = ctx.queryParams().get("page")?.toIntOrNull() ?: 1
-            val size = ctx.queryParams().get("size")?.toIntOrNull() ?: 10
-            
-            val result = permissionService.getPermissions(name, code, type, status, page, size)
+            val query = QueryParamUtil.buildPermissionQuery(ctx)
+            val result = permissionService.getPermissions(query)
             ResponseUtil.sendResponse(ctx, result)
         } catch (e: Exception) {
             logger.error("获取权限列表失败", e)
@@ -80,15 +77,8 @@ class PermissionRouter(private val permissionService: PermissionService) {
     private suspend fun handleCreatePermission(ctx: RoutingContext) {
         try {
             val body = ctx.body().asJsonObject()
-            val name = body.getString("name") ?: ""
-            val code = body.getString("code") ?: ""
-            val type = body.getString("type") ?: ""
-            val parentId = body.getLong("parentId")
-            val path = body.getString("path")
-            val icon = body.getString("icon")
-            val sort = body.getInteger("sort") ?: 0
-            
-            val result = permissionService.createPermission(name, code, type, parentId, path, icon, sort)
+            val form = body.mapTo(PermissionFormDto::class.java)
+            val result = permissionService.createPermission(form)
             ResponseUtil.sendResponse(ctx, result)
         } catch (e: Exception) {
             logger.error("创建权限失败", e)
@@ -105,15 +95,8 @@ class PermissionRouter(private val permissionService: PermissionService) {
             }
             
             val body = ctx.body().asJsonObject()
-            val name = body.getString("name") ?: ""
-            val code = body.getString("code") ?: ""
-            val type = body.getString("type") ?: ""
-            val parentId = body.getLong("parentId")
-            val path = body.getString("path")
-            val icon = body.getString("icon")
-            val sort = body.getInteger("sort") ?: 0
-            
-            val result = permissionService.updatePermission(id, name, code, type, parentId, path, icon, sort)
+            val form = body.mapTo(PermissionFormDto::class.java)
+            val result = permissionService.updatePermission(id, form)
             ResponseUtil.sendResponse(ctx, result)
         } catch (e: Exception) {
             logger.error("更新权限失败", e)
@@ -159,14 +142,8 @@ class PermissionRouter(private val permissionService: PermissionService) {
     private suspend fun handleBatchDelete(ctx: RoutingContext) {
         try {
             val body = ctx.body().asJsonObject()
-            val idsArray = body.getJsonArray("ids")
-            val ids = if (idsArray != null) {
-                idsArray.map { (it as Number).toLong() }
-            } else {
-                emptyList()
-            }
-            
-            val result = permissionService.batchDeletePermissions(ids)
+            val request = body.mapTo(BatchRequest::class.java)
+            val result = permissionService.batchDeletePermissions(request.ids)
             ResponseUtil.sendResponse(ctx, result)
         } catch (e: Exception) {
             logger.error("批量删除权限失败", e)

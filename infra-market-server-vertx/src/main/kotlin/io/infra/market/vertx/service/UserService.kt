@@ -3,6 +3,9 @@ package io.infra.market.vertx.service
 import io.infra.market.vertx.dto.ApiData
 import io.infra.market.vertx.dto.PageResultDto
 import io.infra.market.vertx.dto.UserDto
+import io.infra.market.vertx.dto.UserFormDto
+import io.infra.market.vertx.dto.UserQueryDto
+import io.infra.market.vertx.dto.UserUpdateDto
 import io.infra.market.vertx.entity.User
 import io.infra.market.vertx.entity.UserRole
 import io.infra.market.vertx.enums.StatusEnum
@@ -23,8 +26,8 @@ class UserService(
     private val userRoleDao: UserRoleDao
 ) {
     
-    suspend fun getUsers(username: String?, status: String?, page: Int, size: Int): ApiData<PageResultDto<UserDto>> {
-        val (users, total) = userDao.findPage(username, status, page, size)
+    suspend fun getUsers(query: UserQueryDto): ApiData<PageResultDto<UserDto>> {
+        val (users, total) = userDao.findPage(query.username, query.status, query.page, query.size)
         val userRoles = userRoleDao.findByUids(users.mapNotNull { it.id })
         
         val userRoleMap = userRoles.groupBy { it.uid }
@@ -35,8 +38,8 @@ class UserService(
         val result = PageResultDto(
             records = userDtos,
             total = total,
-            page = page.toLong(),
-            size = size.toLong()
+            page = query.page.toLong(),
+            size = query.size.toLong()
         )
         return ApiData.success(result)
     }
@@ -50,36 +53,36 @@ class UserService(
         return ApiData.success(userDto)
     }
     
-    suspend fun createUser(username: String, email: String?, phone: String?, password: String?, roleIds: List<Long>): ApiData<UserDto> {
-        val existingUser = userDao.findByUsername(username)
+    suspend fun createUser(form: UserFormDto): ApiData<UserDto> {
+        val existingUser = userDao.findByUsername(form.username)
         if (existingUser != null) {
             return ApiData.error("用户名已存在")
         }
         
-        if (!email.isNullOrBlank()) {
-            val existingEmail = userDao.findByEmail(email)
+        if (!form.email.isNullOrBlank()) {
+            val existingEmail = userDao.findByEmail(form.email)
             if (existingEmail != null) {
                 return ApiData.error("邮箱已存在")
             }
         }
         
-        if (!phone.isNullOrBlank()) {
-            val existingPhone = userDao.findByPhone(phone)
+        if (!form.phone.isNullOrBlank()) {
+            val existingPhone = userDao.findByPhone(form.phone)
             if (existingPhone != null) {
                 return ApiData.error("手机号已存在")
             }
         }
         
-        return createUserInternal(username, email, phone, password, roleIds)
+        return createUserInternal(form)
     }
     
-    private suspend fun createUserInternal(username: String, email: String?, phone: String?, password: String?, roleIds: List<Long>): ApiData<UserDto> {
-        val encodedPassword = AesUtil.encrypt(password ?: "123456")
+    private suspend fun createUserInternal(form: UserFormDto): ApiData<UserDto> {
+        val encodedPassword = AesUtil.encrypt(form.password ?: "123456")
         val user = User(
-            username = username,
+            username = form.username,
             password = encodedPassword,
-            email = email,
-            phone = phone,
+            email = form.email,
+            phone = form.phone,
             status = StatusEnum.ACTIVE.code
         )
         
@@ -87,7 +90,7 @@ class UserService(
         user.id = userId
         
         coroutineScope {
-            roleIds.map { roleId ->
+            form.roleIds.map { roleId ->
                 async {
                     val userRole = UserRole(
                         uid = userId,
@@ -98,25 +101,25 @@ class UserService(
             }.awaitAll()
         }
         
-        val userDto = UserDto.fromEntity(user, roleIds)
+        val userDto = UserDto.fromEntity(user, form.roleIds)
         return ApiData.success(userDto)
     }
     
-    suspend fun updateUser(id: Long, username: String, email: String?, phone: String?, password: String?, roleIds: List<Long>): ApiData<UserDto> {
+    suspend fun updateUser(id: Long, form: UserUpdateDto): ApiData<UserDto> {
         val user = userDao.findByUid(id) ?: return ApiData.error("用户不存在")
 
-        user.username = username
-        user.email = email
-        user.phone = phone
-        if (!password.isNullOrBlank()) {
-            user.password = AesUtil.encrypt(password)
+        user.username = form.username
+        user.email = form.email
+        user.phone = form.phone
+        if (!form.password.isNullOrBlank()) {
+            user.password = AesUtil.encrypt(form.password)
         }
         
         userDao.updateById(user)
         userRoleDao.deleteByUid(id)
         
         coroutineScope {
-            roleIds.map { roleId ->
+            form.roleIds.map { roleId ->
                 async {
                     val userRole = UserRole(
                         uid = id,
@@ -127,7 +130,7 @@ class UserService(
             }.awaitAll()
         }
         
-        val userDto = UserDto.fromEntity(user, roleIds)
+        val userDto = UserDto.fromEntity(user, form.roleIds)
         return ApiData.success(userDto)
     }
     

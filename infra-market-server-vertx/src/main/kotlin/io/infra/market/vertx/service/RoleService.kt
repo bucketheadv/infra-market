@@ -3,6 +3,8 @@ package io.infra.market.vertx.service
 import io.infra.market.vertx.dto.ApiData
 import io.infra.market.vertx.dto.PageResultDto
 import io.infra.market.vertx.dto.RoleDto
+import io.infra.market.vertx.dto.RoleFormDto
+import io.infra.market.vertx.dto.RoleQueryDto
 import io.infra.market.vertx.entity.Role
 import io.infra.market.vertx.entity.RolePermission
 import io.infra.market.vertx.repository.RoleDao
@@ -23,12 +25,12 @@ class RoleService(
     private val userRoleDao: UserRoleDao
 ) {
     
-    suspend fun getRoles(name: String?, code: String?, status: String?, page: Int, size: Int): ApiData<PageResultDto<RoleDto>> {
-        val (roles, total) = roleDao.page(name, code, status, page, size)
+    suspend fun getRoles(query: RoleQueryDto): ApiData<PageResultDto<RoleDto>> {
+        val (roles, total) = roleDao.page(query.name, query.code, query.status, query.page, query.size)
         val roleIds = roles.mapNotNull { it.id }
         
         if (roleIds.isEmpty()) {
-            return ApiData.success(PageResultDto(emptyList(), total, page.toLong(), size.toLong()))
+            return ApiData.success(PageResultDto(emptyList(), total, query.page.toLong(), query.size.toLong()))
         }
         
         val rolePermissions = rolePermissionDao.findByRoleIds(roleIds)
@@ -36,7 +38,7 @@ class RoleService(
             .mapValues { (_, permissions) -> permissions.mapNotNull { it.permissionId } }
         
         val roleDtos = RoleDto.fromEntityList(roles, rolePermissionsMap)
-        return ApiData.success(PageResultDto(roleDtos, total, page.toLong(), size.toLong()))
+        return ApiData.success(PageResultDto(roleDtos, total, query.page.toLong(), query.size.toLong()))
     }
     
     suspend fun getAllRoles(): ApiData<List<RoleDto>> {
@@ -64,17 +66,17 @@ class RoleService(
         return ApiData.success(roleDto)
     }
     
-    suspend fun createRole(name: String, code: String, description: String?, permissionIds: List<Long>): ApiData<RoleDto> {
-        val existingRole = roleDao.findByCode(code)
+    suspend fun createRole(form: RoleFormDto): ApiData<RoleDto> {
+        val existingRole = roleDao.findByCode(form.code)
         if (existingRole != null) {
             return ApiData.error("角色编码已存在")
         }
         
         val now = System.currentTimeMillis()
         val role = Role(
-            name = name,
-            code = code,
-            description = description,
+            name = form.name,
+            code = form.code,
+            description = form.description,
             status = "active"
         )
         role.createTime = now
@@ -84,7 +86,7 @@ class RoleService(
         role.id = roleId
         
         coroutineScope {
-            permissionIds.map { permissionId ->
+            form.permissionIds.map { permissionId ->
                 async {
                     val rolePermission = RolePermission(
                         roleId = roleId,
@@ -95,27 +97,28 @@ class RoleService(
             }.awaitAll()
         }
         
-        val roleDto = RoleDto.fromEntity(role, permissionIds)
+        val roleDto = RoleDto.fromEntity(role, form.permissionIds)
         return ApiData.success(roleDto)
     }
     
-    suspend fun updateRole(id: Long, name: String, code: String, description: String?, permissionIds: List<Long>): ApiData<RoleDto> {
+    suspend fun updateRole(id: Long, form: RoleFormDto): ApiData<RoleDto> {
         val role = roleDao.findById(id) ?: return ApiData.error("角色不存在")
 
-        val existingRole = roleDao.findByCode(code)
+        val existingRole = roleDao.findByCode(form.code)
         if (existingRole != null && existingRole.id != role.id) {
             return ApiData.error("角色编码已存在")
         }
         
-        role.name = name
-        role.description = description
+        role.name = form.name
+        role.code = form.code
+        role.description = form.description
         role.updateTime = System.currentTimeMillis()
         
         roleDao.updateById(role)
         rolePermissionDao.deleteByRoleId(id)
         
         coroutineScope {
-            permissionIds.map { permissionId ->
+            form.permissionIds.map { permissionId ->
                 async {
                     val rolePermission = RolePermission(
                         roleId = id,
@@ -126,7 +129,7 @@ class RoleService(
             }.awaitAll()
         }
         
-        val roleDto = RoleDto.fromEntity(role, permissionIds)
+        val roleDto = RoleDto.fromEntity(role, form.permissionIds)
         return ApiData.success(roleDto)
     }
     

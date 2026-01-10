@@ -1,5 +1,7 @@
 package io.infra.market.vertx.router
 
+import io.infra.market.vertx.dto.ApiExecuteRequestDto
+import io.infra.market.vertx.dto.ApiInterfaceFormDto
 import io.infra.market.vertx.middleware.AuthMiddleware
 import io.infra.market.vertx.service.ApiInterfaceService
 import io.infra.market.vertx.util.ResponseUtil
@@ -84,7 +86,8 @@ class ApiInterfaceRouter(private val apiInterfaceService: ApiInterfaceService) {
     private suspend fun handleCreate(ctx: RoutingContext) {
         try {
             val body = ctx.body().asJsonObject()
-            val result = apiInterfaceService.create(body)
+            val form = body.mapTo(ApiInterfaceFormDto::class.java)
+            val result = apiInterfaceService.create(form)
             ResponseUtil.sendResponse(ctx, result)
         } catch (e: Exception) {
             logger.error("创建接口失败", e)
@@ -101,7 +104,8 @@ class ApiInterfaceRouter(private val apiInterfaceService: ApiInterfaceService) {
             }
             
             val body = ctx.body().asJsonObject()
-            val result = apiInterfaceService.update(id, body)
+            val form = body.mapTo(ApiInterfaceFormDto::class.java)
+            val result = apiInterfaceService.update(id, form)
             ResponseUtil.sendResponse(ctx, result)
         } catch (e: Exception) {
             logger.error("更新接口失败", e)
@@ -162,7 +166,8 @@ class ApiInterfaceRouter(private val apiInterfaceService: ApiInterfaceService) {
     private suspend fun handleExecute(ctx: RoutingContext) {
         try {
             val body = ctx.body().asJsonObject()
-            val result = apiInterfaceService.execute(body)
+            val request = body.mapTo(ApiExecuteRequestDto::class.java)
+            val result = apiInterfaceService.execute(request)
             ResponseUtil.sendResponse(ctx, result)
         } catch (e: Exception) {
             logger.error("执行接口失败", e)

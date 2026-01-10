@@ -1,9 +1,12 @@
 package io.infra.market.vertx.service
 
 import io.infra.market.vertx.dto.ApiData
+import io.infra.market.vertx.dto.ApiInterfaceExecutionRecordDto
+import io.infra.market.vertx.dto.ApiInterfaceExecutionRecordQueryDto
+import io.infra.market.vertx.dto.ApiInterfaceExecutionRecordStatsDto
 import io.infra.market.vertx.dto.PageResultDto
+import io.infra.market.vertx.entity.ApiInterfaceExecutionRecord
 import io.infra.market.vertx.repository.ApiInterfaceExecutionRecordDao
-import io.vertx.core.json.JsonObject
 
 /**
  * 接口执行记录服务
@@ -14,39 +17,32 @@ class ApiInterfaceExecutionRecordService(
     private val apiInterfaceExecutionRecordDao: ApiInterfaceExecutionRecordDao
 ) {
     
-    suspend fun list(body: JsonObject): ApiData<PageResultDto<JsonObject>> {
-        val interfaceId = body.getLong("interfaceId")
-        val executorId = body.getLong("executorId")
-        val keyword = body.getString("keyword")
-        val page = body.getInteger("page") ?: 1
-        val size = body.getInteger("size") ?: 10
+    suspend fun list(query: ApiInterfaceExecutionRecordQueryDto): ApiData<PageResultDto<ApiInterfaceExecutionRecordDto>> {
+        val page = query.page ?: 1
+        val size = query.size ?: 10
         
-        val (records, total) = apiInterfaceExecutionRecordDao.page(interfaceId, executorId, keyword, page, size)
-        val recordDtos = records.map { it.toJsonObject() }
+        val (records, total) = apiInterfaceExecutionRecordDao.page(query.interfaceId, query.executorId, query.keyword, page, size)
+        val recordDtos = records.map { convertToDto(it) }
         return ApiData.success(PageResultDto(recordDtos, total, page.toLong(), size.toLong()))
     }
     
-    suspend fun detail(id: Long): ApiData<JsonObject?> {
+    suspend fun detail(id: Long): ApiData<ApiInterfaceExecutionRecordDto?> {
         val record = apiInterfaceExecutionRecordDao.findById(id) ?: return ApiData.error("执行记录不存在")
 
-        return ApiData.success(record.toJsonObject())
+        return ApiData.success(convertToDto(record))
     }
     
-    suspend fun getByExecutorId(executorId: Long, limit: Int): ApiData<List<JsonObject>> {
+    suspend fun getByExecutorId(executorId: Long, limit: Int): ApiData<List<ApiInterfaceExecutionRecordDto>> {
         val records = apiInterfaceExecutionRecordDao.findByExecutorId(executorId, limit)
-        val recordDtos = records.map { it.toJsonObject() }
+        val recordDtos = records.map { convertToDto(it) }
         return ApiData.success(recordDtos)
     }
     
-    suspend fun getExecutionStats(interfaceId: Long): ApiData<JsonObject?> {
+    suspend fun getExecutionStats(interfaceId: Long): ApiData<ApiInterfaceExecutionRecordStatsDto?> {
         val stats = apiInterfaceExecutionRecordDao.getExecutionStats(interfaceId)
             ?: return ApiData.error("未找到执行统计信息")
 
-        val statsJson = JsonObject()
-        stats.forEach { (key, value) ->
-            statsJson.put(key, value)
-        }
-        return ApiData.success(statsJson)
+        return ApiData.success(stats)
     }
     
     suspend fun getExecutionCount(startTime: Long, endTime: Long): ApiData<Long> {
@@ -59,25 +55,26 @@ class ApiInterfaceExecutionRecordService(
         return ApiData.success(deletedCount)
     }
     
-    private fun io.infra.market.vertx.entity.ApiInterfaceExecutionRecord.toJsonObject(): JsonObject {
-        return JsonObject()
-            .put("id", id)
-            .put("interfaceId", interfaceId)
-            .put("executorId", executorId)
-            .put("executorName", executorName)
-            .put("requestParams", requestParams)
-            .put("requestHeaders", requestHeaders)
-            .put("requestBody", requestBody)
-            .put("responseStatus", responseStatus)
-            .put("responseHeaders", responseHeaders)
-            .put("responseBody", responseBody)
-            .put("executionTime", executionTime)
-            .put("success", success)
-            .put("errorMessage", errorMessage)
-            .put("remark", remark)
-            .put("clientIp", clientIp)
-            .put("userAgent", userAgent)
-            .put("createTime", createTime)
-            .put("updateTime", updateTime)
+    private fun convertToDto(entity: ApiInterfaceExecutionRecord): ApiInterfaceExecutionRecordDto {
+        return ApiInterfaceExecutionRecordDto(
+            id = entity.id,
+            interfaceId = entity.interfaceId,
+            executorId = entity.executorId,
+            executorName = entity.executorName,
+            requestParams = entity.requestParams,
+            requestHeaders = entity.requestHeaders,
+            requestBody = entity.requestBody,
+            responseStatus = entity.responseStatus,
+            responseHeaders = entity.responseHeaders,
+            responseBody = entity.responseBody,
+            executionTime = entity.executionTime,
+            success = entity.success,
+            errorMessage = entity.errorMessage,
+            remark = entity.remark,
+            clientIp = entity.clientIp,
+            userAgent = entity.userAgent,
+            createTime = entity.createTime,
+            updateTime = entity.updateTime
+        )
     }
 }

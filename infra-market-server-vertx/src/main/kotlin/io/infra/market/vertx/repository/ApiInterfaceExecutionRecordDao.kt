@@ -1,5 +1,6 @@
 package io.infra.market.vertx.repository
 
+import io.infra.market.vertx.dto.ApiInterfaceExecutionRecordStatsDto
 import io.infra.market.vertx.entity.ApiInterfaceExecutionRecord
 import io.infra.market.vertx.extensions.awaitForResult
 import io.vertx.sqlclient.Pool
@@ -74,7 +75,7 @@ class ApiInterfaceExecutionRecordDao(private val pool: Pool) {
         return Pair(dataRows.map { rowToRecord(it) }, total)
     }
     
-    suspend fun getExecutionStats(interfaceId: Long): Map<String, Any>? {
+    suspend fun getExecutionStats(interfaceId: Long): ApiInterfaceExecutionRecordStatsDto? {
         val rows = pool.preparedQuery("SELECT * FROM api_interface_execution_record WHERE interface_id = ?")
             .execute(Tuple.of(interfaceId))
             .awaitForResult()
@@ -94,18 +95,15 @@ class ApiInterfaceExecutionRecordDao(private val pool: Pool) {
             }
             val minExecutionTime = executionTimes.minOrNull() ?: 0L
             val maxExecutionTime = executionTimes.maxOrNull() ?: 0L
-            val lastExecutionTime = records.maxByOrNull { it.createTime ?: 0L }?.createTime
             
-            return mapOf(
-                "interfaceId" to interfaceId,
-                "totalExecutions" to totalExecutions,
-                "successExecutions" to successExecutions,
-                "failedExecutions" to failedExecutions,
-                "successRate" to successRate,
-                "avgExecutionTime" to avgExecutionTime,
-                "minExecutionTime" to minExecutionTime,
-                "maxExecutionTime" to maxExecutionTime,
-                "lastExecutionTime" to (lastExecutionTime ?: 0L)
+            return ApiInterfaceExecutionRecordStatsDto(
+                totalExecutions = totalExecutions,
+                successCount = successExecutions,
+                failureCount = failedExecutions,
+                successRate = successRate,
+                averageExecutionTime = avgExecutionTime,
+                minExecutionTime = minExecutionTime,
+                maxExecutionTime = maxExecutionTime
             )
         }
     }

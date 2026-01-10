@@ -1,7 +1,10 @@
 package io.infra.market.vertx.router
 
+import io.infra.market.vertx.dto.BatchRequest
+import io.infra.market.vertx.dto.RoleFormDto
 import io.infra.market.vertx.middleware.AuthMiddleware
 import io.infra.market.vertx.service.RoleService
+import io.infra.market.vertx.util.QueryParamUtil
 import io.infra.market.vertx.util.ResponseUtil
 import io.infra.market.vertx.extensions.coroutineHandler
 import io.vertx.core.Vertx
@@ -36,13 +39,8 @@ class RoleRouter(private val roleService: RoleService) {
     
     private suspend fun handleGetRoles(ctx: RoutingContext) {
         try {
-            val name = ctx.queryParams().get("name")
-            val code = ctx.queryParams().get("code")
-            val status = ctx.queryParams().get("status")
-            val page = ctx.queryParams().get("page")?.toIntOrNull() ?: 1
-            val size = ctx.queryParams().get("size")?.toIntOrNull() ?: 10
-            
-            val result = roleService.getRoles(name, code, status, page, size)
+            val query = QueryParamUtil.buildRoleQuery(ctx)
+            val result = roleService.getRoles(query)
             ResponseUtil.sendResponse(ctx, result)
         } catch (e: Exception) {
             logger.error("获取角色列表失败", e)
@@ -79,12 +77,8 @@ class RoleRouter(private val roleService: RoleService) {
     private suspend fun handleCreateRole(ctx: RoutingContext) {
         try {
             val body = ctx.body().asJsonObject()
-            val name = body.getString("name") ?: ""
-            val code = body.getString("code") ?: ""
-            val description = body.getString("description")
-            val permissionIds = body.getJsonArray("permissionIds")?.map { (it as Number).toLong() } ?: emptyList()
-            
-            val result = roleService.createRole(name, code, description, permissionIds)
+            val form = body.mapTo(RoleFormDto::class.java)
+            val result = roleService.createRole(form)
             ResponseUtil.sendResponse(ctx, result)
         } catch (e: Exception) {
             logger.error("创建角色失败", e)
@@ -101,12 +95,8 @@ class RoleRouter(private val roleService: RoleService) {
             }
             
             val body = ctx.body().asJsonObject()
-            val name = body.getString("name") ?: ""
-            val code = body.getString("code") ?: ""
-            val description = body.getString("description")
-            val permissionIds = body.getJsonArray("permissionIds")?.map { (it as Number).toLong() } ?: emptyList()
-            
-            val result = roleService.updateRole(id, name, code, description, permissionIds)
+            val form = body.mapTo(RoleFormDto::class.java)
+            val result = roleService.updateRole(id, form)
             ResponseUtil.sendResponse(ctx, result)
         } catch (e: Exception) {
             logger.error("更新角色失败", e)
@@ -152,14 +142,8 @@ class RoleRouter(private val roleService: RoleService) {
     private suspend fun handleBatchDelete(ctx: RoutingContext) {
         try {
             val body = ctx.body().asJsonObject()
-            val idsArray = body.getJsonArray("ids")
-            val ids = if (idsArray != null) {
-                idsArray.map { (it as Number).toLong() }
-            } else {
-                emptyList()
-            }
-            
-            val result = roleService.batchDeleteRoles(ids)
+            val request = body.mapTo(BatchRequest::class.java)
+            val result = roleService.batchDeleteRoles(request.ids)
             ResponseUtil.sendResponse(ctx, result)
         } catch (e: Exception) {
             logger.error("批量删除角色失败", e)

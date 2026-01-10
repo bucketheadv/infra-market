@@ -3,6 +3,8 @@ package io.infra.market.vertx.service
 import io.infra.market.vertx.dto.ApiData
 import io.infra.market.vertx.dto.PageResultDto
 import io.infra.market.vertx.dto.PermissionDto
+import io.infra.market.vertx.dto.PermissionFormDto
+import io.infra.market.vertx.dto.PermissionQueryDto
 import io.infra.market.vertx.entity.Permission
 import io.infra.market.vertx.repository.PermissionDao
 import io.infra.market.vertx.repository.RolePermissionDao
@@ -20,10 +22,10 @@ class PermissionService(
     private val rolePermissionDao: RolePermissionDao
 ) {
     
-    suspend fun getPermissions(name: String?, code: String?, type: String?, status: String?, page: Int, size: Int): ApiData<PageResultDto<PermissionDto>> {
-        val (permissions, total) = permissionDao.page(name, code, type, status, page, size)
+    suspend fun getPermissions(query: PermissionQueryDto): ApiData<PageResultDto<PermissionDto>> {
+        val (permissions, total) = permissionDao.page(query.name, query.code, query.type, query.status, query.page, query.size)
         val permissionDtos = PermissionDto.fromEntityList(permissions)
-        return ApiData.success(PageResultDto(permissionDtos, total, page.toLong(), size.toLong()))
+        return ApiData.success(PageResultDto(permissionDtos, total, query.page.toLong(), query.size.toLong()))
     }
     
     suspend fun getPermissionTree(): ApiData<List<PermissionDto>> {
@@ -39,21 +41,21 @@ class PermissionService(
         return ApiData.success(permissionDto)
     }
     
-    suspend fun createPermission(name: String, code: String, type: String, parentId: Long?, path: String?, icon: String?, sort: Int): ApiData<PermissionDto> {
-        val existingPermission = permissionDao.findByCode(code)
+    suspend fun createPermission(form: PermissionFormDto): ApiData<PermissionDto> {
+        val existingPermission = permissionDao.findByCode(form.code)
         if (existingPermission != null) {
             return ApiData.error("权限编码已存在")
         }
         
         val now = System.currentTimeMillis()
         val permission = Permission(
-            name = name,
-            code = code,
-            type = type,
-            parentId = parentId,
-            path = path,
-            icon = icon,
-            sort = sort,
+            name = form.name,
+            code = form.code,
+            type = form.type,
+            parentId = form.parentId,
+            path = form.path,
+            icon = form.icon,
+            sort = form.sort,
             status = "active"
         )
         permission.createTime = now
@@ -66,24 +68,21 @@ class PermissionService(
         return ApiData.success(permissionDto)
     }
     
-    suspend fun updatePermission(id: Long, name: String, code: String, type: String, parentId: Long?, path: String?, icon: String?, sort: Int): ApiData<PermissionDto> {
-        val permission = permissionDao.findById(id)
-        
-        if (permission == null) {
-            return ApiData.error("权限不存在")
-        }
-        
-        val existingPermission = permissionDao.findByCode(code)
+    suspend fun updatePermission(id: Long, form: PermissionFormDto): ApiData<PermissionDto> {
+        val permission = permissionDao.findById(id) ?: return ApiData.error("权限不存在")
+
+        val existingPermission = permissionDao.findByCode(form.code)
         if (existingPermission != null && existingPermission.id != permission.id) {
             return ApiData.error("权限编码已存在")
         }
         
-        permission.name = name
-        permission.type = type
-        permission.parentId = parentId
-        permission.path = path
-        permission.icon = icon
-        permission.sort = sort
+        permission.name = form.name
+        permission.code = form.code
+        permission.type = form.type
+        permission.parentId = form.parentId
+        permission.path = form.path
+        permission.icon = form.icon
+        permission.sort = form.sort
         permission.updateTime = System.currentTimeMillis()
         
         permissionDao.updateById(permission)
@@ -93,12 +92,8 @@ class PermissionService(
     }
     
     suspend fun deletePermission(id: Long): ApiData<Unit> {
-        val permission = permissionDao.findById(id)
-        
-        if (permission == null) {
-            return ApiData.error("权限不存在")
-        }
-        
+        val permission = permissionDao.findById(id) ?: return ApiData.error("权限不存在")
+
         if (permission.code == "system") {
             return ApiData.error("不能删除系统权限")
         }
@@ -127,13 +122,9 @@ class PermissionService(
         if (status !in listOf("active", "inactive", "deleted")) {
             return ApiData.error("无效的状态值")
         }
-        
-        val permission = permissionDao.findById(id)
-        
-        if (permission == null) {
-            return ApiData.error("权限不存在")
-        }
-        
+
+        val permission = permissionDao.findById(id) ?: return ApiData.error("权限不存在")
+
         if (permission.code == "system" && status == "deleted") {
             return ApiData.error("不能删除系统权限")
         }

@@ -26,8 +26,8 @@ object ConfigLoader {
      * @param defaultConfig 默认配置（如果配置文件不存在时使用）
      * @return 配置对象
      */
-    fun loadConfig(defaultConfig: JsonObject = JsonObject()): JsonObject {
-        val config = try {
+    fun loadConfig(defaultConfig: ApplicationConfig = ApplicationConfig.default()): ApplicationConfig {
+        val jsonConfig = try {
             // 1. 尝试从系统属性指定的路径加载
             val configFileProperty = System.getProperty(CONFIG_FILE_PROPERTY)
             if (configFileProperty != null) {
@@ -55,74 +55,99 @@ object ConfigLoader {
                 JsonObject(content)
             } else {
                 logger.warn("未找到配置文件，使用默认配置")
-                defaultConfig
+                null
             }
         } catch (e: Exception) {
             logger.error("加载配置文件失败，使用默认配置", e)
-            defaultConfig
+            null
         }
         
-        return mergeWithDefaults(config, defaultConfig)
+        return if (jsonConfig != null) {
+            mergeWithDefaults(jsonConfig, defaultConfig)
+        } else {
+            defaultConfig
+        }
     }
     
     /**
      * 从文件加载配置
      */
-    private fun loadFromFile(file: File): JsonObject {
+    private fun loadFromFile(file: File): ApplicationConfig {
         val content = Files.readString(Paths.get(file.absolutePath))
-        return JsonObject(content)
+        val jsonConfig = JsonObject(content)
+        return ApplicationConfig.fromJson(jsonConfig)
     }
     
     /**
      * 合并配置，确保所有必需的配置项都存在
      */
-    private fun mergeWithDefaults(config: JsonObject, defaults: JsonObject): JsonObject {
-        val merged = JsonObject(defaults.encode())
+    private fun mergeWithDefaults(jsonConfig: JsonObject, defaults: ApplicationConfig): ApplicationConfig {
+        val mergedJson = JsonObject()
         
         // 合并 server 配置
-        if (config.containsKey("server")) {
-            merged.put("server", config.getJsonObject("server"))
-        } else if (!merged.containsKey("server")) {
-            merged.put("server", JsonObject().put("port", 8080))
-        }
+        val serverJson = jsonConfig.getJsonObject("server")
+        mergedJson.put("server", serverJson ?: JsonObject().put("port", defaults.server.port))
         
         // 合并 database 配置
-        if (config.containsKey("database")) {
-            merged.put("database", config.getJsonObject("database"))
-        } else if (!merged.containsKey("database")) {
-            merged.put("database", JsonObject()
-                .put("host", "localhost")
-                .put("port", 3306)
-                .put("database", "infra_market")
-                .put("username", "root")
-                .put("password", "123456")
-                .put("maxPoolSize", 10)
-                .put("charset", "utf8mb4")
-                .put("collation", "utf8mb4_unicode_ci")
-            )
+        val databaseJson = jsonConfig.getJsonObject("database")
+        if (databaseJson != null) {
+            mergedJson.put("database", databaseJson)
+        } else {
+            val defaultDbJson = JsonObject()
+                .put("host", defaults.database.host)
+                .put("port", defaults.database.port)
+                .put("maxPoolSize", defaults.database.maxPoolSize)
+                .put("charset", defaults.database.charset)
+                .put("collation", defaults.database.collation)
+            if (defaults.database.database != null) {
+                defaultDbJson.put("database", defaults.database.database)
+            }
+            if (defaults.database.username != null) {
+                defaultDbJson.put("username", defaults.database.username)
+            }
+            if (defaults.database.password != null) {
+                defaultDbJson.put("password", defaults.database.password)
+            }
+            mergedJson.put("database", defaultDbJson)
         }
         
         // 合并 redis 配置
-        if (config.containsKey("redis")) {
-            merged.put("redis", config.getJsonObject("redis"))
-        } else if (!merged.containsKey("redis")) {
-            merged.put("redis", JsonObject()
-                .put("host", "localhost")
-                .put("port", 6379)
+        val redisJson = jsonConfig.getJsonObject("redis")
+        if (redisJson != null) {
+            mergedJson.put("redis", redisJson)
+        } else {
+            mergedJson.put("redis", JsonObject()
+                .put("host", defaults.redis.host)
+                .put("port", defaults.redis.port)
             )
         }
         
         // 合并 jwt 配置
-        if (config.containsKey("jwt")) {
-            merged.put("jwt", config.getJsonObject("jwt"))
+        val jwtJson = jsonConfig.getJsonObject("jwt")
+        if (jwtJson != null) {
+            mergedJson.put("jwt", jwtJson)
+        } else {
+            val defaultJwtJson = JsonObject()
+                .put("expirationTime", defaults.jwt.expirationTime)
+            if (defaults.jwt.secretKey != null) {
+                defaultJwtJson.put("secretKey", defaults.jwt.secretKey)
+            }
+            mergedJson.put("jwt", defaultJwtJson)
         }
         
         // 合并 aes 配置
-        if (config.containsKey("aes")) {
-            merged.put("aes", config.getJsonObject("aes"))
+        val aesJson = jsonConfig.getJsonObject("aes")
+        if (aesJson != null) {
+            mergedJson.put("aes", aesJson)
+        } else {
+            val defaultAesJson = JsonObject()
+            if (defaults.aes.defaultKey != null) {
+                defaultAesJson.put("defaultKey", defaults.aes.defaultKey)
+            }
+            mergedJson.put("aes", defaultAesJson)
         }
         
-        return merged
+        return ApplicationConfig.fromJson(mergedJson)
     }
 }
 
