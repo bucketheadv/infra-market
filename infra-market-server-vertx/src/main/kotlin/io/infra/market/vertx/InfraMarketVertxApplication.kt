@@ -6,6 +6,7 @@ import io.infra.market.vertx.config.DatabaseConfig
 import io.infra.market.vertx.config.RedisConfig
 import io.infra.market.vertx.config.ServerConfig
 import io.infra.market.vertx.router.MainRouter
+import io.infra.market.vertx.extensions.SqlLoggingPool
 import io.infra.market.vertx.extensions.awaitForResult
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
@@ -144,11 +145,14 @@ class InfraMarketVertxApplication : CoroutineVerticle() {
         val poolOptions = PoolOptions()
             .setMaxSize(dbConfig.maxPoolSize)
         
-        return MySQLBuilder.pool()
+        val pool = MySQLBuilder.pool()
             .with(poolOptions)
             .connectingTo(connectOptions)
             .using(vertx)
             .build()
+        
+        // 包装 Pool 以支持 SQL 日志记录
+        return SqlLoggingPool(pool)
     }
     
     private fun createRedisClient(config: JsonObject): Redis {

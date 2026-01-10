@@ -3,7 +3,7 @@ package io.infra.market.vertx.router
 import io.infra.market.vertx.middleware.AuthMiddleware
 import io.infra.market.vertx.service.UserService
 import io.infra.market.vertx.util.ResponseUtil
-import io.infra.market.vertx.util.coroutineHandler
+import io.infra.market.vertx.extensions.coroutineHandler
 import io.vertx.core.Vertx
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.RoutingContext

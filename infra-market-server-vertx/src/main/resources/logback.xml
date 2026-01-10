@@ -19,6 +19,18 @@
         </encoder>
     </appender>
 
+    <!-- SQL 日志单独输出 -->
+    <appender name="SQL_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/sql.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/sql.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>7</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
     <!-- 根日志级别 -->
     <root level="INFO">
         <appender-ref ref="CONSOLE" />
@@ -36,6 +48,12 @@
     
     <!-- MySQL 客户端日志（输出 SQL 语句） -->
     <logger name="io.vertx.mysqlclient" level="DEBUG" />
+    
+    <!-- SQL 日志记录器（单独输出到文件和控制台） -->
+    <logger name="io.infra.market.vertx.sql" level="DEBUG" additivity="false">
+        <appender-ref ref="SQL_FILE" />
+        <appender-ref ref="CONSOLE" />
+    </logger>
     
     <!-- Redis 客户端日志 -->
     <logger name="io.vertx.redis" level="INFO" />

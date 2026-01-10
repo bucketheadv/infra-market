@@ -1,4 +1,4 @@
-package io.infra.market.vertx.util
+package io.infra.market.vertx.extensions
 
 import io.vertx.core.Vertx
 import io.vertx.ext.web.Route
