@@ -4,17 +4,72 @@ import io.infra.market.vertx.entity.Permission
 
 /**
  * 权限信息DTO
+ * 
+ * 用于传输权限信息的DTO。
+ * 包含权限的完整信息，支持树形结构。
+ * 
+ * @author liuqinglin
+ * @since 1.0.0
  */
 data class PermissionDto(
+    /**
+     * 权限ID
+     * 权限的唯一标识
+     */
     val id: Long,
+    
+    /**
+     * 权限名称
+     * 权限的显示名称
+     */
     val name: String,
+    
+    /**
+     * 权限编码
+     * 权限的唯一标识码
+     */
     val code: String,
+    
+    /**
+     * 权限类型
+     * 权限的类型，如menu、button、api等
+     */
     val type: String,
+    
+    /**
+     * 父权限ID
+     * 父权限的ID，用于构建权限树，顶级权限为null
+     */
     val parentId: Long?,
+    
+    /**
+     * 权限路径
+     * 权限对应的路径，菜单权限为前端路由，接口权限为API路径
+     */
     val path: String?,
+    
+    /**
+     * 权限图标
+     * 权限的图标，用于前端菜单显示
+     */
     val icon: String?,
+    
+    /**
+     * 排序值
+     * 权限的排序值，用于控制显示顺序
+     */
     val sort: Int,
+    
+    /**
+     * 权限状态
+     * 权限的状态，如active、inactive等
+     */
     val status: String,
+    
+    /**
+     * 子权限列表
+     * 当前权限的子权限列表，用于构建权限树，默认为null
+     */
     val children: List<PermissionDto>? = null
 ) {
     companion object {
