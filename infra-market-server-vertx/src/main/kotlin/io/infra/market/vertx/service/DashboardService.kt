@@ -1,5 +1,6 @@
 package io.infra.market.vertx.service
 
+import com.google.inject.Inject
 import io.infra.market.vertx.dto.ApiData
 import io.infra.market.vertx.dto.DashboardDataDto
 import io.infra.market.vertx.dto.DashboardStatisticsDto
@@ -20,7 +21,7 @@ import kotlinx.coroutines.coroutineScope
  * 
  * 规则1：任何调用 xxx.awaitForResult() 的函数，必须用 suspend 修饰
  */
-class DashboardService(
+class DashboardService @Inject constructor(
     private val userDao: UserDao,
     private val roleDao: RoleDao,
     private val permissionDao: PermissionDao,
@@ -81,8 +82,8 @@ class DashboardService(
         val systemInfo = SystemInfoDto(
             systemVersion = "1.0.0",
             javaVersion = System.getProperty("java.version"),
-            springBootVersion = "N/A",
-            kotlinVersion = "1.9.24",
+            vertxVersion = "5.0.6",
+            kotlinVersion = "2.3.0",
             lastUpdate = TimeUtil.format(System.currentTimeMillis())
         )
         

@@ -1,5 +1,6 @@
 package io.infra.market.vertx.service
 
+import com.google.inject.Inject
 import io.infra.market.vertx.dto.ApiData
 import io.infra.market.vertx.dto.PageResultDto
 import io.infra.market.vertx.dto.RoleDto
@@ -19,7 +20,7 @@ import kotlinx.coroutines.coroutineScope
  * 
  * 规则1：任何调用 xxx.awaitForResult() 的函数，必须用 suspend 修饰
  */
-class RoleService(
+class RoleService @Inject constructor(
     private val roleDao: RoleDao,
     private val rolePermissionDao: RolePermissionDao,
     private val userRoleDao: UserRoleDao

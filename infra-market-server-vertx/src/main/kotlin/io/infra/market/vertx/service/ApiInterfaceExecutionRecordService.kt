@@ -1,5 +1,6 @@
 package io.infra.market.vertx.service
 
+import com.google.inject.Inject
 import io.infra.market.vertx.dto.ApiData
 import io.infra.market.vertx.dto.ApiInterfaceExecutionRecordDto
 import io.infra.market.vertx.dto.ApiInterfaceExecutionRecordQueryDto
@@ -13,7 +14,7 @@ import io.infra.market.vertx.repository.ApiInterfaceExecutionRecordDao
  * 
  * 规则1：任何调用 xxx.awaitForResult() 的函数，必须用 suspend 修饰
  */
-class ApiInterfaceExecutionRecordService(
+class ApiInterfaceExecutionRecordService @Inject constructor(
     private val apiInterfaceExecutionRecordDao: ApiInterfaceExecutionRecordDao
 ) {
     

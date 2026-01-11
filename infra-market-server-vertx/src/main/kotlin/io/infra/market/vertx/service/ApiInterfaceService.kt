@@ -1,5 +1,6 @@
 package io.infra.market.vertx.service
 
+import com.google.inject.Inject
 import io.infra.market.vertx.dto.ApiData
 import io.infra.market.vertx.dto.ApiExecuteRequestDto
 import io.infra.market.vertx.dto.ApiExecuteResponseDto
@@ -9,8 +10,8 @@ import io.infra.market.vertx.dto.ApiInterfaceQueryDto
 import io.infra.market.vertx.dto.ApiParamDto
 import io.infra.market.vertx.dto.PageResultDto
 import io.infra.market.vertx.entity.ApiInterface
-import io.infra.market.vertx.repository.ApiInterfaceDao
 import io.infra.market.vertx.extensions.awaitForResult
+import io.infra.market.vertx.repository.ApiInterfaceDao
 import io.vertx.core.Vertx
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.http.HttpMethod
@@ -28,9 +29,9 @@ import java.net.URLEncoder
  * 
  * 规则1：任何调用 xxx.awaitForResult() 的函数，必须用 suspend 修饰
  */
-class ApiInterfaceService(
+class ApiInterfaceService @Inject constructor(
     private val apiInterfaceDao: ApiInterfaceDao,
-    private val vertx: Vertx? = null
+    private val vertx: Vertx
 ) {
     
     suspend fun list(query: ApiInterfaceQueryDto): ApiData<PageResultDto<ApiInterfaceDto>> {

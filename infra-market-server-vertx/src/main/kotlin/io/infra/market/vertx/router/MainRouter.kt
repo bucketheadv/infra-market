@@ -1,19 +1,12 @@
 package io.infra.market.vertx.router
 
-import io.infra.market.vertx.repository.ApiInterfaceDao
-import io.infra.market.vertx.repository.ApiInterfaceExecutionRecordDao
-import io.infra.market.vertx.repository.PermissionDao
-import io.infra.market.vertx.repository.RoleDao
-import io.infra.market.vertx.repository.RolePermissionDao
-import io.infra.market.vertx.repository.UserDao
-import io.infra.market.vertx.repository.UserRoleDao
+import com.google.inject.Inject
 import io.infra.market.vertx.service.ApiInterfaceExecutionRecordService
 import io.infra.market.vertx.service.ApiInterfaceService
 import io.infra.market.vertx.service.AuthService
 import io.infra.market.vertx.service.DashboardService
 import io.infra.market.vertx.service.PermissionService
 import io.infra.market.vertx.service.RoleService
-import io.infra.market.vertx.service.TokenService
 import io.infra.market.vertx.service.UserService
 import io.infra.market.vertx.exception.GlobalExceptionHandler
 import io.vertx.core.Vertx
@@ -21,15 +14,24 @@ import io.vertx.core.http.HttpMethod
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.handler.BodyHandler
 import io.vertx.ext.web.handler.CorsHandler
-import io.vertx.sqlclient.Pool
-import io.vertx.redis.client.RedisAPI
 
 /**
  * 主路由器
+ * 
+ * 使用 Guice 进行依赖注入，所有 Service 通过构造函数注入。
  */
-object MainRouter {
+class MainRouter @Inject constructor(
+    private val vertx: Vertx,
+    private val authService: AuthService,
+    private val userService: UserService,
+    private val roleService: RoleService,
+    private val permissionService: PermissionService,
+    private val apiInterfaceService: ApiInterfaceService,
+    private val apiInterfaceExecutionRecordService: ApiInterfaceExecutionRecordService,
+    private val dashboardService: DashboardService
+) {
     
-    fun create(vertx: Vertx, dbPool: Pool, redisAPI: RedisAPI): Router {
+    fun create(): Router {
         val router = Router.router(vertx)
         
         // CORS 配置
@@ -45,27 +47,6 @@ object MainRouter {
         
         // 注册全局异常处理器（必须在路由注册之前）
         GlobalExceptionHandler.register(router)
-        
-        // 初始化 DAO
-        val userDao = UserDao(dbPool)
-        val userRoleDao = UserRoleDao(dbPool)
-        val roleDao = RoleDao(dbPool)
-        val rolePermissionDao = RolePermissionDao(dbPool)
-        val permissionDao = PermissionDao(dbPool)
-        val apiInterfaceDao = ApiInterfaceDao(dbPool)
-        val apiInterfaceExecutionRecordDao = ApiInterfaceExecutionRecordDao(dbPool)
-        
-        // 初始化 Service
-        val tokenService = TokenService(redisAPI)
-        val authService = AuthService(userDao, userRoleDao, rolePermissionDao, permissionDao, tokenService)
-        val userService = UserService(userDao, userRoleDao)
-        val dashboardService = DashboardService(userDao, roleDao, permissionDao, apiInterfaceDao)
-        
-        // 初始化更多 Service
-        val roleService = RoleService(roleDao, rolePermissionDao, userRoleDao)
-        val permissionService = PermissionService(permissionDao, rolePermissionDao)
-        val apiInterfaceService = ApiInterfaceService(apiInterfaceDao, vertx)
-        val apiInterfaceExecutionRecordService = ApiInterfaceExecutionRecordService(apiInterfaceExecutionRecordDao)
         
         // 直接注册路由到主路由（路由内部已包含完整路径）
         AuthRouter(authService).mount(router, vertx)

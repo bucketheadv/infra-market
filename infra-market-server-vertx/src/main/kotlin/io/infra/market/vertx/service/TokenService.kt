@@ -1,5 +1,6 @@
 package io.infra.market.vertx.service
 
+import com.google.inject.Inject
 import io.infra.market.vertx.util.JwtUtil
 import io.infra.market.vertx.extensions.awaitForResult
 import io.vertx.redis.client.RedisAPI
@@ -9,7 +10,7 @@ import io.vertx.redis.client.RedisAPI
  * 
  * 规则1：任何调用 xxx.awaitForResult() 的函数，必须用 suspend 修饰
  */
-class TokenService(
+class TokenService @Inject constructor(
     private val redisAPI: RedisAPI
 ) {
     

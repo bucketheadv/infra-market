@@ -1,5 +1,6 @@
 package io.infra.market.vertx.repository
 
+import com.google.inject.Inject
 import io.infra.market.vertx.entity.RolePermission
 import io.infra.market.vertx.extensions.awaitForResult
 import io.vertx.sqlclient.Pool
@@ -12,7 +13,7 @@ import io.vertx.sqlclient.Tuple
  * 
  * 规则1：任何调用 xxx.awaitForResult() 的函数，必须用 suspend 修饰
  */
-class RolePermissionDao(pool: Pool) : BaseDao(pool) {
+class RolePermissionDao @Inject constructor(pool: Pool) : BaseDao(pool) {
     
     suspend fun findByRoleIds(roleIds: List<Long>): List<RolePermission> {
         if (roleIds.isEmpty()) {

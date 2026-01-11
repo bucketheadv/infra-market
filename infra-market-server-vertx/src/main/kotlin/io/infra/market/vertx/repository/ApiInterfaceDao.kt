@@ -1,5 +1,6 @@
 package io.infra.market.vertx.repository
 
+import com.google.inject.Inject
 import io.infra.market.vertx.dto.ApiInterfaceQueryDto
 import io.infra.market.vertx.entity.ApiInterface
 import io.infra.market.vertx.extensions.awaitForResult
@@ -13,7 +14,7 @@ import io.vertx.sqlclient.Tuple
  * 
  * 规则1：任何调用 xxx.awaitForResult() 的函数，必须用 suspend 修饰
  */
-class ApiInterfaceDao(pool: Pool) : BaseDao(pool) {
+class ApiInterfaceDao @Inject constructor(pool: Pool) : BaseDao(pool) {
     
     suspend fun findById(id: Long): ApiInterface? {
         val rows = pool.preparedQuery("SELECT * FROM api_interface WHERE id = ?")

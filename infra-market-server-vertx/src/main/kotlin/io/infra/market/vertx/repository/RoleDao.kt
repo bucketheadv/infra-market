@@ -1,5 +1,6 @@
 package io.infra.market.vertx.repository
 
+import com.google.inject.Inject
 import io.infra.market.vertx.entity.Role
 import io.infra.market.vertx.extensions.awaitForResult
 import io.vertx.sqlclient.Pool
@@ -12,7 +13,7 @@ import io.vertx.sqlclient.Tuple
  * 
  * 规则1：任何调用 xxx.awaitForResult() 的函数，必须用 suspend 修饰
  */
-class RoleDao(pool: Pool) : BaseDao(pool) {
+class RoleDao @Inject constructor(pool: Pool) : BaseDao(pool) {
     
     suspend fun findById(id: Long): Role? {
         val rows = pool.preparedQuery("SELECT * FROM role_info WHERE id = ? AND status != 'deleted'")
