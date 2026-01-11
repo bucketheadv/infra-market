@@ -1,12 +1,12 @@
 package io.infra.market.vertx.util
 
-import io.infra.market.vertx.dto.PermissionQueryDto
-import io.infra.market.vertx.dto.RoleQueryDto
-import io.infra.market.vertx.dto.UserQueryDto
 import io.vertx.ext.web.RoutingContext
 
 /**
  * 查询参数工具类
+ * 
+ * 注意：现在推荐使用 RoutingContext.queryParamsTo<T>() 扩展函数直接转换查询参数
+ * 这个工具类保留了一些基础方法，供特殊场景使用
  */
 object QueryParamUtil {
     
@@ -32,59 +32,6 @@ object QueryParamUtil {
     fun getLong(ctx: RoutingContext, key: String, default: Long? = null): Long? {
         val value = ctx.queryParams().get(key)?.toLongOrNull()
         return value ?: default
-    }
-    
-    /**
-     * 从 RoutingContext 获取分页参数
-     */
-    fun getPage(ctx: RoutingContext, default: Int = 1): Int {
-        return getInt(ctx, "page", default) ?: default
-    }
-    
-    /**
-     * 从 RoutingContext 获取分页大小参数
-     */
-    fun getSize(ctx: RoutingContext, default: Int = 10): Int {
-        return getInt(ctx, "size", default) ?: default
-    }
-    
-    /**
-     * 从 RoutingContext 构建 RoleQueryDto
-     */
-    fun buildRoleQuery(ctx: RoutingContext): RoleQueryDto {
-        return RoleQueryDto(
-            name = getString(ctx, "name"),
-            code = getString(ctx, "code"),
-            status = getString(ctx, "status"),
-            page = getPage(ctx),
-            size = getSize(ctx)
-        )
-    }
-    
-    /**
-     * 从 RoutingContext 构建 UserQueryDto
-     */
-    fun buildUserQuery(ctx: RoutingContext): UserQueryDto {
-        return UserQueryDto(
-            username = getString(ctx, "username"),
-            status = getString(ctx, "status"),
-            page = getPage(ctx),
-            size = getSize(ctx)
-        )
-    }
-    
-    /**
-     * 从 RoutingContext 构建 PermissionQueryDto
-     */
-    fun buildPermissionQuery(ctx: RoutingContext): PermissionQueryDto {
-        return PermissionQueryDto(
-            name = getString(ctx, "name"),
-            code = getString(ctx, "code"),
-            type = getString(ctx, "type"),
-            status = getString(ctx, "status"),
-            page = getPage(ctx),
-            size = getSize(ctx)
-        )
     }
 }
 

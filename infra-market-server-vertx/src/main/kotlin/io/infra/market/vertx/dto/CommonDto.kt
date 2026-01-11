@@ -1,5 +1,9 @@
 package io.infra.market.vertx.dto
 
+import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.NotEmpty
+import jakarta.validation.constraints.Pattern
+
 /**
  * 通用API响应DTO
  */
@@ -29,6 +33,7 @@ data class PageResultDto<T>(
  * 批量操作请求DTO
  */
 data class BatchRequest(
+    @field:NotEmpty(message = "ID列表不能为空")
     val ids: List<Long>
 )
 
@@ -36,6 +41,8 @@ data class BatchRequest(
  * 状态更新DTO
  */
 data class StatusUpdateDto(
+    @field:NotBlank(message = "状态值不能为空")
+    @field:Pattern(regexp = "^(active|inactive)$", message = "状态只能是active或inactive")
     val status: String
 )
 

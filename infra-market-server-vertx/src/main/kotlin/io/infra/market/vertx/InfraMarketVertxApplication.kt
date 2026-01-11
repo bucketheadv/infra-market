@@ -5,6 +5,7 @@ import io.infra.market.vertx.config.AppConfig
 import io.infra.market.vertx.config.ConfigLoader
 import io.infra.market.vertx.config.DatabaseConfig
 import io.infra.market.vertx.config.RedisConfig
+import io.infra.market.vertx.config.JacksonConfig
 import io.infra.market.vertx.router.MainRouter
 import io.infra.market.vertx.extensions.SqlLoggingPool
 import io.infra.market.vertx.extensions.awaitForResult
@@ -165,6 +166,9 @@ fun main() {
     val logger = LoggerFactory.getLogger(InfraMarketVertxApplication::class.java)
     val mainStartTime = System.currentTimeMillis()
     logger.info("正在启动 Infra Market Vert.x 应用...")
+    
+    // 初始化 Jackson 配置（必须在创建 Vertx 实例之前）
+    JacksonConfig.init()
     
     val vertx = Vertx.vertx()
     vertx.deployVerticle(InfraMarketVertxApplication())

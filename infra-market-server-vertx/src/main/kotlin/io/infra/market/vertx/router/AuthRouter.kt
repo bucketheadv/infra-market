@@ -6,6 +6,7 @@ import io.infra.market.vertx.middleware.AuthMiddleware
 import io.infra.market.vertx.service.AuthService
 import io.infra.market.vertx.util.ResponseUtil
 import io.infra.market.vertx.extensions.coroutineHandler
+import io.infra.market.vertx.extensions.mapTo
 import io.vertx.core.Vertx
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.RoutingContext
@@ -41,11 +42,7 @@ class AuthRouter(private val authService: AuthService) {
     
     private suspend fun handleLogin(ctx: RoutingContext) {
         val body = ctx.body().asJsonObject()
-        val request = LoginRequest(
-            username = body.getString("username") ?: "",
-            password = body.getString("password") ?: ""
-        )
-        
+        val request = body.mapTo<LoginRequest>(validate = true)
         val result = authService.login(request)
         ResponseUtil.sendResponse(ctx, result)
     }
@@ -77,11 +74,7 @@ class AuthRouter(private val authService: AuthService) {
     private suspend fun handleChangePassword(ctx: RoutingContext) {
         val uid = ctx.get<Long>("uid")
         val body = ctx.body().asJsonObject()
-        val request = ChangePasswordRequest(
-            oldPassword = body.getString("oldPassword") ?: "",
-            newPassword = body.getString("newPassword") ?: ""
-        )
-        
+        val request = body.mapTo<ChangePasswordRequest>(validate = true)
         val result = authService.changePassword(uid, request)
         ResponseUtil.sendResponse(ctx, result)
     }

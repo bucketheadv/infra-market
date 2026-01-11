@@ -5,6 +5,7 @@ import io.infra.market.vertx.middleware.AuthMiddleware
 import io.infra.market.vertx.service.ApiInterfaceExecutionRecordService
 import io.infra.market.vertx.util.ResponseUtil
 import io.infra.market.vertx.extensions.coroutineHandler
+import io.infra.market.vertx.extensions.mapTo
 import io.vertx.core.Vertx
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.RoutingContext
@@ -32,7 +33,7 @@ class ApiInterfaceExecutionRecordRouter(private val apiInterfaceExecutionRecordS
     
     private suspend fun handleList(ctx: RoutingContext) {
         val body = ctx.body().asJsonObject()
-        val query = body.mapTo(ApiInterfaceExecutionRecordQueryDto::class.java)
+        val query = body.mapTo<ApiInterfaceExecutionRecordQueryDto>(validate = true)
         val result = apiInterfaceExecutionRecordService.list(query)
         ResponseUtil.sendResponse(ctx, result)
     }

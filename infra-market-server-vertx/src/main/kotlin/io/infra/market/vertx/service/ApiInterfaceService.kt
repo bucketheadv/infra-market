@@ -5,6 +5,7 @@ import io.infra.market.vertx.dto.ApiExecuteRequestDto
 import io.infra.market.vertx.dto.ApiExecuteResponseDto
 import io.infra.market.vertx.dto.ApiInterfaceDto
 import io.infra.market.vertx.dto.ApiInterfaceFormDto
+import io.infra.market.vertx.dto.ApiInterfaceQueryDto
 import io.infra.market.vertx.dto.ApiParamDto
 import io.infra.market.vertx.dto.PageResultDto
 import io.infra.market.vertx.entity.ApiInterface
@@ -32,8 +33,8 @@ class ApiInterfaceService(
     private val vertx: Vertx? = null
 ) {
     
-    suspend fun list(name: String?, method: String?, status: Int?, environment: String?, page: Int, size: Int): ApiData<PageResultDto<ApiInterfaceDto>> {
-        val pageResult = apiInterfaceDao.page(name, method, status, environment, page, size)
+    suspend fun list(query: ApiInterfaceQueryDto): ApiData<PageResultDto<ApiInterfaceDto>> {
+        val pageResult = apiInterfaceDao.page(query)
         val interfaceDtos = pageResult.records.map { convertToDto(it) }
         return ApiData.success(PageResultDto(interfaceDtos, pageResult.total, pageResult.page, pageResult.size))
     }

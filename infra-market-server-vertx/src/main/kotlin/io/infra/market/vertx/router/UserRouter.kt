@@ -3,12 +3,14 @@ package io.infra.market.vertx.router
 import io.infra.market.vertx.dto.BatchRequest
 import io.infra.market.vertx.dto.StatusUpdateDto
 import io.infra.market.vertx.dto.UserFormDto
+import io.infra.market.vertx.dto.UserQueryDto
 import io.infra.market.vertx.dto.UserUpdateDto
 import io.infra.market.vertx.middleware.AuthMiddleware
 import io.infra.market.vertx.service.UserService
-import io.infra.market.vertx.util.QueryParamUtil
 import io.infra.market.vertx.util.ResponseUtil
 import io.infra.market.vertx.extensions.coroutineHandler
+import io.infra.market.vertx.extensions.mapTo
+import io.infra.market.vertx.extensions.queryParamsTo
 import io.vertx.core.Vertx
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.RoutingContext
@@ -37,7 +39,7 @@ class UserRouter(private val userService: UserService) {
     }
     
     private suspend fun handleGetUsers(ctx: RoutingContext) {
-        val query = QueryParamUtil.buildUserQuery(ctx)
+        val query = ctx.queryParamsTo<UserQueryDto>(validate = true)
         val result = userService.getUsers(query)
         ResponseUtil.sendResponse(ctx, result)
     }
@@ -52,7 +54,8 @@ class UserRouter(private val userService: UserService) {
     
     private suspend fun handleCreateUser(ctx: RoutingContext) {
         val body = ctx.body().asJsonObject()
-        val form = body.mapTo(UserFormDto::class.java)
+        // 使用 validate = true 启用参数验证（类似 Spring 的 @Valid）
+        val form = body.mapTo<UserFormDto>(validate = true)
         val result = userService.createUser(form)
         ResponseUtil.sendResponse(ctx, result)
     }
@@ -62,7 +65,8 @@ class UserRouter(private val userService: UserService) {
             ?: throw IllegalArgumentException("用户ID无效")
         
         val body = ctx.body().asJsonObject()
-        val form = body.mapTo(UserUpdateDto::class.java)
+        // 使用 validate = true 启用参数验证（类似 Spring 的 @Valid）
+        val form = body.mapTo<UserUpdateDto>(validate = true)
         val result = userService.updateUser(id, form)
         ResponseUtil.sendResponse(ctx, result)
     }
@@ -80,9 +84,8 @@ class UserRouter(private val userService: UserService) {
             ?: throw IllegalArgumentException("用户ID无效")
         
         val body = ctx.body().asJsonObject()
-        val status = body.getString("status") ?: throw IllegalArgumentException("状态参数不能为空")
-        
-        val result = userService.updateStatus(id, status)
+        val request = body.mapTo<StatusUpdateDto>(validate = true)
+        val result = userService.updateStatus(id, request.status)
         ResponseUtil.sendResponse(ctx, result)
     }
     
@@ -96,7 +99,7 @@ class UserRouter(private val userService: UserService) {
     
     private suspend fun handleBatchDelete(ctx: RoutingContext) {
         val body = ctx.body().asJsonObject()
-        val request = body.mapTo(BatchRequest::class.java)
+        val request = body.mapTo<BatchRequest>(validate = true)
         val result = userService.batchDeleteUsers(request.ids)
         ResponseUtil.sendResponse(ctx, result)
     }

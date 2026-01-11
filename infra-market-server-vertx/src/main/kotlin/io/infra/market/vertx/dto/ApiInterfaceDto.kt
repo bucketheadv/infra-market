@@ -2,6 +2,8 @@ package io.infra.market.vertx.dto
 
 import io.infra.market.vertx.enums.EnvironmentEnum
 import io.infra.market.vertx.enums.HttpMethodEnum
+import jakarta.validation.constraints.Max
+import jakarta.validation.constraints.Min
 
 /**
  * 接口管理DTO
@@ -90,5 +92,30 @@ data class ApiExecuteResponseDto(
     var success: Boolean? = null,
     var error: String? = null,
     var extractedValue: String? = null
+)
+
+/**
+ * 接口查询DTO
+ */
+data class ApiInterfaceQueryDto(
+    var name: String? = null,
+    var method: String? = null,
+    var status: Int? = null,
+    var environment: String? = null,
+    
+    @field:Min(value = 1, message = "页码不能小于1")
+    var page: Int = 1,
+    
+    @field:Min(value = 1, message = "每页大小不能小于1")
+    @field:Max(value = 1000, message = "每页大小不能超过1000")
+    var size: Int = 10
+)
+
+/**
+ * 最常用接口查询DTO
+ */
+data class MostUsedInterfacesQueryDto(
+    var days: Int = 30,
+    var limit: Int = 5
 )
 

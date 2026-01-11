@@ -2,11 +2,14 @@ package io.infra.market.vertx.router
 
 import io.infra.market.vertx.dto.BatchRequest
 import io.infra.market.vertx.dto.PermissionFormDto
+import io.infra.market.vertx.dto.PermissionQueryDto
+import io.infra.market.vertx.dto.StatusUpdateDto
 import io.infra.market.vertx.middleware.AuthMiddleware
 import io.infra.market.vertx.service.PermissionService
-import io.infra.market.vertx.util.QueryParamUtil
 import io.infra.market.vertx.util.ResponseUtil
 import io.infra.market.vertx.extensions.coroutineHandler
+import io.infra.market.vertx.extensions.mapTo
+import io.infra.market.vertx.extensions.queryParamsTo
 import io.vertx.core.Vertx
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.RoutingContext
@@ -35,7 +38,7 @@ class PermissionRouter(private val permissionService: PermissionService) {
     }
     
     private suspend fun handleGetPermissions(ctx: RoutingContext) {
-        val query = QueryParamUtil.buildPermissionQuery(ctx)
+        val query = ctx.queryParamsTo<PermissionQueryDto>(validate = true)
         val result = permissionService.getPermissions(query)
         ResponseUtil.sendResponse(ctx, result)
     }
@@ -55,7 +58,7 @@ class PermissionRouter(private val permissionService: PermissionService) {
     
     private suspend fun handleCreatePermission(ctx: RoutingContext) {
         val body = ctx.body().asJsonObject()
-        val form = body.mapTo(PermissionFormDto::class.java)
+        val form = body.mapTo<PermissionFormDto>(validate = true)
         val result = permissionService.createPermission(form)
         ResponseUtil.sendResponse(ctx, result)
     }
@@ -65,7 +68,7 @@ class PermissionRouter(private val permissionService: PermissionService) {
             ?: throw IllegalArgumentException("权限ID无效")
         
         val body = ctx.body().asJsonObject()
-        val form = body.mapTo(PermissionFormDto::class.java)
+        val form = body.mapTo<PermissionFormDto>(validate = true)
         val result = permissionService.updatePermission(id, form)
         ResponseUtil.sendResponse(ctx, result)
     }
@@ -83,15 +86,14 @@ class PermissionRouter(private val permissionService: PermissionService) {
             ?: throw IllegalArgumentException("权限ID无效")
         
         val body = ctx.body().asJsonObject()
-        val status = body.getString("status") ?: throw IllegalArgumentException("状态参数不能为空")
-        
-        val result = permissionService.updatePermissionStatus(id, status)
+        val request = body.mapTo<StatusUpdateDto>(validate = true)
+        val result = permissionService.updatePermissionStatus(id, request.status)
         ResponseUtil.sendResponse(ctx, result)
     }
     
     private suspend fun handleBatchDelete(ctx: RoutingContext) {
         val body = ctx.body().asJsonObject()
-        val request = body.mapTo(BatchRequest::class.java)
+        val request = body.mapTo<BatchRequest>(validate = true)
         val result = permissionService.batchDeletePermissions(request.ids)
         ResponseUtil.sendResponse(ctx, result)
     }

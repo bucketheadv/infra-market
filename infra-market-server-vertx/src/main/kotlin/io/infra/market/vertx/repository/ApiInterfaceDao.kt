@@ -1,5 +1,6 @@
 package io.infra.market.vertx.repository
 
+import io.infra.market.vertx.dto.ApiInterfaceQueryDto
 import io.infra.market.vertx.entity.ApiInterface
 import io.infra.market.vertx.extensions.awaitForResult
 import io.vertx.sqlclient.Pool
@@ -36,16 +37,16 @@ class ApiInterfaceDao(pool: Pool) : BaseDao(pool) {
         return rows.map { rowToApiInterface(it) }
     }
     
-    suspend fun page(name: String?, method: String?, status: Int?, environment: String?, page: Int, size: Int): PageWrapper<ApiInterface> {
+    suspend fun page(query: ApiInterfaceQueryDto): PageWrapper<ApiInterface> {
         return page(
             tableName = "api_interface",
-            page = page,
-            size = size,
+            page = query.page,
+            size = query.size,
             dynamicConditions = listOf(
-                "name LIKE ?" to name?.let { "%$it%" },
-                "method = ?" to method,
-                "status = ?" to status,
-                "environment = ?" to environment
+                "name LIKE ?" to query.name?.let { "%$it%" },
+                "method = ?" to query.method,
+                "status = ?" to query.status,
+                "environment = ?" to query.environment
             ),
             orderBy = "id DESC",
             rowMapper = { rowToApiInterface(it) }

@@ -2,10 +2,14 @@ package io.infra.market.vertx.router
 
 import io.infra.market.vertx.dto.ApiExecuteRequestDto
 import io.infra.market.vertx.dto.ApiInterfaceFormDto
+import io.infra.market.vertx.dto.ApiInterfaceQueryDto
+import io.infra.market.vertx.dto.MostUsedInterfacesQueryDto
 import io.infra.market.vertx.middleware.AuthMiddleware
 import io.infra.market.vertx.service.ApiInterfaceService
 import io.infra.market.vertx.util.ResponseUtil
 import io.infra.market.vertx.extensions.coroutineHandler
+import io.infra.market.vertx.extensions.mapTo
+import io.infra.market.vertx.extensions.queryParamsTo
 import io.vertx.core.Vertx
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.RoutingContext
@@ -35,22 +39,14 @@ class ApiInterfaceRouter(private val apiInterfaceService: ApiInterfaceService) {
     }
     
     private suspend fun handleList(ctx: RoutingContext) {
-        val name = ctx.queryParams().get("name")
-        val method = ctx.queryParams().get("method")
-        val status = ctx.queryParams().get("status")?.toIntOrNull()
-        val environment = ctx.queryParams().get("environment")
-        val page = ctx.queryParams().get("page")?.toIntOrNull() ?: 1
-        val size = ctx.queryParams().get("size")?.toIntOrNull() ?: 10
-        
-        val result = apiInterfaceService.list(name, method, status, environment, page, size)
+        val query = ctx.queryParamsTo<ApiInterfaceQueryDto>(validate = true)
+        val result = apiInterfaceService.list(query)
         ResponseUtil.sendResponse(ctx, result)
     }
     
     private suspend fun handleGetMostUsed(ctx: RoutingContext) {
-        val days = ctx.queryParams().get("days")?.toIntOrNull() ?: 30
-        val limit = ctx.queryParams().get("limit")?.toIntOrNull() ?: 5
-        
-        val result = apiInterfaceService.getMostUsedInterfaces(days, limit)
+        val query = ctx.queryParamsTo<MostUsedInterfacesQueryDto>()
+        val result = apiInterfaceService.getMostUsedInterfaces(query.days, query.limit)
         ResponseUtil.sendResponse(ctx, result)
     }
     
@@ -64,7 +60,7 @@ class ApiInterfaceRouter(private val apiInterfaceService: ApiInterfaceService) {
     
     private suspend fun handleCreate(ctx: RoutingContext) {
         val body = ctx.body().asJsonObject()
-        val form = body.mapTo(ApiInterfaceFormDto::class.java)
+        val form = body.mapTo<ApiInterfaceFormDto>(validate = true)
         val result = apiInterfaceService.create(form)
         ResponseUtil.sendResponse(ctx, result)
     }
@@ -74,7 +70,7 @@ class ApiInterfaceRouter(private val apiInterfaceService: ApiInterfaceService) {
             ?: throw IllegalArgumentException("接口ID无效")
         
         val body = ctx.body().asJsonObject()
-        val form = body.mapTo(ApiInterfaceFormDto::class.java)
+        val form = body.mapTo<ApiInterfaceFormDto>(validate = true)
         val result = apiInterfaceService.update(id, form)
         ResponseUtil.sendResponse(ctx, result)
     }
@@ -107,7 +103,7 @@ class ApiInterfaceRouter(private val apiInterfaceService: ApiInterfaceService) {
     
     private suspend fun handleExecute(ctx: RoutingContext) {
         val body = ctx.body().asJsonObject()
-        val request = body.mapTo(ApiExecuteRequestDto::class.java)
+        val request = body.mapTo<ApiExecuteRequestDto>(validate = true)
         val result = apiInterfaceService.execute(request)
         ResponseUtil.sendResponse(ctx, result)
     }
