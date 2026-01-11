@@ -1,5 +1,7 @@
 package io.infra.market.vertx.router
 
+import com.google.inject.Inject
+import com.google.inject.Singleton
 import io.infra.market.vertx.dto.ApiExecuteRequestDto
 import io.infra.market.vertx.dto.ApiInterfaceFormDto
 import io.infra.market.vertx.dto.ApiInterfaceQueryDto
@@ -19,7 +21,10 @@ import io.vertx.ext.web.RoutingContext
  * 
  * 规则2：路由处理请求，必须用 coroutineHandler 替代原生的 handler
  */
-class ApiInterfaceRouter(private val apiInterfaceService: ApiInterfaceService) {
+@Singleton
+class ApiInterfaceRouter @Inject constructor(
+    private val apiInterfaceService: ApiInterfaceService
+) {
     
     fun mount(router: Router, vertx: Vertx) {
         val apiInterfaceRouter = Router.router(vertx)

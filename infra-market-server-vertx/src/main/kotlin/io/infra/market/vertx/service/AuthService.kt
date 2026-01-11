@@ -1,6 +1,7 @@
 package io.infra.market.vertx.service
 
 import com.google.inject.Inject
+import com.google.inject.Singleton
 import io.infra.market.vertx.dto.ApiData
 import io.infra.market.vertx.dto.ChangePasswordRequest
 import io.infra.market.vertx.dto.LoginRequest
@@ -22,6 +23,7 @@ import io.infra.market.vertx.util.JwtUtil
  * 
  * 规则1：任何调用 xxx.awaitForResult() 的函数，必须用 suspend 修饰
  */
+@Singleton
 class AuthService @Inject constructor(
     private val userDao: UserDao,
     private val userRoleDao: UserRoleDao,

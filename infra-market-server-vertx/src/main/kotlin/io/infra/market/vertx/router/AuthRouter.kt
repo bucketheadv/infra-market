@@ -1,5 +1,7 @@
 package io.infra.market.vertx.router
 
+import com.google.inject.Inject
+import com.google.inject.Singleton
 import io.infra.market.vertx.dto.ChangePasswordRequest
 import io.infra.market.vertx.dto.LoginRequest
 import io.infra.market.vertx.middleware.AuthMiddleware
@@ -16,7 +18,10 @@ import io.vertx.ext.web.RoutingContext
  * 
  * 规则2：路由处理请求，必须用 coroutineHandler 替代原生的 handler
  */
-class AuthRouter(private val authService: AuthService) {
+@Singleton
+class AuthRouter @Inject constructor(
+    private val authService: AuthService
+) {
     
     fun mount(router: Router, vertx: Vertx) {
         val authRouter = Router.router(vertx)

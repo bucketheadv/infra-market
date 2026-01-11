@@ -1,13 +1,7 @@
 package io.infra.market.vertx.router
 
 import com.google.inject.Inject
-import io.infra.market.vertx.service.ApiInterfaceExecutionRecordService
-import io.infra.market.vertx.service.ApiInterfaceService
-import io.infra.market.vertx.service.AuthService
-import io.infra.market.vertx.service.DashboardService
-import io.infra.market.vertx.service.PermissionService
-import io.infra.market.vertx.service.RoleService
-import io.infra.market.vertx.service.UserService
+import com.google.inject.Singleton
 import io.infra.market.vertx.exception.GlobalExceptionHandler
 import io.vertx.core.Vertx
 import io.vertx.core.http.HttpMethod
@@ -18,17 +12,18 @@ import io.vertx.ext.web.handler.CorsHandler
 /**
  * 主路由器
  * 
- * 使用 Guice 进行依赖注入，所有 Service 通过构造函数注入。
+ * 使用 Guice 进行依赖注入，所有 Router 和 Service 通过构造函数注入。
  */
+@Singleton
 class MainRouter @Inject constructor(
     private val vertx: Vertx,
-    private val authService: AuthService,
-    private val userService: UserService,
-    private val roleService: RoleService,
-    private val permissionService: PermissionService,
-    private val apiInterfaceService: ApiInterfaceService,
-    private val apiInterfaceExecutionRecordService: ApiInterfaceExecutionRecordService,
-    private val dashboardService: DashboardService
+    private val authRouter: AuthRouter,
+    private val userRouter: UserRouter,
+    private val roleRouter: RoleRouter,
+    private val permissionRouter: PermissionRouter,
+    private val apiInterfaceRouter: ApiInterfaceRouter,
+    private val apiInterfaceExecutionRecordRouter: ApiInterfaceExecutionRecordRouter,
+    private val dashboardRouter: DashboardRouter
 ) {
     
     fun create(): Router {
@@ -49,13 +44,13 @@ class MainRouter @Inject constructor(
         GlobalExceptionHandler.register(router)
         
         // 直接注册路由到主路由（路由内部已包含完整路径）
-        AuthRouter(authService).mount(router, vertx)
-        UserRouter(userService).mount(router, vertx)
-        RoleRouter(roleService).mount(router, vertx)
-        PermissionRouter(permissionService).mount(router, vertx)
-        ApiInterfaceRouter(apiInterfaceService).mount(router, vertx)
-        ApiInterfaceExecutionRecordRouter(apiInterfaceExecutionRecordService).mount(router, vertx)
-        DashboardRouter(dashboardService).mount(router, vertx)
+        authRouter.mount(router, vertx)
+        userRouter.mount(router, vertx)
+        roleRouter.mount(router, vertx)
+        permissionRouter.mount(router, vertx)
+        apiInterfaceRouter.mount(router, vertx)
+        apiInterfaceExecutionRecordRouter.mount(router, vertx)
+        dashboardRouter.mount(router, vertx)
         
         // 健康检查
         router.get("/health").handler { ctx ->

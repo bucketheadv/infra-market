@@ -1,5 +1,7 @@
 package io.infra.market.vertx.router
 
+import com.google.inject.Inject
+import com.google.inject.Singleton
 import io.infra.market.vertx.middleware.AuthMiddleware
 import io.infra.market.vertx.service.DashboardService
 import io.infra.market.vertx.util.ResponseUtil
@@ -13,7 +15,10 @@ import io.vertx.ext.web.RoutingContext
  * 
  * 规则2：路由处理请求，必须用 coroutineHandler 替代原生的 handler
  */
-class DashboardRouter(private val dashboardService: DashboardService) {
+@Singleton
+class DashboardRouter @Inject constructor(
+    private val dashboardService: DashboardService
+) {
     
     fun mount(router: Router, vertx: Vertx) {
         val dashboardRouter = Router.router(vertx)

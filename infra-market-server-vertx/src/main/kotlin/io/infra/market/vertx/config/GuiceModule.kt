@@ -4,22 +4,6 @@ import com.google.inject.AbstractModule
 import com.google.inject.Provides
 import com.google.inject.Singleton
 import io.infra.market.vertx.extensions.SqlLoggingPool
-import io.infra.market.vertx.repository.ApiInterfaceDao
-import io.infra.market.vertx.repository.ApiInterfaceExecutionRecordDao
-import io.infra.market.vertx.repository.PermissionDao
-import io.infra.market.vertx.repository.RoleDao
-import io.infra.market.vertx.repository.RolePermissionDao
-import io.infra.market.vertx.repository.UserDao
-import io.infra.market.vertx.repository.UserRoleDao
-import io.infra.market.vertx.service.ApiInterfaceExecutionRecordService
-import io.infra.market.vertx.service.ApiInterfaceService
-import io.infra.market.vertx.service.AuthService
-import io.infra.market.vertx.service.DashboardService
-import io.infra.market.vertx.service.PermissionService
-import io.infra.market.vertx.service.RoleService
-import io.infra.market.vertx.service.TokenService
-import io.infra.market.vertx.service.UserService
-import io.infra.market.vertx.router.MainRouter
 import io.vertx.core.Vertx
 import io.vertx.mysqlclient.MySQLBuilder
 import io.vertx.mysqlclient.MySQLConnectOptions
@@ -51,27 +35,8 @@ class GuiceModule(
         // 绑定应用配置
         bind(ApplicationConfig::class.java).toInstance(appConfig)
         
-        // 绑定 DAO（单例）- Guice 会自动识别 @Inject 构造函数，这里只需要指定作用域
-        bind(UserDao::class.java).`in`(Singleton::class.java)
-        bind(UserRoleDao::class.java).`in`(Singleton::class.java)
-        bind(RoleDao::class.java).`in`(Singleton::class.java)
-        bind(RolePermissionDao::class.java).`in`(Singleton::class.java)
-        bind(PermissionDao::class.java).`in`(Singleton::class.java)
-        bind(ApiInterfaceDao::class.java).`in`(Singleton::class.java)
-        bind(ApiInterfaceExecutionRecordDao::class.java).`in`(Singleton::class.java)
-        
-        // 绑定 Service（单例）- Guice 会自动识别 @Inject 构造函数，这里只需要指定作用域
-        bind(TokenService::class.java).`in`(Singleton::class.java)
-        bind(AuthService::class.java).`in`(Singleton::class.java)
-        bind(UserService::class.java).`in`(Singleton::class.java)
-        bind(RoleService::class.java).`in`(Singleton::class.java)
-        bind(PermissionService::class.java).`in`(Singleton::class.java)
-        bind(ApiInterfaceService::class.java).`in`(Singleton::class.java)
-        bind(ApiInterfaceExecutionRecordService::class.java).`in`(Singleton::class.java)
-        bind(DashboardService::class.java).`in`(Singleton::class.java)
-        
-        // 绑定 MainRouter（单例）
-        bind(MainRouter::class.java).`in`(Singleton::class.java)
+        // DAO 和 Service 类已使用 @Singleton 注解，Guice 会自动识别并创建单例
+        // 无需在此处显式绑定
     }
 
     /**

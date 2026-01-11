@@ -1,5 +1,7 @@
 package io.infra.market.vertx.router
 
+import com.google.inject.Inject
+import com.google.inject.Singleton
 import io.infra.market.vertx.dto.BatchRequest
 import io.infra.market.vertx.dto.RoleFormDto
 import io.infra.market.vertx.dto.RoleQueryDto
@@ -19,7 +21,10 @@ import io.vertx.ext.web.RoutingContext
  * 
  * 规则2：路由处理请求，必须用 coroutineHandler 替代原生的 handler
  */
-class RoleRouter(private val roleService: RoleService) {
+@Singleton
+class RoleRouter @Inject constructor(
+    private val roleService: RoleService
+) {
     
     fun mount(router: Router, vertx: Vertx) {
         val roleRouter = Router.router(vertx)
