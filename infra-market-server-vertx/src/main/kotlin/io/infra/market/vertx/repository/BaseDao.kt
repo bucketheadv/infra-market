@@ -8,7 +8,9 @@ import io.vertx.sqlclient.Row
 import io.vertx.sqlclient.RowSet
 import io.vertx.sqlclient.SqlConnection
 import io.vertx.sqlclient.Tuple
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.intellij.lang.annotations.Language
 
 /**
@@ -115,13 +117,15 @@ abstract class BaseDao(protected val pool: Pool) {
         block: suspend (SqlConnection) -> T
     ): Future<T> {
         return Future.future { promise ->
-            try {
-                val result = runBlocking {
-                    block(connection!!)
+            // 使用 CoroutineScope 配合 Dispatchers.IO 在 IO 线程池中执行协程，避免阻塞 event loop
+            // 这种方式比 GlobalScope 更安全，因为可以控制协程的生命周期
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    val result = block(connection!!)
+                    promise.complete(result)
+                } catch (e: Exception) {
+                    promise.fail(e)
                 }
-                promise.complete(result)
-            } catch (e: Exception) {
-                promise.fail(e)
             }
         }
     }
