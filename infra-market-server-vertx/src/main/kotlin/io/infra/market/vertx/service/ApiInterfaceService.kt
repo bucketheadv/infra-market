@@ -153,7 +153,7 @@ class ApiInterfaceService @Inject constructor(
         val path = uri.path ?: "/"
         val baseUrl = "$scheme://$host:$port$path"
         
-        val vertxInstance = vertx ?: return ApiData.error("HTTP客户端未初始化")
+        val vertxInstance = vertx
         
         val clientOptions = WebClientOptions()
             .setConnectTimeout(timeoutMillis.toInt())
