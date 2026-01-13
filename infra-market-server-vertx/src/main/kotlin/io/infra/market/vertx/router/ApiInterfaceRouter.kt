@@ -109,7 +109,7 @@ class ApiInterfaceRouter @Inject constructor(
     private suspend fun handleExecute(ctx: RoutingContext) {
         val body = ctx.body().asJsonObject()
         val request = body.mapTo<ApiExecuteRequestDto>(validate = true)
-        val result = apiInterfaceService.execute(request)
+        val result = apiInterfaceService.execute(request, ctx)
         ResponseUtil.sendResponse(ctx, result)
     }
 }

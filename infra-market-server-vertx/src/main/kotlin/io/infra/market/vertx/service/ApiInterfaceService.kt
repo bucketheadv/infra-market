@@ -11,9 +11,15 @@ import io.infra.market.vertx.dto.ApiInterfaceQueryDto
 import io.infra.market.vertx.dto.ApiParamDto
 import io.infra.market.vertx.dto.PageResultDto
 import io.infra.market.vertx.entity.ApiInterface
+import io.infra.market.vertx.entity.ApiInterfaceExecutionRecord
 import io.infra.market.vertx.extensions.awaitForResult
 import io.infra.market.vertx.repository.ApiInterfaceDao
+import io.infra.market.vertx.repository.ApiInterfaceExecutionRecordDao
+import io.infra.market.vertx.repository.UserDao
+import io.infra.market.vertx.util.TimeUtil
 import io.vertx.core.Vertx
+import io.vertx.ext.web.RoutingContext
+import org.slf4j.LoggerFactory
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.http.HttpMethod
 import io.vertx.core.json.JsonArray
@@ -33,8 +39,12 @@ import java.net.URLEncoder
 @Singleton
 class ApiInterfaceService @Inject constructor(
     private val apiInterfaceDao: ApiInterfaceDao,
+    private val apiInterfaceExecutionRecordDao: ApiInterfaceExecutionRecordDao,
+    private val userDao: UserDao,
     private val vertx: Vertx
 ) {
+    
+    private val logger = LoggerFactory.getLogger(ApiInterfaceService::class.java)
     
     suspend fun list(query: ApiInterfaceQueryDto): ApiData<PageResultDto<ApiInterfaceDto>> {
         val pageResult = apiInterfaceDao.page(query)
@@ -117,7 +127,7 @@ class ApiInterfaceService @Inject constructor(
         return ApiData.success(convertToDto(newInterface))
     }
     
-    suspend fun execute(request: ApiExecuteRequestDto): ApiData<ApiExecuteResponseDto> {
+    suspend fun execute(request: ApiExecuteRequestDto, ctx: RoutingContext? = null): ApiData<ApiExecuteResponseDto> {
         val startTime = System.currentTimeMillis()
         val interfaceId = request.interfaceId ?: return ApiData.error("接口ID不能为空")
 
@@ -221,27 +231,47 @@ class ApiInterfaceService @Inject constructor(
             val endTime = System.currentTimeMillis()
             val responseTime = endTime - startTime
             
-            return ApiData.success(ApiExecuteResponseDto(
+            val errorResponse = ApiExecuteResponseDto(
                 status = 500,
                 headers = emptyMap(),
                 body = null,
                 responseTime = responseTime,
                 success = false,
                 error = error.message ?: "请求失败"
-            ))
+            )
+            
+            // 保存执行记录
+            saveExecutionRecord(
+                interfaceId = interfaceId,
+                request = request,
+                response = errorResponse,
+                ctx = ctx
+            )
+            
+            return ApiData.success(errorResponse)
         }
         
         val endTime = System.currentTimeMillis()
         val responseTime = endTime - startTime
         val statusCode = response.statusCode()
         
-        return ApiData.success(ApiExecuteResponseDto(
+        val successResponse = ApiExecuteResponseDto(
             status = statusCode,
             headers = emptyMap(),
             body = response.bodyAsString(),
             responseTime = responseTime,
             success = statusCode in 200..299
-        ))
+        )
+        
+        // 保存执行记录
+        saveExecutionRecord(
+            interfaceId = interfaceId,
+            request = request,
+            response = successResponse,
+            ctx = ctx
+        )
+        
+        return ApiData.success(successResponse)
     }
     
     private fun convertToDto(entity: ApiInterface): ApiInterfaceDto {
@@ -254,8 +284,8 @@ class ApiInterfaceService @Inject constructor(
             url = entity.url,
             description = entity.description,
             status = entity.status,
-            createTime = entity.createTime,
-            updateTime = entity.updateTime,
+            createTime = TimeUtil.format(entity.createTime),
+            updateTime = TimeUtil.format(entity.updateTime),
             postType = entity.postType,
             environment = entity.environment,
             timeout = entity.timeout,
@@ -325,5 +355,79 @@ class ApiInterfaceService @Inject constructor(
     
     private fun encodeURIComponent(str: String): String {
         return URLEncoder.encode(str, "UTF-8")
+    }
+    
+    /**
+     * 将 Map 转换为 JSON 字符串
+     */
+    private fun mapToJsonString(map: Map<String, *>?): String? {
+        return if (!map.isNullOrEmpty()) {
+            JsonObject(map.mapValues { it.value.toString() }).encode()
+        } else null
+    }
+    
+    /**
+     * 保存接口执行记录
+     */
+    private suspend fun saveExecutionRecord(
+        interfaceId: Long,
+        request: ApiExecuteRequestDto,
+        response: ApiExecuteResponseDto,
+        ctx: RoutingContext?
+    ) {
+        try {
+            // 获取执行人信息
+            val executorId = ctx?.get<Long>("uid")
+            val executorName = if (executorId != null) {
+                try {
+                    val user = userDao.findByUid(executorId)
+                    user?.username ?: "用户$executorId"
+                } catch (e: Exception) {
+                    logger.warn("获取用户信息失败: ${e.message}", e)
+                    "用户$executorId"
+                }
+            } else {
+                "未知用户"
+            }
+            
+            // 获取客户端信息
+            val clientIp = ctx?.request()?.remoteAddress()?.host() ?: "未知IP"
+            val userAgent = ctx?.request()?.getHeader("User-Agent") ?: "未知User-Agent"
+            
+            // 构建请求参数JSON
+            val requestParamsJson = mapToJsonString(request.urlParams)
+            
+            // 构建请求头JSON
+            val requestHeadersJson = mapToJsonString(request.headers)
+            
+            // 构建请求体JSON
+            val requestBodyJson = mapToJsonString(request.bodyParams)
+            
+            // 构建响应头JSON
+            val responseHeadersJson = mapToJsonString(response.headers)
+            
+            val executionRecord = ApiInterfaceExecutionRecord(
+                interfaceId = interfaceId,
+                executorId = executorId,
+                executorName = executorName,
+                requestParams = requestParamsJson,
+                requestHeaders = requestHeadersJson,
+                requestBody = requestBodyJson,
+                responseStatus = response.status,
+                responseHeaders = responseHeadersJson,
+                responseBody = response.body,
+                executionTime = response.responseTime,
+                success = response.success ?: false,
+                errorMessage = response.error,
+                remark = request.remark,
+                clientIp = clientIp,
+                userAgent = userAgent
+            )
+            
+            apiInterfaceExecutionRecordDao.save(executionRecord)
+        } catch (e: Exception) {
+            // 记录执行记录失败不影响主流程，只打印日志
+            logger.error("保存接口执行记录失败: ${e.message}", e)
+        }
     }
 }

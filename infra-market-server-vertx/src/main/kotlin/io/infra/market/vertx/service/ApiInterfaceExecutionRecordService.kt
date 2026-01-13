@@ -9,6 +9,7 @@ import io.infra.market.vertx.dto.ApiInterfaceExecutionRecordStatsDto
 import io.infra.market.vertx.dto.PageResultDto
 import io.infra.market.vertx.entity.ApiInterfaceExecutionRecord
 import io.infra.market.vertx.repository.ApiInterfaceExecutionRecordDao
+import io.infra.market.vertx.util.TimeUtil
 
 /**
  * 接口执行记录服务
@@ -76,8 +77,8 @@ class ApiInterfaceExecutionRecordService @Inject constructor(
             remark = entity.remark,
             clientIp = entity.clientIp,
             userAgent = entity.userAgent,
-            createTime = entity.createTime,
-            updateTime = entity.updateTime
+            createTime = TimeUtil.format(entity.createTime),
+            updateTime = TimeUtil.format(entity.updateTime)
         )
     }
 }

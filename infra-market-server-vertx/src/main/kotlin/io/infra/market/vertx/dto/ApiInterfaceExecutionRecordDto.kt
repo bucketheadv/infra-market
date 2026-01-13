@@ -111,15 +111,15 @@ data class ApiInterfaceExecutionRecordDto(
 
     /**
      * 创建时间
-     * 执行记录的创建时间，毫秒时间戳
+     * 执行记录的创建时间，格式化的字符串（如 "2024-01-01 12:00:00"）
      */
-    var createTime: Long? = null,
+    var createTime: String? = null,
 
     /**
      * 更新时间
-     * 执行记录的最后修改时间，毫秒时间戳
+     * 执行记录的最后修改时间，格式化的字符串（如 "2024-01-01 12:00:00"）
      */
-    var updateTime: Long? = null
+    var updateTime: String? = null
 )
 
 /**

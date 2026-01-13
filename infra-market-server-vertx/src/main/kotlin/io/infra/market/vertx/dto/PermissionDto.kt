@@ -1,6 +1,7 @@
 package io.infra.market.vertx.dto
 
 import io.infra.market.vertx.entity.Permission
+import io.infra.market.vertx.util.TimeUtil
 
 /**
  * 权限信息DTO
@@ -67,6 +68,18 @@ data class PermissionDto(
     val status: String,
     
     /**
+     * 创建时间
+     * 权限记录的创建时间，格式化的字符串（如 "2024-01-01 12:00:00"）
+     */
+    val createTime: String? = null,
+    
+    /**
+     * 更新时间
+     * 权限信息最后更新的时间，格式化的字符串（如 "2024-01-01 12:00:00"）
+     */
+    val updateTime: String? = null,
+    
+    /**
      * 子权限列表
      * 当前权限的子权限列表，用于构建权限树，默认为null
      */
@@ -87,6 +100,8 @@ data class PermissionDto(
                 icon = permission.icon,
                 sort = permission.sort,
                 status = permission.status,
+                createTime = TimeUtil.format(permission.createTime),
+                updateTime = TimeUtil.format(permission.updateTime),
                 children = null
             )
         }
@@ -106,6 +121,8 @@ data class PermissionDto(
                     icon = permission.icon,
                     sort = permission.sort,
                     status = permission.status,
+                    createTime = TimeUtil.format(permission.createTime),
+                    updateTime = TimeUtil.format(permission.updateTime),
                     children = null
                 )
             }
@@ -155,7 +172,7 @@ data class PermissionDto(
             // 按sort字段排序子权限
             val sortedChildren = children.sortedBy { it.sort }
             
-            // 返回带有子权限的新PermissionDto
+            // 返回带有子权限的新PermissionDto（保留时间字段）
             return permission.copy(children = sortedChildren)
         }
     }
