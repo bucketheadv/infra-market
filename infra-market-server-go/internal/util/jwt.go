@@ -2,6 +2,8 @@ package util
 
 import (
 	"errors"
+	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -13,7 +15,6 @@ const (
 )
 
 type Claims struct {
-	UID      uint64 `json:"uid"`
 	Username string `json:"username"`
 	jwt.RegisteredClaims
 }
@@ -24,9 +25,9 @@ func GenerateToken(uid uint64, username string) (string, error) {
 	expiration := now.Add(time.Duration(expirationTime) * time.Millisecond)
 
 	claims := &Claims{
-		UID:      uid,
 		Username: username,
 		RegisteredClaims: jwt.RegisteredClaims{
+			Subject:   fmt.Sprintf("%d", uid), // 使用 subject claim 存储 uid，与 Java 版本保持一致
 			IssuedAt:  jwt.NewNumericDate(now),
 			ExpiresAt: jwt.NewNumericDate(expiration),
 		},
@@ -42,7 +43,12 @@ func GetUIDFromToken(tokenString string) (uint64, error) {
 	if err != nil {
 		return 0, err
 	}
-	return claims.UID, nil
+	// 从 subject claim 中提取 uid，与 Java 版本保持一致
+	uid, err := strconv.ParseUint(claims.Subject, 10, 64)
+	if err != nil {
+		return 0, err
+	}
+	return uid, nil
 }
 
 // ValidateToken 验证token是否有效
