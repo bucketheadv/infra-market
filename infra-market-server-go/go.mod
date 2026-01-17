@@ -12,6 +12,7 @@ require (
 	github.com/go-resty/resty/v2 v2.17.1
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/pelletier/go-toml/v2 v2.2.4
+	go.uber.org/dig v1.18.0
 	gorm.io/driver/mysql v1.6.0
 	gorm.io/gorm v1.31.1
 )

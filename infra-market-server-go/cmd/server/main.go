@@ -29,7 +29,10 @@ func main() {
 	}
 
 	// 初始化路由
-	r := router.SetupRouter(db, cfg)
+	r, err := router.SetupRouter(db, cfg)
+	if err != nil {
+		log.Fatalf("路由初始化失败: %v", err)
+	}
 
 	// 启动服务器
 	if err := r.Run(":" + cfg.Server.Port); err != nil {
