@@ -85,35 +85,38 @@ public static class AesUtil
     {
         var keyBytes = Encoding.UTF8.GetBytes(key);
 
-        if (keyBytes.Length < 16)
+        switch (keyBytes.Length)
         {
-            // 如果密钥太短，填充到16字节
-            var paddedKey = new byte[16];
-            Array.Copy(keyBytes, paddedKey, keyBytes.Length);
-            return paddedKey;
+            case < 16:
+            {
+                // 如果密钥太短，填充到16字节
+                var paddedKey = new byte[16];
+                Array.Copy(keyBytes, paddedKey, keyBytes.Length);
+                return paddedKey;
+            }
+            case > 32:
+            {
+                // 如果密钥太长，截取前32字节
+                var truncatedKey = new byte[32];
+                Array.Copy(keyBytes, truncatedKey, 32);
+                return truncatedKey;
+            }
+            case > 16 and < 24:
+            {
+                // 如果密钥长度在16-24之间，填充到24字节
+                var paddedKey = new byte[24];
+                Array.Copy(keyBytes, paddedKey, keyBytes.Length);
+                return paddedKey;
+            }
+            case > 24 and < 32:
+            {
+                // 如果密钥长度在24-32之间，填充到32字节
+                var paddedKey = new byte[32];
+                Array.Copy(keyBytes, paddedKey, keyBytes.Length);
+                return paddedKey;
+            }
+            default:
+                return keyBytes;
         }
-        else if (keyBytes.Length > 32)
-        {
-            // 如果密钥太长，截取前32字节
-            var truncatedKey = new byte[32];
-            Array.Copy(keyBytes, truncatedKey, 32);
-            return truncatedKey;
-        }
-        else if (keyBytes.Length is > 16 and < 24)
-        {
-            // 如果密钥长度在16-24之间，填充到24字节
-            var paddedKey = new byte[24];
-            Array.Copy(keyBytes, paddedKey, keyBytes.Length);
-            return paddedKey;
-        }
-        else if (keyBytes.Length is > 24 and < 32)
-        {
-            // 如果密钥长度在24-32之间，填充到32字节
-            var paddedKey = new byte[32];
-            Array.Copy(keyBytes, paddedKey, keyBytes.Length);
-            return paddedKey;
-        }
-
-        return keyBytes;
     }
 }
