@@ -1,5 +1,6 @@
 using InfraMarket.Server.DTOs;
 using InfraMarket.Server.Services.Interfaces;
+using InfraMarket.Server.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -69,7 +70,7 @@ public class ApiInterfaceController(IApiInterfaceService apiInterfaceService) : 
     [HttpPost("execute")]
     public async Task<ActionResult<ApiData<ApiExecuteResponseDto>>> Execute([FromBody] ApiExecuteRequestDto request)
     {
-        var uid = GetUidFromClaims();
+        var uid = User.GetUid();
         if (!uid.HasValue)
         {
             return Unauthorized(ApiData<ApiExecuteResponseDto>.Error("未登录", 401));
@@ -82,13 +83,4 @@ public class ApiInterfaceController(IApiInterfaceService apiInterfaceService) : 
         return Ok(result);
     }
 
-    private ulong? GetUidFromClaims()
-    {
-        var uidClaim = User.FindFirst("uid");
-        if (uidClaim != null && ulong.TryParse(uidClaim.Value, out var uid))
-        {
-            return uid;
-        }
-        return null;
-    }
 }

@@ -1,5 +1,6 @@
 using InfraMarket.Server.DTOs;
 using InfraMarket.Server.Services.Interfaces;
+using InfraMarket.Server.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -22,7 +23,7 @@ public class AuthController(
     [Authorize]
     public async Task<ActionResult<ApiData<LoginResponse>>> GetCurrentUser()
     {
-        var uid = GetUidFromClaims();
+        var uid = User.GetUid();
         if (!uid.HasValue)
         {
             return Unauthorized(ApiData<LoginResponse>.Error("未登录", 401));
@@ -36,7 +37,7 @@ public class AuthController(
     [Authorize]
     public async Task<ActionResult<ApiData<List<PermissionDto>>>> GetUserMenus()
     {
-        var uid = GetUidFromClaims();
+        var uid = User.GetUid();
         if (!uid.HasValue)
         {
             return Unauthorized(ApiData<List<PermissionDto>>.Error("未登录", 401));
@@ -50,7 +51,7 @@ public class AuthController(
     [Authorize]
     public async Task<ActionResult<ApiData<LoginResponse>>> RefreshToken()
     {
-        var uid = GetUidFromClaims();
+        var uid = User.GetUid();
         if (!uid.HasValue)
         {
             return Unauthorized(ApiData<LoginResponse>.Error("未登录", 401));
@@ -64,7 +65,7 @@ public class AuthController(
     [Authorize]
     public async Task<ActionResult<ApiData<object>>> Logout()
     {
-        var uid = GetUidFromClaims();
+        var uid = User.GetUid();
         if (!uid.HasValue)
         {
             return Unauthorized(ApiData<object>.Error("未登录", 401));
@@ -78,7 +79,7 @@ public class AuthController(
     [Authorize]
     public async Task<ActionResult<ApiData<object>>> ChangePassword([FromBody] ChangePasswordRequest request)
     {
-        var uid = GetUidFromClaims();
+        var uid = User.GetUid();
         if (!uid.HasValue)
         {
             return Unauthorized(ApiData<object>.Error("未登录", 401));
@@ -88,14 +89,4 @@ public class AuthController(
         return Ok(result);
     }
 
-    private ulong? GetUidFromClaims()
-    {
-        // 从 subject claim 中提取 uid，与 Java 版本保持一致
-        var subClaim = User.FindFirst("sub") ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
-        if (subClaim != null && ulong.TryParse(subClaim.Value, out var uid))
-        {
-            return uid;
-        }
-        return null;
-    }
 }
