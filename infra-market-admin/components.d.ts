@@ -61,6 +61,8 @@ declare module 'vue' {
     Breadcrumb: typeof import('./src/components/Breadcrumb.vue')['default']
     CodeEditor: typeof import('./src/components/CodeEditor.vue')['default']
     CodeEditorModal: typeof import('./src/components/CodeEditorModal.vue')['default']
+    ComponentRenderer: typeof import('./src/components/ComponentRenderer.vue')['default']
+    FieldRenderer: typeof import('./src/components/FieldRenderer.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     ThemeButton: typeof import('./src/components/ThemeButton.vue')['default']

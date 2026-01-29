@@ -1,13 +1,13 @@
 <template>
-  <div class="template-edit-page">
+  <div class="component-edit-page">
     <div class="form-header">
       <div class="header-content">
         <div class="header-icon">
-          <FileTextOutlined />
+          <AppstoreOutlined />
         </div>
         <div class="header-text">
-          <div class="header-title">{{ isEdit ? '编辑模板' : '创建模板' }}</div>
-          <div class="header-subtitle">{{ isEdit ? '修改模板信息和字段配置' : '创建新的活动模板并配置字段' }}</div>
+          <div class="header-title">{{ isEdit ? '编辑组件' : '创建组件' }}</div>
+          <div class="header-subtitle">{{ isEdit ? '修改组件信息和字段配置' : '创建新的活动组件并配置字段' }}</div>
         </div>
       </div>
     </div>
@@ -20,7 +20,7 @@
           :rules="rules"
           :label-col="{ span: 3 }"
           :wrapper-col="{ span: 21 }"
-          class="template-form-content"
+          class="component-form-content"
           size="small"
           layout="horizontal"
         >
@@ -33,19 +33,19 @@
               <div class="section-title">基本信息</div>
             </div>
             
-            <a-form-item label="模板名称" name="name">
+            <a-form-item label="组件名称" name="name">
               <a-input
                 v-model:value="form.name"
-                placeholder="请输入模板名称"
+                placeholder="请输入组件名称"
                 size="middle"
                 class="form-input"
               />
             </a-form-item>
 
-            <a-form-item label="模板描述" name="description">
+            <a-form-item label="组件描述" name="description">
               <a-textarea
                 v-model:value="form.description"
-                placeholder="请输入模板描述"
+                placeholder="请输入组件描述"
                 :rows="3"
                 size="middle"
                 class="form-textarea"
@@ -191,7 +191,7 @@
                 @click="handleSave"
                 class="submit-btn"
               >
-                {{ isEdit ? '更新模板' : '创建模板' }}
+                {{ isEdit ? '更新组件' : '创建组件' }}
               </ThemeButton>
               <ThemeButton 
                 variant="secondary"
@@ -281,7 +281,6 @@
           <a-switch v-model:checked="fieldForm.required" />
         </a-form-item>
         <a-form-item v-if="fieldForm.type !== 'COMPONENT'" label="默认值" name="defaultValue">
-          <!-- 下拉框类型的默认值：从选项中选择 -->
           <a-select
             v-if="fieldForm.inputType === 'SELECT' && fieldForm.options && fieldForm.options.length > 0"
             v-model:value="fieldForm.defaultValue"
@@ -296,7 +295,6 @@
               {{ option.label || option.value }}
             </a-select-option>
           </a-select>
-          <!-- 多选下拉框类型的默认值：从选项中选择多个 -->
           <a-select
             v-else-if="fieldForm.inputType === 'MULTI_SELECT' && fieldForm.options && fieldForm.options.length > 0"
             v-model:value="fieldForm.defaultValue"
@@ -312,7 +310,6 @@
               {{ option.label || option.value }}
             </a-select-option>
           </a-select>
-          <!-- 日期类型 -->
           <a-date-picker
             v-else-if="fieldForm.type === 'DATE'"
             v-model:value="fieldForm.defaultValue"
@@ -321,7 +318,6 @@
             format="YYYY-MM-DD"
             value-format="YYYY-MM-DD"
           />
-          <!-- 日期时间类型 -->
           <a-date-picker
             v-else-if="fieldForm.type === 'DATETIME'"
             v-model:value="fieldForm.defaultValue"
@@ -331,13 +327,11 @@
             format="YYYY-MM-DD HH:mm:ss"
             value-format="YYYY-MM-DD HH:mm:ss"
           />
-          <!-- 字符串类型 -->
           <a-input
             v-else-if="fieldForm.type === 'STRING'"
             v-model:value="fieldForm.defaultValue"
             :placeholder="getDefaultValuePlaceholder()"
           />
-          <!-- 整数类型 -->
           <a-input-number
             v-else-if="fieldForm.type === 'INTEGER'"
             v-model:value="fieldForm.defaultValue"
@@ -345,7 +339,6 @@
             style="width: 100%"
             :precision="0"
           />
-          <!-- 浮点数类型 -->
           <a-input-number
             v-else-if="fieldForm.type === 'DOUBLE'"
             v-model:value="fieldForm.defaultValue"
@@ -353,26 +346,22 @@
             style="width: 100%"
             :precision="2"
           />
-          <!-- 布尔值类型 -->
           <a-switch
             v-else-if="fieldForm.type === 'BOOLEAN'"
             v-model:checked="fieldForm.defaultValue"
           />
-          <!-- 数组类型 -->
           <a-textarea
             v-else-if="fieldForm.type === 'ARRAY'"
             v-model:value="fieldForm.defaultValue"
             :placeholder="getDefaultValuePlaceholder()"
             :rows="3"
           />
-          <!-- JSON对象类型 -->
           <a-textarea
             v-else-if="fieldForm.type === 'JSON_OBJECT'"
             v-model:value="fieldForm.defaultValue"
             :placeholder="getDefaultValuePlaceholder()"
             :rows="4"
           />
-          <!-- 其他类型 -->
           <a-input
             v-else
             v-model:value="fieldForm.defaultValue"
@@ -422,7 +411,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import {
   PlusOutlined,
-  FileTextOutlined,
+  AppstoreOutlined,
   IdcardOutlined,
   SettingOutlined,
   CheckOutlined,
@@ -431,14 +420,12 @@ import {
   EditOutlined,
   DeleteOutlined
 } from '@ant-design/icons-vue'
-import { activityTemplateApi, type ActivityTemplateField } from '@/api/activityTemplate'
-import { activityComponentApi, type ActivityComponent } from '@/api/activityComponent'
+import { activityComponentApi, type ActivityComponentField, type ActivityComponent } from '@/api/activityComponent'
 import ThemeButton from '@/components/ThemeButton.vue'
 
 const route = useRoute()
 const router = useRouter()
 
-// 响应式数据
 const formRef = ref()
 const fieldFormRef = ref()
 const saving = ref(false)
@@ -449,12 +436,11 @@ const draggedIndex = ref<number | null>(null)
 const dragOverIndex = ref<number | null>(null)
 const components = ref<ActivityComponent[]>([])
 
-// 表单数据
 const form = reactive<{
   name: string
   description: string
   status: number
-  fields: ActivityTemplateField[]
+  fields: ActivityComponentField[]
 }>({
   name: '',
   description: '',
@@ -462,8 +448,7 @@ const form = reactive<{
   fields: []
 })
 
-// 字段表单数据
-const fieldForm = reactive<ActivityTemplateField & { options?: Array<{ value: string; label?: string }> }>({
+const fieldForm = reactive<ActivityComponentField & { options?: Array<{ value: string; label?: string }> }>({
   name: '',
   label: '',
   type: 'STRING',
@@ -479,9 +464,8 @@ const fieldForm = reactive<ActivityTemplateField & { options?: Array<{ value: st
   allowDynamic: false
 })
 
-// 表单验证规则
 const rules = {
-  name: [{ required: true, message: '请输入模板名称', trigger: 'blur' }]
+  name: [{ required: true, message: '请输入组件名称', trigger: 'blur' }]
 }
 
 const fieldRules = {
@@ -492,11 +476,21 @@ const fieldRules = {
   componentId: [{ required: true, message: '请选择活动组件', trigger: 'change' }]
 }
 
-// 方法
 const loadComponents = async () => {
   try {
     const response = await activityComponentApi.getAll()
-    components.value = response.data || []
+    const allComponents = response.data || []
+    // 如果是编辑模式，排除当前组件，避免循环引用
+    if (isEdit.value) {
+      const id = route.params.id as string
+      if (id && id !== 'create') {
+        components.value = allComponents.filter(comp => comp.id !== Number(id))
+      } else {
+        components.value = allComponents
+      }
+    } else {
+      components.value = allComponents
+    }
   } catch (error) {
     message.error('加载组件列表失败')
   }
@@ -529,7 +523,7 @@ const loadData = async () => {
 
   isEdit.value = true
   try {
-    const response = await activityTemplateApi.getById(Number(id))
+    const response = await activityComponentApi.getById(Number(id))
     if (response.data) {
       form.name = response.data.name || ''
       form.description = response.data.description || ''
@@ -542,9 +536,7 @@ const loadData = async () => {
           field.isArray = fieldAny.array
         }
       })
-      // 确保字段按排序号排序
       form.fields.sort((a, b) => (a.sort || 0) - (b.sort || 0))
-      // 更新排序号，确保连续
       updateFieldSorts()
     }
   } catch (error) {
@@ -570,7 +562,6 @@ const handleEditField = (index: number) => {
   fieldForm.placeholder = field.placeholder || ''
   fieldForm.description = field.description || ''
   
-  // 处理默认值：如果是对象或数组，转换为JSON字符串；布尔值直接使用；下拉框和多选下拉框直接使用
   if (field.defaultValue !== undefined && field.defaultValue !== null) {
     if (field.type === 'ARRAY' || field.type === 'JSON_OBJECT') {
       if (typeof field.defaultValue === 'string') {
@@ -579,7 +570,6 @@ const handleEditField = (index: number) => {
         fieldForm.defaultValue = JSON.stringify(field.defaultValue, null, 2)
       }
     } else if (field.inputType === 'MULTI_SELECT' && Array.isArray(field.defaultValue)) {
-      // 多选下拉框的默认值是数组，直接使用
       fieldForm.defaultValue = field.defaultValue
     } else if (field.type === 'DATE' || field.type === 'DATETIME') {
       // 日期类型：如果已经是字符串格式，直接使用；否则转换为字符串
@@ -590,7 +580,6 @@ const handleEditField = (index: number) => {
         fieldForm.defaultValue = String(field.defaultValue)
       }
     } else {
-      // 其他类型（包括下拉框、复选框等）直接使用
       fieldForm.defaultValue = field.defaultValue
     }
   } else {
@@ -598,9 +587,9 @@ const handleEditField = (index: number) => {
   }
   
   fieldForm.options = field.options?.map(opt => ({ value: opt.value || '', label: opt.label || '' })) || []
-  fieldForm.componentId = field.componentId
-  // 确保布尔值正确加载，兼容 array 和 isArray 两种字段名
+  // 兼容 array 和 isArray 两种字段名
   const fieldAny = field as any
+  fieldForm.componentId = field.componentId
   fieldForm.isArray = field.isArray ?? fieldAny.array ?? false
   fieldForm.allowDynamic = field.allowDynamic ?? false
   fieldModalVisible.value = true
@@ -608,20 +597,18 @@ const handleEditField = (index: number) => {
 
 const handleRemoveField = (index: number) => {
   form.fields.splice(index, 1)
+  updateFieldSorts()
 }
 
 const handleSaveField = async () => {
   try {
     await fieldFormRef.value?.validate()
     
-    // 处理默认值：根据类型转换
     let defaultValue = fieldForm.defaultValue
     if (defaultValue !== undefined && defaultValue !== null) {
-      // 空字符串、空数组等需要特殊处理
       if (defaultValue === '' || (Array.isArray(defaultValue) && defaultValue.length === 0)) {
         defaultValue = undefined
       } else if (fieldForm.type === 'ARRAY' || fieldForm.type === 'JSON_OBJECT') {
-        // 如果是数组或JSON对象，尝试解析JSON字符串
         if (typeof defaultValue === 'string') {
           try {
             defaultValue = JSON.parse(defaultValue)
@@ -637,12 +624,11 @@ const handleSaveField = async () => {
       } else if (fieldForm.type === 'DOUBLE' && typeof defaultValue === 'string') {
         defaultValue = parseFloat(defaultValue)
       }
-      // 下拉框、多选下拉框、复选框的默认值直接使用，不需要转换
     } else {
       defaultValue = undefined
     }
     
-    const field: ActivityTemplateField = {
+    const field: ActivityComponentField = {
       name: fieldForm.name,
       label: fieldForm.label,
       type: fieldForm.type,
@@ -664,9 +650,7 @@ const handleSaveField = async () => {
       form.fields.push(field)
     }
 
-    // 更新所有字段的排序号
     updateFieldSorts()
-
     fieldModalVisible.value = false
     resetFieldForm()
   } catch (error) {
@@ -694,7 +678,6 @@ const resetFieldForm = () => {
   fieldForm.allowDynamic = false
 }
 
-// 获取默认值占位符
 const getDefaultValuePlaceholder = () => {
   const inputType = fieldForm.inputType
   const type = fieldForm.type
@@ -721,7 +704,6 @@ const getDefaultValuePlaceholder = () => {
   return '请输入默认值'
 }
 
-// 拖拽排序相关方法
 const handleDragStart = (index: number, event: DragEvent) => {
   draggedIndex.value = index
   if (event.dataTransfer) {
@@ -747,9 +729,7 @@ const handleDrop = (targetIndex: number, event: DragEvent) => {
   form.fields.splice(draggedIndex.value, 1)
   form.fields.splice(targetIndex, 0, draggedField)
 
-  // 更新所有字段的排序号
   updateFieldSorts()
-
   dragOverIndex.value = null
 }
 
@@ -758,14 +738,12 @@ const handleDragEnd = () => {
   dragOverIndex.value = null
 }
 
-// 更新所有字段的排序号
 const updateFieldSorts = () => {
   form.fields.forEach((field, index) => {
     field.sort = index
   })
 }
 
-// 格式化默认值显示
 const formatDefaultValue = (value: any): string => {
   if (value === null || value === undefined) {
     return '-'
@@ -793,7 +771,6 @@ const handleSave = async () => {
   try {
     await formRef.value?.validate()
     
-    // 确保所有字段的排序号都是最新的
     updateFieldSorts()
     
     saving.value = true
@@ -806,19 +783,19 @@ const handleSave = async () => {
 
     if (isEdit.value) {
       const id = route.params.id as string
-      await activityTemplateApi.update(Number(id), formData)
-      message.success('模板更新成功')
+      await activityComponentApi.update(Number(id), formData)
+      message.success('组件更新成功')
     } else {
-      await activityTemplateApi.create(formData)
-      message.success('模板创建成功')
+      await activityComponentApi.create(formData)
+      message.success('组件创建成功')
     }
 
-    router.push('/activity/template')
+    router.push('/activity/component')
   } catch (error: any) {
     if (error?.errorFields) {
       message.error('请完善表单信息')
     } else {
-      message.error(isEdit.value ? '模板更新失败' : '模板创建失败')
+      message.error(isEdit.value ? '组件更新失败' : '组件创建失败')
     }
   } finally {
     saving.value = false
@@ -829,14 +806,14 @@ const handleBack = () => {
   router.back()
 }
 
-onMounted(() => {
-  loadComponents()
-  loadData()
+onMounted(async () => {
+  await loadData()
+  await loadComponents()
 })
 </script>
 
 <style scoped lang="css">
-.template-edit-page {
+.component-edit-page {
   min-height: 100%;
   background: #f0f2f5;
   padding: 0;

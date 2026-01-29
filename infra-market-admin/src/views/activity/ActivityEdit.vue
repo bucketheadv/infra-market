@@ -200,6 +200,16 @@
                 value-format="YYYY-MM-DD HH:mm:ss"
               />
               
+              <!-- 组件类型 -->
+              <div v-else-if="field.type === 'COMPONENT'" class="component-container">
+                <ComponentRenderer
+                  :field="field"
+                  :value="form.configData[field.name || '']"
+                  :component-cache="componentCache"
+                  @update:value="(val: any) => form.configData[field.name || ''] = val"
+                />
+              </div>
+              
               <div v-if="field.description" class="form-help-text">
                 {{ field.description }}
               </div>
@@ -209,6 +219,13 @@
           <!-- 操作按钮区域 -->
           <div class="form-actions">
             <a-space size="small">
+              <a-button 
+                size="small"
+                :icon="h(EyeOutlined)"
+                @click="handlePreview"
+              >
+                预览
+              </a-button>
               <ThemeButton 
                 variant="primary" 
                 size="small"
@@ -233,11 +250,35 @@
         </a-form>
       </a-card>
     </div>
+
+    <!-- 预览对话框 -->
+    <a-modal
+      v-model:open="previewVisible"
+      title="配置数据预览"
+      width="800px"
+      :footer="null"
+    >
+      <div class="preview-container">
+        <div class="preview-header">
+          <a-space>
+            <a-button type="primary" @click="handleCopyJson">
+              复制 JSON
+            </a-button>
+            <a-button @click="previewVisible = false">
+              关闭
+            </a-button>
+          </a-space>
+        </div>
+        <div class="preview-content">
+          <pre class="json-preview">{{ previewJson }}</pre>
+        </div>
+      </div>
+    </a-modal>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, h } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import {
@@ -245,11 +286,14 @@ import {
   IdcardOutlined,
   SettingOutlined,
   CheckOutlined,
-  CloseOutlined
+  CloseOutlined,
+  EyeOutlined
 } from '@ant-design/icons-vue'
-import { activityApi, type Activity, type ActivityForm } from '@/api/activity'
+import { activityApi, type ActivityForm } from '@/api/activity'
 import { activityTemplateApi, type ActivityTemplate, type ActivityTemplateField } from '@/api/activityTemplate'
+import { activityComponentApi, type ActivityComponent } from '@/api/activityComponent'
 import ThemeButton from '@/components/ThemeButton.vue'
+import ComponentRenderer from '@/components/ComponentRenderer.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -260,6 +304,8 @@ const saving = ref(false)
 const isEdit = ref(false)
 const templates = ref<ActivityTemplate[]>([])
 const selectedTemplate = ref<ActivityTemplate | null>(null)
+const componentCache = ref<Map<number, ActivityComponent>>(new Map())
+const previewVisible = ref(false)
 
 // 表单数据
 const form = reactive<ActivityForm & { configData: Record<string, any> }>({
@@ -327,6 +373,17 @@ const loadTemplate = async (templateId: number) => {
     const response = await activityTemplateApi.getById(templateId)
     if (response.data) {
       selectedTemplate.value = response.data
+      // 统一字段名：将 array 转换为 isArray
+      if (response.data.fields) {
+        response.data.fields.forEach(field => {
+          const fieldAny = field as any
+          if (fieldAny.array !== undefined && field.isArray === undefined) {
+            field.isArray = fieldAny.array
+          }
+        })
+      }
+      // 加载模板中引用的所有组件
+      await loadComponentsFromTemplate(response.data)
       // 初始化配置数据
       if (!isEdit.value) {
         initializeConfigData()
@@ -334,6 +391,39 @@ const loadTemplate = async (templateId: number) => {
     }
   } catch (error) {
     message.error('加载模板信息失败')
+  }
+}
+
+const loadComponentsFromTemplate = async (template: ActivityTemplate) => {
+  if (!template.fields) {
+    return
+  }
+  
+  const componentIds = new Set<number>()
+  
+  // 收集所有组件ID
+  const collectComponentIds = (fields: ActivityTemplateField[]) => {
+    fields.forEach(field => {
+      if (field.type === 'COMPONENT' && field.componentId) {
+        componentIds.add(field.componentId)
+      }
+    })
+  }
+  
+  collectComponentIds(template.fields)
+  
+  // 加载所有组件
+  for (const componentId of componentIds) {
+    if (!componentCache.value.has(componentId)) {
+      try {
+        const response = await activityComponentApi.getById(componentId)
+        if (response.data) {
+          componentCache.value.set(componentId, response.data)
+        }
+      } catch (error) {
+        console.error(`加载组件 ${componentId} 失败:`, error)
+      }
+    }
   }
 }
 
@@ -366,6 +456,16 @@ const initializeConfigData = () => {
         // 直接使用默认值（可能是数字、布尔值、对象、数组等）
         // 包括下拉框的选项值、多选下拉框的数组、复选框的布尔值等
         form.configData[fieldName] = field.defaultValue
+      }
+    } else if (field.type === 'COMPONENT') {
+      // 组件类型：如果是数组，初始化为空数组；否则初始化为空对象
+      // 兼容 array 和 isArray 两种字段名
+      const fieldAny = field as any
+      const isArrayValue = field.isArray ?? fieldAny.array ?? false
+      if (isArrayValue) {
+        form.configData[fieldName] = []
+      } else {
+        form.configData[fieldName] = {}
       }
     } else if (field.type === 'ARRAY' || field.inputType === 'MULTI_SELECT') {
       form.configData[fieldName] = []
@@ -487,6 +587,27 @@ const handleBack = () => {
   router.back()
 }
 
+const previewJson = computed(() => {
+  try {
+    return JSON.stringify(form.configData, null, 2)
+  } catch (error) {
+    return '{}'
+  }
+})
+
+const handlePreview = () => {
+  previewVisible.value = true
+}
+
+const handleCopyJson = async () => {
+  try {
+    await navigator.clipboard.writeText(previewJson.value)
+    message.success('JSON 已复制到剪贴板')
+  } catch (error) {
+    message.error('复制失败，请手动复制')
+  }
+}
+
 onMounted(async () => {
   await loadTemplates()
   await loadData()
@@ -589,5 +710,34 @@ onMounted(async () => {
   padding-top: 24px;
   border-top: 1px solid #f0f0f0;
   text-align: right;
+}
+
+.preview-container {
+  width: 100%;
+}
+
+.preview-header {
+  margin-bottom: 16px;
+  text-align: right;
+}
+
+.preview-content {
+  width: 100%;
+  max-height: 600px;
+  overflow: auto;
+  background: #f5f5f5;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  padding: 16px;
+}
+
+.json-preview {
+  margin: 0;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #333;
+  white-space: pre-wrap;
+  word-wrap: break-word;
 }
 </style>

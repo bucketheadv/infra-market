@@ -156,6 +156,24 @@ const routes: RouteRecordRaw[] = [
         name: 'ActivityEdit',
         component: () => import('@/views/activity/ActivityEdit.vue'),
         meta: { title: '编辑活动', permission: 'activity:update' }
+      },
+      {
+        path: '/activity/component',
+        name: 'ActivityComponentList',
+        component: () => import('@/views/activity/ComponentList.vue'),
+        meta: { title: '活动组件', permission: 'activity:component:list' }
+      },
+      {
+        path: '/activity/component/create',
+        name: 'ActivityComponentCreate',
+        component: () => import('@/views/activity/ComponentEdit.vue'),
+        meta: { title: '创建组件', permission: 'activity:component:create' }
+      },
+      {
+        path: '/activity/component/:id/edit',
+        name: 'ActivityComponentEdit',
+        component: () => import('@/views/activity/ComponentEdit.vue'),
+        meta: { title: '编辑组件', permission: 'activity:component:update' }
       }
     ]
   }

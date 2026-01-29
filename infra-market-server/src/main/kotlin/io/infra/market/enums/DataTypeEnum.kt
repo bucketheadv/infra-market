@@ -15,6 +15,7 @@ enum class DataTypeEnum(val code: String, val description: String) {
     JSON("JSON", "JSON字符串"),
     JSON_OBJECT("JSON_OBJECT", "JSON对象"),
     ARRAY("ARRAY", "数组"),
+    COMPONENT("COMPONENT", "组件"),
     
     // 编程语言类型（用于代码编辑器）
     TEXT("TEXT", "Text"),

@@ -269,6 +269,21 @@ CREATE TABLE IF NOT EXISTS `activity_template` (
     KEY `idx_create_time` (`create_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='活动模板表';
 
+-- 活动组件表
+CREATE TABLE IF NOT EXISTS `activity_component` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    `name` VARCHAR(100) NOT NULL COMMENT '组件名称',
+    `description` VARCHAR(500) NULL COMMENT '组件描述',
+    `fields` LONGTEXT NULL COMMENT '字段/组件配置JSON，存储组件的所有字段和嵌套组件配置',
+    `status` INT NOT NULL DEFAULT 1 COMMENT '状态：1-启用，0-禁用',
+    `create_time` BIGINT NOT NULL DEFAULT (FLOOR(UNIX_TIMESTAMP(NOW(3)) * 1000)) COMMENT '创建时间（毫秒时间戳）',
+    `update_time` BIGINT NOT NULL DEFAULT (FLOOR(UNIX_TIMESTAMP(NOW(3)) * 1000)) COMMENT '更新时间（毫秒时间戳）',
+    PRIMARY KEY (`id`),
+    KEY `idx_name` (`name`),
+    KEY `idx_status` (`status`),
+    KEY `idx_create_time` (`create_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='活动组件表';
+
 -- 活动表
 CREATE TABLE IF NOT EXISTS `activity` (
     `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
@@ -296,7 +311,8 @@ INSERT INTO `permission_info` (`name`, `code`, `type`, `parent_id`, `path`, `ico
 SET @activity_manage_id = (SELECT id FROM `permission_info` WHERE code = 'activity:manage');
 INSERT INTO `permission_info` (`name`, `code`, `type`, `parent_id`, `path`, `icon`, `sort`, `status`, `create_time`, `update_time`) VALUES
 ('活动列表', 'activity:list:manage', 'menu', @activity_manage_id, '/activity/list', 'AppstoreOutlined', 1, 'active', UNIX_TIMESTAMP() * 1000, UNIX_TIMESTAMP() * 1000),
-('活动模板', 'activity:template:manage', 'menu', @activity_manage_id, '/activity/template', 'FileTextOutlined', 2, 'active', UNIX_TIMESTAMP() * 1000, UNIX_TIMESTAMP() * 1000);
+('活动模板', 'activity:template:manage', 'menu', @activity_manage_id, '/activity/template', 'FileTextOutlined', 2, 'active', UNIX_TIMESTAMP() * 1000, UNIX_TIMESTAMP() * 1000),
+('活动组件', 'activity:component:manage', 'menu', @activity_manage_id, '/activity/component', 'AppstoreOutlined', 3, 'active', UNIX_TIMESTAMP() * 1000, UNIX_TIMESTAMP() * 1000);
 
 -- 插入活动模板管理相关的按钮权限
 SET @activity_template_manage_id = (SELECT id FROM `permission_info` WHERE code = 'activity:template:manage');
@@ -316,6 +332,15 @@ INSERT INTO `permission_info` (`name`, `code`, `type`, `parent_id`, `path`, `ico
 ('活动编辑', 'activity:update', 'button', @activity_list_manage_id, NULL, NULL, 4, 'active', UNIX_TIMESTAMP() * 1000, UNIX_TIMESTAMP() * 1000),
 ('活动删除', 'activity:delete', 'button', @activity_list_manage_id, NULL, NULL, 5, 'active', UNIX_TIMESTAMP() * 1000, UNIX_TIMESTAMP() * 1000);
 
+-- 插入活动组件管理相关的按钮权限
+SET @activity_component_manage_id = (SELECT id FROM `permission_info` WHERE code = 'activity:component:manage');
+INSERT INTO `permission_info` (`name`, `code`, `type`, `parent_id`, `path`, `icon`, `sort`, `status`, `create_time`, `update_time`) VALUES
+('组件列表', 'activity:component:list', 'button', @activity_component_manage_id, NULL, NULL, 1, 'active', UNIX_TIMESTAMP() * 1000, UNIX_TIMESTAMP() * 1000),
+('组件查看', 'activity:component:view', 'button', @activity_component_manage_id, NULL, NULL, 2, 'active', UNIX_TIMESTAMP() * 1000, UNIX_TIMESTAMP() * 1000),
+('组件创建', 'activity:component:create', 'button', @activity_component_manage_id, NULL, NULL, 3, 'active', UNIX_TIMESTAMP() * 1000, UNIX_TIMESTAMP() * 1000),
+('组件编辑', 'activity:component:update', 'button', @activity_component_manage_id, NULL, NULL, 4, 'active', UNIX_TIMESTAMP() * 1000, UNIX_TIMESTAMP() * 1000),
+('组件删除', 'activity:component:delete', 'button', @activity_component_manage_id, NULL, NULL, 5, 'active', UNIX_TIMESTAMP() * 1000, UNIX_TIMESTAMP() * 1000);
+
 -- 更新角色权限关联，为超级管理员和管理员添加活动管理权限（包括所有新插入的按钮权限）
 INSERT INTO `role_permission` (`role_id`, `permission_id`, `create_time`, `update_time`) 
 SELECT 1, id, UNIX_TIMESTAMP() * 1000, UNIX_TIMESTAMP() * 1000 FROM `permission_info` WHERE status = 'active' AND code LIKE 'activity:%';
@@ -326,11 +351,11 @@ SELECT 2, id, UNIX_TIMESTAMP() * 1000, UNIX_TIMESTAMP() * 1000 FROM `permission_
 -- 为普通用户添加活动管理查看权限
 INSERT INTO `role_permission` (`role_id`, `permission_id`, `create_time`, `update_time`) 
 SELECT 3, id, UNIX_TIMESTAMP() * 1000, UNIX_TIMESTAMP() * 1000 FROM `permission_info` WHERE status = 'active' AND code IN (
-    'activity:manage', 'activity:list:manage', 'activity:list', 'activity:view', 'activity:template:manage', 'activity:template:list', 'activity:template:view'
+    'activity:manage', 'activity:list:manage', 'activity:list', 'activity:view', 'activity:template:manage', 'activity:template:list', 'activity:template:view', 'activity:component:manage', 'activity:component:list', 'activity:component:view'
 );
 
 -- 为访客添加活动管理查看权限
 INSERT INTO `role_permission` (`role_id`, `permission_id`, `create_time`, `update_time`) 
 SELECT 4, id, UNIX_TIMESTAMP() * 1000, UNIX_TIMESTAMP() * 1000 FROM `permission_info` WHERE status = 'active' AND code IN (
-    'activity:manage', 'activity:list:manage', 'activity:list', 'activity:view', 'activity:template:manage', 'activity:template:list', 'activity:template:view'
+    'activity:manage', 'activity:list:manage', 'activity:list', 'activity:view', 'activity:template:manage', 'activity:template:list', 'activity:template:view', 'activity:component:manage', 'activity:component:list', 'activity:component:view'
 );

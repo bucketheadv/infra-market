@@ -1,5 +1,13 @@
 import request from '@/utils/request'
 
+// 分页响应类型
+export interface PageResult<T> {
+  records: T[]
+  total: number
+  page: number
+  size: number
+}
+
 // 活动模板相关类型定义
 export interface ActivityTemplateField {
   name?: string
@@ -20,6 +28,10 @@ export interface ActivityTemplateField {
   placeholder?: string
   itemType?: ActivityTemplateField
   properties?: Record<string, ActivityTemplateField>
+  // 组件相关字段
+  componentId?: number
+  isArray?: boolean
+  allowDynamic?: boolean
 }
 
 export interface SelectOption {
