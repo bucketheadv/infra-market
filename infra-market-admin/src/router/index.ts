@@ -120,6 +120,42 @@ const routes: RouteRecordRaw[] = [
         name: 'ImageProcessor',
         component: () => import('@/views/tools/ImageProcessor.vue'),
         meta: { title: '图片处理', permission: 'image:manage' }
+      },
+      {
+        path: '/activity/template',
+        name: 'ActivityTemplateList',
+        component: () => import('@/views/activity/TemplateList.vue'),
+        meta: { title: '活动模板', permission: 'activity:template:list' }
+      },
+      {
+        path: '/activity/template/create',
+        name: 'ActivityTemplateCreate',
+        component: () => import('@/views/activity/TemplateEdit.vue'),
+        meta: { title: '创建模板', permission: 'activity:template:create' }
+      },
+      {
+        path: '/activity/template/:id/edit',
+        name: 'ActivityTemplateEdit',
+        component: () => import('@/views/activity/TemplateEdit.vue'),
+        meta: { title: '编辑模板', permission: 'activity:template:update' }
+      },
+      {
+        path: '/activity/list',
+        name: 'ActivityList',
+        component: () => import('@/views/activity/ActivityList.vue'),
+        meta: { title: '活动管理', permission: 'activity:list' }
+      },
+      {
+        path: '/activity/create',
+        name: 'ActivityCreate',
+        component: () => import('@/views/activity/ActivityEdit.vue'),
+        meta: { title: '创建活动', permission: 'activity:create' }
+      },
+      {
+        path: '/activity/:id/edit',
+        name: 'ActivityEdit',
+        component: () => import('@/views/activity/ActivityEdit.vue'),
+        meta: { title: '编辑活动', permission: 'activity:update' }
       }
     ]
   }

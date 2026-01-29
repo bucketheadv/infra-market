@@ -17,7 +17,8 @@ enum class InputTypeEnum(@JsonValue val code: String, val description: String) {
     CODE("CODE", "代码编辑器"),
     PASSWORD("PASSWORD", "密码"),
     EMAIL("EMAIL", "邮箱"),
-    URL("URL", "URL");
+    URL("URL", "URL"),
+    CHECKBOX("CHECKBOX", "复选框");
 
     companion object {
         @JsonCreator

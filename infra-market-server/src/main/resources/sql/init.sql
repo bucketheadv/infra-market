@@ -254,3 +254,83 @@ CREATE TABLE IF NOT EXISTS `api_interface_execution_record` (
     CONSTRAINT `fk_execution_record_executor` FOREIGN KEY (`executor_id`) REFERENCES `user_info` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='接口执行记录表';
 
+-- 活动模板表
+CREATE TABLE IF NOT EXISTS `activity_template` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    `name` VARCHAR(100) NOT NULL COMMENT '模板名称',
+    `description` VARCHAR(500) NULL COMMENT '模板描述',
+    `fields` LONGTEXT NULL COMMENT '字段配置JSON，存储模板的所有字段配置',
+    `status` INT NOT NULL DEFAULT 1 COMMENT '状态：1-启用，0-禁用',
+    `create_time` BIGINT NOT NULL DEFAULT (FLOOR(UNIX_TIMESTAMP(NOW(3)) * 1000)) COMMENT '创建时间（毫秒时间戳）',
+    `update_time` BIGINT NOT NULL DEFAULT (FLOOR(UNIX_TIMESTAMP(NOW(3)) * 1000)) COMMENT '更新时间（毫秒时间戳）',
+    PRIMARY KEY (`id`),
+    KEY `idx_name` (`name`),
+    KEY `idx_status` (`status`),
+    KEY `idx_create_time` (`create_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='活动模板表';
+
+-- 活动表
+CREATE TABLE IF NOT EXISTS `activity` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    `name` VARCHAR(100) NOT NULL COMMENT '活动名称',
+    `description` VARCHAR(500) NULL COMMENT '活动描述',
+    `template_id` BIGINT NOT NULL COMMENT '模板ID，关联到activity_template表',
+    `config_data` LONGTEXT NULL COMMENT '配置数据JSON，存储活动的配置数据',
+    `status` INT NOT NULL DEFAULT 1 COMMENT '状态：1-启用，0-禁用',
+    `create_time` BIGINT NOT NULL DEFAULT (FLOOR(UNIX_TIMESTAMP(NOW(3)) * 1000)) COMMENT '创建时间（毫秒时间戳）',
+    `update_time` BIGINT NOT NULL DEFAULT (FLOOR(UNIX_TIMESTAMP(NOW(3)) * 1000)) COMMENT '更新时间（毫秒时间戳）',
+    PRIMARY KEY (`id`),
+    KEY `idx_name` (`name`),
+    KEY `idx_template_id` (`template_id`),
+    KEY `idx_status` (`status`),
+    KEY `idx_create_time` (`create_time`),
+    CONSTRAINT `fk_activity_template` FOREIGN KEY (`template_id`) REFERENCES `activity_template` (`id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='活动表';
+
+-- 插入活动管理相关权限
+-- 先插入活动管理菜单
+INSERT INTO `permission_info` (`name`, `code`, `type`, `parent_id`, `path`, `icon`, `sort`, `status`, `create_time`, `update_time`) VALUES
+('活动管理', 'activity:manage', 'menu', NULL, '/activity', 'AppstoreOutlined', 3, 'active', UNIX_TIMESTAMP() * 1000, UNIX_TIMESTAMP() * 1000);
+
+-- 插入活动管理菜单（作为活动管理的子菜单）
+SET @activity_manage_id = (SELECT id FROM `permission_info` WHERE code = 'activity:manage');
+INSERT INTO `permission_info` (`name`, `code`, `type`, `parent_id`, `path`, `icon`, `sort`, `status`, `create_time`, `update_time`) VALUES
+('活动列表', 'activity:list:manage', 'menu', @activity_manage_id, '/activity/list', 'AppstoreOutlined', 1, 'active', UNIX_TIMESTAMP() * 1000, UNIX_TIMESTAMP() * 1000),
+('活动模板', 'activity:template:manage', 'menu', @activity_manage_id, '/activity/template', 'FileTextOutlined', 2, 'active', UNIX_TIMESTAMP() * 1000, UNIX_TIMESTAMP() * 1000);
+
+-- 插入活动模板管理相关的按钮权限
+SET @activity_template_manage_id = (SELECT id FROM `permission_info` WHERE code = 'activity:template:manage');
+INSERT INTO `permission_info` (`name`, `code`, `type`, `parent_id`, `path`, `icon`, `sort`, `status`, `create_time`, `update_time`) VALUES
+('模板列表', 'activity:template:list', 'button', @activity_template_manage_id, NULL, NULL, 1, 'active', UNIX_TIMESTAMP() * 1000, UNIX_TIMESTAMP() * 1000),
+('模板查看', 'activity:template:view', 'button', @activity_template_manage_id, NULL, NULL, 2, 'active', UNIX_TIMESTAMP() * 1000, UNIX_TIMESTAMP() * 1000),
+('模板创建', 'activity:template:create', 'button', @activity_template_manage_id, NULL, NULL, 3, 'active', UNIX_TIMESTAMP() * 1000, UNIX_TIMESTAMP() * 1000),
+('模板编辑', 'activity:template:update', 'button', @activity_template_manage_id, NULL, NULL, 4, 'active', UNIX_TIMESTAMP() * 1000, UNIX_TIMESTAMP() * 1000),
+('模板删除', 'activity:template:delete', 'button', @activity_template_manage_id, NULL, NULL, 5, 'active', UNIX_TIMESTAMP() * 1000, UNIX_TIMESTAMP() * 1000);
+
+-- 插入活动管理相关的按钮权限
+SET @activity_list_manage_id = (SELECT id FROM `permission_info` WHERE code = 'activity:list:manage');
+INSERT INTO `permission_info` (`name`, `code`, `type`, `parent_id`, `path`, `icon`, `sort`, `status`, `create_time`, `update_time`) VALUES
+('活动列表', 'activity:list', 'button', @activity_list_manage_id, NULL, NULL, 1, 'active', UNIX_TIMESTAMP() * 1000, UNIX_TIMESTAMP() * 1000),
+('活动查看', 'activity:view', 'button', @activity_list_manage_id, NULL, NULL, 2, 'active', UNIX_TIMESTAMP() * 1000, UNIX_TIMESTAMP() * 1000),
+('活动创建', 'activity:create', 'button', @activity_list_manage_id, NULL, NULL, 3, 'active', UNIX_TIMESTAMP() * 1000, UNIX_TIMESTAMP() * 1000),
+('活动编辑', 'activity:update', 'button', @activity_list_manage_id, NULL, NULL, 4, 'active', UNIX_TIMESTAMP() * 1000, UNIX_TIMESTAMP() * 1000),
+('活动删除', 'activity:delete', 'button', @activity_list_manage_id, NULL, NULL, 5, 'active', UNIX_TIMESTAMP() * 1000, UNIX_TIMESTAMP() * 1000);
+
+-- 更新角色权限关联，为超级管理员和管理员添加活动管理权限（包括所有新插入的按钮权限）
+INSERT INTO `role_permission` (`role_id`, `permission_id`, `create_time`, `update_time`) 
+SELECT 1, id, UNIX_TIMESTAMP() * 1000, UNIX_TIMESTAMP() * 1000 FROM `permission_info` WHERE status = 'active' AND code LIKE 'activity:%';
+
+INSERT INTO `role_permission` (`role_id`, `permission_id`, `create_time`, `update_time`) 
+SELECT 2, id, UNIX_TIMESTAMP() * 1000, UNIX_TIMESTAMP() * 1000 FROM `permission_info` WHERE status = 'active' AND code LIKE 'activity:%';
+
+-- 为普通用户添加活动管理查看权限
+INSERT INTO `role_permission` (`role_id`, `permission_id`, `create_time`, `update_time`) 
+SELECT 3, id, UNIX_TIMESTAMP() * 1000, UNIX_TIMESTAMP() * 1000 FROM `permission_info` WHERE status = 'active' AND code IN (
+    'activity:manage', 'activity:list:manage', 'activity:list', 'activity:view', 'activity:template:manage', 'activity:template:list', 'activity:template:view'
+);
+
+-- 为访客添加活动管理查看权限
+INSERT INTO `role_permission` (`role_id`, `permission_id`, `create_time`, `update_time`) 
+SELECT 4, id, UNIX_TIMESTAMP() * 1000, UNIX_TIMESTAMP() * 1000 FROM `permission_info` WHERE status = 'active' AND code IN (
+    'activity:manage', 'activity:list:manage', 'activity:list', 'activity:view', 'activity:template:manage', 'activity:template:list', 'activity:template:view'
+);
