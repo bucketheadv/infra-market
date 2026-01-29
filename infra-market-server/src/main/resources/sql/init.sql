@@ -310,9 +310,9 @@ INSERT INTO `permission_info` (`name`, `code`, `type`, `parent_id`, `path`, `ico
 -- 插入活动管理菜单（作为活动管理的子菜单）
 SET @activity_manage_id = (SELECT id FROM `permission_info` WHERE code = 'activity:manage');
 INSERT INTO `permission_info` (`name`, `code`, `type`, `parent_id`, `path`, `icon`, `sort`, `status`, `create_time`, `update_time`) VALUES
-('活动列表', 'activity:list:manage', 'menu', @activity_manage_id, '/activity/list', 'AppstoreOutlined', 1, 'active', UNIX_TIMESTAMP() * 1000, UNIX_TIMESTAMP() * 1000),
-('活动模板', 'activity:template:manage', 'menu', @activity_manage_id, '/activity/template', 'FileTextOutlined', 2, 'active', UNIX_TIMESTAMP() * 1000, UNIX_TIMESTAMP() * 1000),
-('活动组件', 'activity:component:manage', 'menu', @activity_manage_id, '/activity/component', 'AppstoreOutlined', 3, 'active', UNIX_TIMESTAMP() * 1000, UNIX_TIMESTAMP() * 1000);
+('活动列表', 'activity:list:manage', 'menu', @activity_manage_id, '/activity/list', 'ShoppingOutlined', 1, 'active', UNIX_TIMESTAMP() * 1000, UNIX_TIMESTAMP() * 1000),
+('活动模板', 'activity:template:manage', 'menu', @activity_manage_id, '/activity/template', 'FolderOutlined', 2, 'active', UNIX_TIMESTAMP() * 1000, UNIX_TIMESTAMP() * 1000),
+('活动组件', 'activity:component:manage', 'menu', @activity_manage_id, '/activity/component', 'CloudServerOutlined', 3, 'active', UNIX_TIMESTAMP() * 1000, UNIX_TIMESTAMP() * 1000);
 
 -- 插入活动模板管理相关的按钮权限
 SET @activity_template_manage_id = (SELECT id FROM `permission_info` WHERE code = 'activity:template:manage');

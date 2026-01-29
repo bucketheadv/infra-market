@@ -165,6 +165,7 @@ import {
   ShoppingOutlined,
   AppstoreOutlined,
   FileTextOutlined,
+  FolderOutlined,
   LogoutOutlined,
   QuestionOutlined,
   KeyOutlined,
@@ -220,6 +221,7 @@ const getIconComponent = (iconName: string) => {
     ShoppingOutlined,
     AppstoreOutlined,
     FileTextOutlined,
+    FolderOutlined,
     ToolOutlined,
     PictureOutlined,
   }
