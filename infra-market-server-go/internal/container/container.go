@@ -23,7 +23,7 @@ func NewContainer(db *gorm.DB, cfg *config.Config) (*Container, error) {
 	container := &Container{container: c}
 
 	// 注册外部依赖
-	providers := []interface{}{
+	providers := []any{
 		func() *gorm.DB { return db },
 		func() *config.Config { return cfg },
 	}
@@ -40,7 +40,7 @@ func NewContainer(db *gorm.DB, cfg *config.Config) (*Container, error) {
 }
 
 // mustProvide 批量注册提供者，如果任何一个失败则返回错误
-func (c *Container) mustProvide(providers ...interface{}) error {
+func (c *Container) mustProvide(providers ...any) error {
 	for _, provider := range providers {
 		if err := c.container.Provide(provider); err != nil {
 			return err
@@ -65,7 +65,7 @@ func (c *Container) registerDependencies() error {
 
 	// 注册 Repository 层
 	// 所有 Repository 构造函数接收 *gorm.DB 参数，dig 会自动注入
-	repositories := []interface{}{
+	repositories := []any{
 		repository.NewUserRepository,
 		repository.NewRoleRepository,
 		repository.NewPermissionRepository,
@@ -73,6 +73,9 @@ func (c *Container) registerDependencies() error {
 		repository.NewRolePermissionRepository,
 		repository.NewApiInterfaceRepository,
 		repository.NewApiInterfaceExecutionRecordRepository,
+		repository.NewActivityRepository,
+		repository.NewActivityTemplateRepository,
+		repository.NewActivityComponentRepository,
 	}
 	if err := c.mustProvide(repositories...); err != nil {
 		return err
@@ -80,7 +83,7 @@ func (c *Container) registerDependencies() error {
 
 	// 注册 Service 层
 	// Service 构造函数接收 Repository 和 *gorm.DB 参数，dig 会自动注入
-	services := []interface{}{
+	services := []any{
 		service.NewTokenService,
 		service.NewAuthService,
 		service.NewUserService,
@@ -89,6 +92,9 @@ func (c *Container) registerDependencies() error {
 		service.NewApiInterfaceService,
 		service.NewApiInterfaceExecutionRecordService,
 		service.NewDashboardService,
+		service.NewActivityService,
+		service.NewActivityTemplateService,
+		service.NewActivityComponentService,
 	}
 	if err := c.mustProvide(services...); err != nil {
 		return err
@@ -96,7 +102,7 @@ func (c *Container) registerDependencies() error {
 
 	// 注册 Controller 层
 	// Controller 构造函数接收 Service 参数，dig 会自动注入
-	controllers := []interface{}{
+	controllers := []any{
 		controller.NewAuthController,
 		controller.NewUserController,
 		controller.NewRoleController,
@@ -104,6 +110,9 @@ func (c *Container) registerDependencies() error {
 		controller.NewApiInterfaceController,
 		controller.NewApiInterfaceExecutionRecordController,
 		controller.NewDashboardController,
+		controller.NewActivityController,
+		controller.NewActivityTemplateController,
+		controller.NewActivityComponentController,
 	}
 	if err := c.mustProvide(controllers...); err != nil {
 		return err
@@ -122,7 +131,7 @@ func (c *Container) ProvideRedisClient(cfg *config.Config) *redis.Client {
 }
 
 // Invoke 调用函数并自动注入依赖
-func (c *Container) Invoke(fn interface{}) error {
+func (c *Container) Invoke(fn any) error {
 	return c.container.Invoke(fn)
 }
 
@@ -137,6 +146,9 @@ func (c *Container) SetupRouter() (*gin.Engine, error) {
 		apiInterfaceController *controller.ApiInterfaceController,
 		apiInterfaceExecutionRecordController *controller.ApiInterfaceExecutionRecordController,
 		dashboardController *controller.DashboardController,
+		activityController *controller.ActivityController,
+		activityTemplateController *controller.ActivityTemplateController,
+		activityComponentController *controller.ActivityComponentController,
 		tokenService *service.TokenService,
 	) {
 		router = gin.Default()
@@ -231,6 +243,43 @@ func (c *Container) SetupRouter() (*gin.Engine, error) {
 			dashboard := api.Group("/dashboard")
 			{
 				dashboard.GET("/data", dashboardController.GetDashboardData)
+			}
+
+			// 活动管理
+			activity := api.Group("/activity")
+			{
+				activity.GET("/list", activityController.List)
+				activity.GET("/:id", activityController.Detail)
+				activity.POST("", activityController.Create)
+				activity.PUT("/:id", activityController.Update)
+				activity.DELETE("/:id", activityController.Delete)
+				activity.PUT("/:id/status", activityController.UpdateStatus)
+			}
+
+			// 活动模板管理
+			activityTemplate := api.Group("/activity/template")
+			{
+				activityTemplate.GET("/list", activityTemplateController.List)
+				activityTemplate.GET("/all", activityTemplateController.GetAll)
+				activityTemplate.GET("/:id", activityTemplateController.Detail)
+				activityTemplate.POST("", activityTemplateController.Create)
+				activityTemplate.PUT("/:id", activityTemplateController.Update)
+				activityTemplate.DELETE("/:id", activityTemplateController.Delete)
+				activityTemplate.PUT("/:id/status", activityTemplateController.UpdateStatus)
+				activityTemplate.POST("/:id/copy", activityTemplateController.Copy)
+			}
+
+			// 活动组件管理
+			activityComponent := api.Group("/activity/component")
+			{
+				activityComponent.GET("/list", activityComponentController.List)
+				activityComponent.GET("/all", activityComponentController.GetAll)
+				activityComponent.GET("/:id", activityComponentController.Detail)
+				activityComponent.POST("", activityComponentController.Create)
+				activityComponent.PUT("/:id", activityComponentController.Update)
+				activityComponent.DELETE("/:id", activityComponentController.Delete)
+				activityComponent.PUT("/:id/status", activityComponentController.UpdateStatus)
+				activityComponent.POST("/:id/copy", activityComponentController.Copy)
 			}
 		}
 	})
