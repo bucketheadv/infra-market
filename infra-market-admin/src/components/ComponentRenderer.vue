@@ -47,7 +47,7 @@
       </div>
       <div v-if="component">
         <a-card
-          v-for="(item, index) in arrayValue"
+          v-for="(_, index) in arrayValue"
           :key="index"
           size="small"
           class="component-card component-array-item"
@@ -95,14 +95,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed, h, watch, nextTick } from 'vue'
+import { computed, h, watch, inject, provide } from 'vue'
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons-vue'
 import type { ActivityTemplateField } from '@/api/activityTemplate'
 import type { ActivityComponent, ActivityComponentField } from '@/api/activityComponent'
 import FieldRenderer from './FieldRenderer.vue'
 
 interface Props {
-  field: ActivityTemplateField
+  field: ActivityTemplateField | ActivityComponentField
   value: any
   componentCache: Map<number, ActivityComponent>
 }
@@ -112,6 +112,28 @@ const props = defineProps<Props>()
 const emit = defineEmits<{
   'update:value': [value: any]
 }>()
+
+// 注入父级的字段路径前缀（用于嵌套组件）
+const injectedPath = inject<(() => (string | number)[]) | (string | number)[]>('componentFieldPath', [])
+const parentFieldPath = computed(() => {
+  if (typeof injectedPath === 'function') {
+    return injectedPath()
+  }
+  return injectedPath as (string | number)[]
+})
+
+// 计算当前字段的完整路径前缀
+const currentFieldPath = computed(() => {
+  // 如果是顶层组件（parentFieldPath 为空），使用 configData 作为前缀
+  if (parentFieldPath.value.length === 0) {
+    return ['configData', props.field.name || '']
+  }
+  // 如果是嵌套组件，追加当前字段名
+  return [...parentFieldPath.value, props.field.name || '']
+})
+
+// 提供当前路径给子组件（提供 computed 的 getter 函数）
+provide('componentFieldPath', () => currentFieldPath.value)
 
 const component = computed(() => {
   if (!props.field.componentId) {
@@ -155,13 +177,9 @@ const getArrayFieldValue = (index: number, fieldName: string) => {
 }
 
 const updateFieldValue = (fieldName: string, val: any) => {
-  const newValue = { ...props.value }
+  const newValue = { ...(props.value || {}) }
   newValue[fieldName] = val
   emit('update:value', newValue)
-  // 确保数据已更新后再触发验证
-  nextTick(() => {
-    // 验证会在数据更新后自动触发
-  })
 }
 
 const updateArrayFieldValue = (index: number, fieldName: string, val: any) => {
@@ -184,23 +202,24 @@ const handleRemoveItem = (index: number) => {
 }
 
 const getFieldName = (fieldName: string) => {
-  return ['configData', props.field.name, fieldName]
+  // 使用当前字段路径前缀，追加子字段名
+  return [...currentFieldPath.value, fieldName]
 }
 
 const getArrayFieldName = (index: number, fieldName: string) => {
-  return ['configData', props.field.name, index, fieldName]
+  // 使用当前字段路径前缀，追加索引和子字段名
+  return [...currentFieldPath.value, index, fieldName]
 }
 
 const getFieldRules = (field: ActivityComponentField) => {
   const rules: any[] = []
   
   if (field.required) {
-    // 对于日期时间选择器，使用 'change' 触发器；其他使用 'blur'
-    const trigger = field.inputType === 'DATE' || field.inputType === 'DATETIME' ? ['change', 'blur'] : 'blur'
+    // 所有字段都使用 'change' 和 'blur' 触发器，确保值变化时立即验证
     rules.push({
       required: true,
       message: `请输入${field.label || field.name}`,
-      trigger: trigger,
+      trigger: ['change', 'blur'],
       validator: (_rule: any, value: any) => {
         // 检查值是否为空
         if (value === null || value === undefined) {
@@ -214,7 +233,7 @@ const getFieldRules = (field: ActivityComponentField) => {
         if (Array.isArray(value) && value.length === 0) {
           return Promise.reject(new Error(`请输入${field.label || field.name}`))
         }
-        // 其他情况都认为有效（包括有效的日期时间字符串）
+        // 其他情况都认为有效（包括有效的日期时间字符串、数字、布尔值等）
         return Promise.resolve()
       }
     })

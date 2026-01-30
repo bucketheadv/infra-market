@@ -400,9 +400,10 @@ const loadComponentsFromTemplate = async (template: ActivityTemplate) => {
   }
   
   const componentIds = new Set<number>()
+  const loadedComponentIds = new Set<number>()
   
-  // 收集所有组件ID
-  const collectComponentIds = (fields: ActivityTemplateField[]) => {
+  // 递归收集所有组件ID（包括嵌套组件）
+  const collectComponentIds = (fields: (ActivityTemplateField | import('@/api/activityComponent').ActivityComponentField)[]) => {
     fields.forEach(field => {
       if (field.type === 'COMPONENT' && field.componentId) {
         componentIds.add(field.componentId)
@@ -410,18 +411,51 @@ const loadComponentsFromTemplate = async (template: ActivityTemplate) => {
     })
   }
   
+  // 从组件字段中收集嵌套组件ID
+  const collectNestedComponentIds = (component: ActivityComponent) => {
+    if (component.fields) {
+      collectComponentIds(component.fields)
+    }
+  }
+  
+  // 初始收集模板字段中的组件ID
   collectComponentIds(template.fields)
   
-  // 加载所有组件
-  for (const componentId of componentIds) {
-    if (!componentCache.value.has(componentId)) {
-      try {
-        const response = await activityComponentApi.getById(componentId)
-        if (response.data) {
-          componentCache.value.set(componentId, response.data)
+  // 循环加载所有组件（包括新发现的嵌套组件）
+  let hasNewComponents = true
+  while (hasNewComponents) {
+    hasNewComponents = false
+    const componentsToLoad: number[] = []
+    
+    // 找出需要加载的组件
+    for (const componentId of componentIds) {
+      if (!loadedComponentIds.has(componentId)) {
+        componentsToLoad.push(componentId)
+      }
+    }
+    
+    // 加载组件
+    for (const componentId of componentsToLoad) {
+      if (!componentCache.value.has(componentId)) {
+        try {
+          const response = await activityComponentApi.getById(componentId)
+          if (response.data) {
+            componentCache.value.set(componentId, response.data)
+            loadedComponentIds.add(componentId)
+            // 检查已加载组件中的嵌套组件
+            collectNestedComponentIds(response.data)
+            hasNewComponents = true
+          }
+        } catch (error) {
+          console.error(`加载组件 ${componentId} 失败:`, error)
         }
-      } catch (error) {
-        console.error(`加载组件 ${componentId} 失败:`, error)
+      } else {
+        // 如果组件已在缓存中，也要检查其嵌套组件
+        const cachedComponent = componentCache.value.get(componentId)
+        if (cachedComponent) {
+          loadedComponentIds.add(componentId)
+          collectNestedComponentIds(cachedComponent)
+        }
       }
     }
   }
