@@ -71,6 +71,9 @@ services.AddScoped<IUserRoleRepository, UserRoleRepository>();
 services.AddScoped<IRolePermissionRepository, RolePermissionRepository>();
 services.AddScoped<IApiInterfaceRepository, ApiInterfaceRepository>();
 services.AddScoped<IApiInterfaceExecutionRecordRepository, ApiInterfaceExecutionRecordRepository>();
+services.AddScoped<IActivityRepository, ActivityRepository>();
+services.AddScoped<IActivityTemplateRepository, ActivityTemplateRepository>();
+services.AddScoped<IActivityComponentRepository, ActivityComponentRepository>();
 
 // 注册Service
 services.AddSingleton<IConnectionMultiplexer>(sp =>
@@ -88,6 +91,9 @@ services.AddScoped<IPermissionService, PermissionService>();
 services.AddScoped<IApiInterfaceService, ApiInterfaceService>();
 services.AddScoped<IApiInterfaceExecutionRecordService, ApiInterfaceExecutionRecordService>();
 services.AddScoped<IDashboardService, DashboardService>();
+services.AddScoped<IActivityService, ActivityService>();
+services.AddScoped<IActivityTemplateService, ActivityTemplateService>();
+services.AddScoped<IActivityComponentService, ActivityComponentService>();
 
 // 注册Controller，添加全局路由前缀 /api
 services.AddControllers(_ =>

@@ -12,6 +12,9 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<RolePermission> RolePermissions { get; set; }
     public DbSet<ApiInterface> ApiInterfaces { get; set; }
     public DbSet<ApiInterfaceExecutionRecord> ApiInterfaceExecutionRecords { get; set; }
+    public DbSet<Activity> Activities { get; set; }
+    public DbSet<ActivityTemplate> ActivityTemplates { get; set; }
+    public DbSet<ActivityComponent> ActivityComponents { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -25,6 +28,9 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         modelBuilder.Entity<RolePermission>().ToTable("role_permission");
         modelBuilder.Entity<ApiInterface>().ToTable("api_interface");
         modelBuilder.Entity<ApiInterfaceExecutionRecord>().ToTable("api_interface_execution_record");
+        modelBuilder.Entity<Activity>().ToTable("activity");
+        modelBuilder.Entity<ActivityTemplate>().ToTable("activity_template");
+        modelBuilder.Entity<ActivityComponent>().ToTable("activity_component");
 
         // 配置User实体
         modelBuilder.Entity<User>(entity =>
@@ -150,6 +156,53 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             entity.Property(e => e.Remark).HasColumnName("remark");
             entity.Property(e => e.ClientIp).HasMaxLength(50).HasColumnName("client_ip");
             entity.Property(e => e.UserAgent).HasMaxLength(500).HasColumnName("user_agent");
+        });
+
+        // 配置Activity实体
+        modelBuilder.Entity<Activity>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.CreateTime).HasColumnName("create_time");
+            entity.Property(e => e.UpdateTime).HasColumnName("update_time");
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(100).HasColumnName("name");
+            entity.HasIndex(e => e.Name);
+            entity.Property(e => e.Description).HasMaxLength(500).HasColumnName("description");
+            entity.Property(e => e.TemplateId).IsRequired().HasColumnName("template_id");
+            entity.HasIndex(e => e.TemplateId);
+            entity.Property(e => e.ConfigData).HasColumnName("config_data");
+            entity.Property(e => e.Status).IsRequired().HasDefaultValue(1).HasColumnName("status");
+            entity.HasIndex(e => e.Status);
+        });
+
+        // 配置ActivityTemplate实体
+        modelBuilder.Entity<ActivityTemplate>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.CreateTime).HasColumnName("create_time");
+            entity.Property(e => e.UpdateTime).HasColumnName("update_time");
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(100).HasColumnName("name");
+            entity.HasIndex(e => e.Name);
+            entity.Property(e => e.Description).HasMaxLength(500).HasColumnName("description");
+            entity.Property(e => e.Fields).HasColumnName("fields");
+            entity.Property(e => e.Status).IsRequired().HasDefaultValue(1).HasColumnName("status");
+            entity.HasIndex(e => e.Status);
+        });
+
+        // 配置ActivityComponent实体
+        modelBuilder.Entity<ActivityComponent>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.CreateTime).HasColumnName("create_time");
+            entity.Property(e => e.UpdateTime).HasColumnName("update_time");
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(100).HasColumnName("name");
+            entity.HasIndex(e => e.Name);
+            entity.Property(e => e.Description).HasMaxLength(500).HasColumnName("description");
+            entity.Property(e => e.Fields).HasColumnName("fields");
+            entity.Property(e => e.Status).IsRequired().HasDefaultValue(1).HasColumnName("status");
+            entity.HasIndex(e => e.Status);
         });
     }
 
