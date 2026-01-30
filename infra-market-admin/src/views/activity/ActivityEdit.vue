@@ -96,7 +96,9 @@
             <a-form-item
               v-for="field in sortedFields"
               :key="field.name || ''"
-              :label="field.label || field.name"
+              :label="field.type === 'COMPONENT' ? '' : (field.label || field.name)"
+              :label-col="field.type === 'COMPONENT' ? { span: 0 } : undefined"
+              :wrapper-col="field.type === 'COMPONENT' ? { span: 24 } : undefined"
               :name="['configData', field.name || '']"
               :rules="getFieldRules(field)"
             >

@@ -10,7 +10,9 @@
           <a-form-item
             v-for="compField in sortedComponentFields"
             :key="compField.name || ''"
-            :label="compField.label || compField.name"
+            :label="compField.type === 'COMPONENT' ? '' : (compField.label || compField.name)"
+            :label-col="compField.type === 'COMPONENT' ? { span: 0 } : undefined"
+            :wrapper-col="compField.type === 'COMPONENT' ? { span: 24 } : undefined"
             :name="getFieldName(compField.name || '')"
             :rules="getFieldRules(compField)"
           >
