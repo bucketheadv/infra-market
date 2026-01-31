@@ -23,7 +23,10 @@ class MainRouter @Inject constructor(
     private val permissionRouter: PermissionRouter,
     private val apiInterfaceRouter: ApiInterfaceRouter,
     private val apiInterfaceExecutionRecordRouter: ApiInterfaceExecutionRecordRouter,
-    private val dashboardRouter: DashboardRouter
+    private val dashboardRouter: DashboardRouter,
+    private val activityRouter: ActivityRouter,
+    private val activityTemplateRouter: ActivityTemplateRouter,
+    private val activityComponentRouter: ActivityComponentRouter
 ) {
     
     fun create(): Router {
@@ -51,6 +54,9 @@ class MainRouter @Inject constructor(
         apiInterfaceRouter.mount(router, vertx)
         apiInterfaceExecutionRecordRouter.mount(router, vertx)
         dashboardRouter.mount(router, vertx)
+        activityRouter.mount(router, vertx)
+        activityTemplateRouter.mount(router, vertx)
+        activityComponentRouter.mount(router, vertx)
         
         // 健康检查
         router.get("/health").handler { ctx ->
