@@ -91,7 +91,7 @@ class ActivityComponentService @Inject constructor(
     }
     
     suspend fun deleteActivityComponent(id: Long): ApiData<Unit> {
-        val component = activityComponentDao.findById(id) ?: return ApiData.error("活动组件不存在", 404)
+        activityComponentDao.findById(id) ?: return ApiData.error("活动组件不存在", 404)
         
         activityComponentDao.deleteById(id)
         

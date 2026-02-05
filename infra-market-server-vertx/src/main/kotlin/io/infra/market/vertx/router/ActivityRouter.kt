@@ -6,6 +6,7 @@ import io.infra.market.vertx.dto.ActivityFormDto
 import io.infra.market.vertx.dto.ActivityQueryDto
 import io.infra.market.vertx.middleware.AuthMiddleware
 import io.infra.market.vertx.service.ActivityService
+import io.infra.market.vertx.util.QueryParamUtil
 import io.infra.market.vertx.util.ResponseUtil
 import io.infra.market.vertx.extensions.coroutineHandler
 import io.infra.market.vertx.extensions.mapTo
@@ -81,16 +82,7 @@ class ActivityRouter @Inject constructor(
         val id = ctx.pathParam("id").toLongOrNull()
             ?: throw IllegalArgumentException("活动ID无效")
         
-        val statusStr = ctx.queryParams().get("status")
-        if (statusStr.isNullOrBlank()) {
-            throw IllegalArgumentException("状态参数不能为空")
-        }
-        
-        val status = when (statusStr) {
-            "1" -> 1
-            "0" -> 0
-            else -> throw IllegalArgumentException("状态值只能是0或1")
-        }
+        val status = QueryParamUtil.getStatus(ctx)
         
         val result = activityService.updateActivityStatus(id, status)
         ResponseUtil.sendResponse(ctx, result)

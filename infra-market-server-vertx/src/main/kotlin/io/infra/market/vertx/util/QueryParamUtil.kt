@@ -33,5 +33,27 @@ object QueryParamUtil {
         val value = ctx.queryParams().get(key)?.toLongOrNull()
         return value ?: default
     }
+    
+    /**
+     * 从 RoutingContext 获取并验证状态参数
+     * 状态值只能是0或1
+     * 
+     * @param ctx RoutingContext
+     * @param paramName 参数名称，默认为"status"
+     * @return 状态值（0或1）
+     * @throws IllegalArgumentException 如果参数为空或值不是0或1
+     */
+    fun getStatus(ctx: RoutingContext, paramName: String = "status"): Int {
+        val statusStr = ctx.queryParams().get(paramName)
+        if (statusStr.isNullOrBlank()) {
+            throw IllegalArgumentException("状态参数不能为空")
+        }
+        
+        return when (statusStr) {
+            "1" -> 1
+            "0" -> 0
+            else -> throw IllegalArgumentException("状态值只能是0或1")
+        }
+    }
 }
 

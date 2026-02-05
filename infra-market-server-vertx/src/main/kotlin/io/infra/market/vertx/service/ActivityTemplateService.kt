@@ -91,7 +91,7 @@ class ActivityTemplateService @Inject constructor(
     }
     
     suspend fun deleteActivityTemplate(id: Long): ApiData<Unit> {
-        val template = activityTemplateDao.findById(id) ?: return ApiData.error("活动模板不存在", 404)
+        activityTemplateDao.findById(id) ?: return ApiData.error("活动模板不存在", 404)
         
         activityTemplateDao.deleteById(id)
         

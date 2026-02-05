@@ -74,11 +74,8 @@ class ActivityService @Inject constructor(
     
     suspend fun createActivity(form: ActivityFormDto): ApiData<ActivityDto> {
         // 验证模板是否存在
-        val templateId = form.templateId
-        if (templateId == null) {
-            return ApiData.error("模板ID不能为空", 400)
-        }
-        
+        val templateId = form.templateId ?: return ApiData.error("模板ID不能为空", 400)
+
         val templateExists = checkTemplateExists(templateId)
         if (!templateExists) {
             return ApiData.error("活动模板不存在", 400)
@@ -128,7 +125,7 @@ class ActivityService @Inject constructor(
     }
     
     suspend fun deleteActivity(id: Long): ApiData<Unit> {
-        val activity = activityDao.findById(id) ?: return ApiData.error("活动不存在", 404)
+        activityDao.findById(id) ?: return ApiData.error("活动不存在", 404)
         
         activityDao.deleteById(id)
         
