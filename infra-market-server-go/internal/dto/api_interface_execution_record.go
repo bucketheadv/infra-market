@@ -33,7 +33,7 @@ type ApiInterfaceExecutionRecordQueryDto struct {
 	StartTime        *int64  `form:"startTime"`
 	EndTime          *int64  `form:"endTime"`
 	MinExecutionTime *int64  `form:"minExecutionTime"`
-	MaxExecutionTime  *int64  `form:"maxExecutionTime"`
+	MaxExecutionTime *int64  `form:"maxExecutionTime"`
 	Pagination
 }
 

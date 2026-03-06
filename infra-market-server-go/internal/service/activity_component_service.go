@@ -34,19 +34,12 @@ func (s *ActivityComponentService) GetActivityComponents(query dto.ActivityCompo
 		return dto.Error[dto.PageResult[dto.ActivityComponentDto]]("查询失败", http.StatusInternalServerError)
 	}
 
-	// 转换为DTO
-	componentDtos := make([]dto.ActivityComponentDto, len(components))
-	for i, component := range components {
-		componentDtos[i] = s.convertComponentToDto(&component)
-	}
-
 	result := dto.PageResult[dto.ActivityComponentDto]{
-		Records: componentDtos,
+		Records: s.toComponentDtos(components),
 		Total:   total,
 		Page:    query.GetPage(),
 		Size:    query.GetSize(),
 	}
-
 	return dto.Success(result)
 }
 
@@ -56,14 +49,7 @@ func (s *ActivityComponentService) GetAllActivityComponents() dto.ApiData[[]dto.
 	if err != nil {
 		return dto.Error[[]dto.ActivityComponentDto]("查询失败", http.StatusInternalServerError)
 	}
-
-	// 转换为DTO
-	componentDtos := make([]dto.ActivityComponentDto, len(components))
-	for i, component := range components {
-		componentDtos[i] = s.convertComponentToDto(&component)
-	}
-
-	return dto.Success(componentDtos)
+	return dto.Success(s.toComponentDtos(components))
 }
 
 // GetActivityComponent 获取活动组件详情
@@ -203,6 +189,15 @@ func (s *ActivityComponentService) CopyActivityComponent(id uint64) dto.ApiData[
 
 	componentDto := s.convertComponentToDto(newComponent)
 	return dto.Success(componentDto)
+}
+
+// toComponentDtos 批量转换活动组件实体列表为DTO列表
+func (s *ActivityComponentService) toComponentDtos(components []entity.ActivityComponent) []dto.ActivityComponentDto {
+	dtos := make([]dto.ActivityComponentDto, len(components))
+	for i := range components {
+		dtos[i] = s.convertComponentToDto(&components[i])
+	}
+	return dtos
 }
 
 // convertComponentToDto 转换活动组件实体为DTO
