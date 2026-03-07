@@ -3,7 +3,6 @@ package repository
 import (
 	"github.com/bucketheadv/infra-market/internal/dto"
 	"github.com/bucketheadv/infra-market/internal/entity"
-	"github.com/bucketheadv/infra-market/internal/util"
 	"gorm.io/gorm"
 )
 
@@ -29,14 +28,7 @@ func (r *ActivityComponentRepository) FindByID(id uint64) (*entity.ActivityCompo
 func (r *ActivityComponentRepository) Page(query dto.ActivityComponentQueryDto) ([]entity.ActivityComponent, int64, error) {
 	var components []entity.ActivityComponent
 
-	db := r.db.Model(&entity.ActivityComponent{})
-
-	if util.IsNotBlank(query.Name) {
-		db = db.Where("name LIKE ?", "%"+*query.Name+"%")
-	}
-	if query.Status != nil {
-		db = db.Where("status = ?", *query.Status)
-	}
+	db := ApplyNameStatusFilters(r.db.Model(&entity.ActivityComponent{}), query.Name, query.Status)
 
 	return PaginateQuery(db, &query, "create_time DESC", &components)
 }

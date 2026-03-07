@@ -3,7 +3,6 @@ package repository
 import (
 	"github.com/bucketheadv/infra-market/internal/dto"
 	"github.com/bucketheadv/infra-market/internal/entity"
-	"github.com/bucketheadv/infra-market/internal/util"
 	"gorm.io/gorm"
 )
 
@@ -29,14 +28,7 @@ func (r *ActivityTemplateRepository) FindByID(id uint64) (*entity.ActivityTempla
 func (r *ActivityTemplateRepository) Page(query dto.ActivityTemplateQueryDto) ([]entity.ActivityTemplate, int64, error) {
 	var templates []entity.ActivityTemplate
 
-	db := r.db.Model(&entity.ActivityTemplate{})
-
-	if util.IsNotBlank(query.Name) {
-		db = db.Where("name LIKE ?", "%"+*query.Name+"%")
-	}
-	if query.Status != nil {
-		db = db.Where("status = ?", *query.Status)
-	}
+	db := ApplyNameStatusFilters(r.db.Model(&entity.ActivityTemplate{}), query.Name, query.Status)
 
 	return PaginateQuery(db, &query, "create_time DESC", &templates)
 }

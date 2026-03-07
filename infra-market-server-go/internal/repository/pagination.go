@@ -20,6 +20,17 @@ func ApplyCommonFilters(db *gorm.DB, name, code, status *string) *gorm.DB {
 	return db
 }
 
+// ApplyNameStatusFilters 应用通用查询条件（Name、Status[int]）
+func ApplyNameStatusFilters(db *gorm.DB, name *string, status *int) *gorm.DB {
+	if util.IsNotBlank(name) {
+		db = db.Where("name LIKE ?", "%"+*name+"%")
+	}
+	if status != nil {
+		db = db.Where("status = ?", *status)
+	}
+	return db
+}
+
 // PaginateQuery 执行分页查询的通用函数
 // db: 已构建好的查询构建器
 // query: 实现了 PaginationQuery 接口的查询对象
