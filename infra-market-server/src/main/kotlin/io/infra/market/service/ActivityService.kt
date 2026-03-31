@@ -41,10 +41,8 @@ class ActivityService(
     @Transactional
     fun save(form: ActivityFormDto): ActivityDto {
         // 验证模板是否存在
-        if (form.templateId == null) {
-            throw RuntimeException("模板ID不能为空")
-        }
-        val template = activityTemplateDao.getById(form.templateId)
+        val templateId = form.templateId ?: throw RuntimeException("模板ID不能为空")
+        val template = activityTemplateDao.getById(templateId)
             ?: throw RuntimeException("活动模板不存在")
         
         // 验证配置数据
@@ -65,8 +63,9 @@ class ActivityService(
             ?: throw RuntimeException("活动不存在")
 
         // 验证模板是否存在
-        if (form.templateId != null) {
-            val template = activityTemplateDao.getById(form.templateId)
+        val templateId = form.templateId
+        if (templateId != null) {
+            val template = activityTemplateDao.getById(templateId)
                 ?: throw RuntimeException("活动模板不存在")
             
             // 验证配置数据
@@ -105,8 +104,9 @@ class ActivityService(
         
         // 获取模板名称
         var templateName: String? = null
-        if (entity.templateId != null) {
-            val template = activityTemplateDao.getById(entity.templateId)
+        val templateId = entity.templateId
+        if (templateId != null) {
+            val template = activityTemplateDao.getById(templateId)
             templateName = template?.name
         }
 
@@ -187,9 +187,7 @@ class ActivityService(
         fields.forEach { field ->
             if (field.required == true) {
                 val fieldName = field.name ?: return@forEach
-                val value = configData?.get(fieldName)
-                
-                val isEmpty = when (value) {
+                val isEmpty = when (val value = configData?.get(fieldName)) {
                     null -> true
                     is String -> value.trim().isEmpty()
                     is Collection<*> -> value.isEmpty()

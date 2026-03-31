@@ -35,7 +35,7 @@ class RoleDao : ServiceImpl<RoleMapper, Role>() {
         val query = query().whereWith {
             Role::status.eq(status)
         }
-        return mapper.selectListByQuery(query)
+        return mapper.selectListByQuery(query) ?: emptyList()
     }
     
     fun findByIds(ids: List<Long>): List<Role> {
@@ -46,7 +46,7 @@ class RoleDao : ServiceImpl<RoleMapper, Role>() {
             Role::id.inList(ids)
             Role::status.ne(StatusEnum.DELETED.code)
         }
-        return mapper.selectListByQuery(query)
+        return mapper.selectListByQuery(query) ?: emptyList()
     }
     
     fun page(query: RoleQueryDto): Page<Role> {

@@ -20,7 +20,7 @@ class UserRoleDao : ServiceImpl<UserRoleMapper, UserRole>() {
         val query = query().whereWith {
             UserRole::uid.eq(uid)
         }
-        return mapper.selectListByQuery(query)
+        return mapper.selectListByQuery(query) ?: emptyList()
     }
     
     fun findByUids(uids: List<Long>): List<UserRole> {
@@ -30,7 +30,7 @@ class UserRoleDao : ServiceImpl<UserRoleMapper, UserRole>() {
         val query = query().whereWith {
             UserRole::uid.inList(uids)
         }
-        return mapper.selectListByQuery(query)
+        return mapper.selectListByQuery(query) ?: emptyList()
     }
     
     fun deleteByUid(uid: Long): Int {

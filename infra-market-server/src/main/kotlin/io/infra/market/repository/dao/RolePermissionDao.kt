@@ -20,7 +20,7 @@ class RolePermissionDao : ServiceImpl<RolePermissionMapper, RolePermission>() {
         val query = query().whereWith {
             RolePermission::roleId.eq(roleId)
         }
-        return mapper.selectListByQuery(query)
+        return mapper.selectListByQuery(query) ?: emptyList()
     }
     
     fun findByRoleIds(roleIds: List<Long>): List<RolePermission> {
@@ -30,7 +30,7 @@ class RolePermissionDao : ServiceImpl<RolePermissionMapper, RolePermission>() {
         val query = query().whereWith {
             RolePermission::roleId.inList(roleIds)
         }
-        return mapper.selectListByQuery(query)
+        return mapper.selectListByQuery(query) ?: emptyList()
     }
     
     fun deleteByRoleId(roleId: Long): Int {

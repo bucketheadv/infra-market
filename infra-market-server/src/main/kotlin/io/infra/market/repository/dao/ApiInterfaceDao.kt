@@ -92,6 +92,6 @@ class ApiInterfaceDao : ServiceImpl<ApiInterfaceMapper, ApiInterface>() {
             .where("id IN (${ids.joinToString(",")})")
             .and(ApiInterface::status.eq(1))
         
-        return mapper.selectListByQuery(queryWrapper)
+        return mapper.selectListByQuery(queryWrapper) ?: emptyList()
     }
 }

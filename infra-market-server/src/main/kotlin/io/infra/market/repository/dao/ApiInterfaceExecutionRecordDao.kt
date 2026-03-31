@@ -117,7 +117,7 @@ class ApiInterfaceExecutionRecordDao : ServiceImpl<ApiInterfaceExecutionRecordMa
             .orderBy("create_time DESC")
             .limit(limit)
 
-        return mapper.selectListByQuery(query)
+        return mapper.selectListByQuery(query) ?: emptyList()
     }
 
     /**
@@ -132,7 +132,7 @@ class ApiInterfaceExecutionRecordDao : ServiceImpl<ApiInterfaceExecutionRecordMa
             .from(ApiInterfaceExecutionRecord::class.java)
             .where(ApiInterfaceExecutionRecord::interfaceId.eq(interfaceId))
 
-        val records = mapper.selectListByQuery(query)
+        val records = mapper.selectListByQuery(query) ?: emptyList()
         
         if (records.isEmpty()) {
             return null

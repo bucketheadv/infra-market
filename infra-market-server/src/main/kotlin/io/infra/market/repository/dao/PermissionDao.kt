@@ -35,7 +35,7 @@ class PermissionDao : ServiceImpl<PermissionMapper, Permission>() {
         val query = query().whereWith {
             Permission::status.eq(status)
         }
-        return mapper.selectListByQuery(query)
+        return mapper.selectListByQuery(query) ?: emptyList()
     }
     
     fun findByIds(ids: List<Long>): List<Permission> {
@@ -45,14 +45,14 @@ class PermissionDao : ServiceImpl<PermissionMapper, Permission>() {
         val query = query().whereWith {
             Permission::id.inList(ids)
         }
-        return mapper.selectListByQuery(query)
+        return mapper.selectListByQuery(query) ?: emptyList()
     }
 
     fun findByParentId(parentId: Long): List<Permission> {
         val query = query().whereWith {
             Permission::parentId.eq(parentId) and Permission::status.ne(StatusEnum.DELETED.code)
         }
-        return mapper.selectListByQuery(query)
+        return mapper.selectListByQuery(query) ?: emptyList()
     }
     
     fun page(query: PermissionQueryDto): Page<Permission> {

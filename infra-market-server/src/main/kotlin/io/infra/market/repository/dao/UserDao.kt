@@ -35,7 +35,7 @@ class UserDao : ServiceImpl<UserMapper, User>() {
         val condition = query().whereWith {
             User::id.inList(uids) and User::status.ne(StatusEnum.DELETED.code)
         }
-        return mapper.selectListByQuery(condition)
+        return mapper.selectListByQuery(condition) ?: emptyList()
     }
     
     fun findByUsername(username: String): User? {
@@ -96,7 +96,7 @@ class UserDao : ServiceImpl<UserMapper, User>() {
             User::status.ne(StatusEnum.DELETED.code) and User::lastLoginTime.isNotNull
         }.orderBy("last_login_time DESC").limit(limit)
         
-        return mapper.selectListByQuery(query)
+        return mapper.selectListByQuery(query) ?: emptyList()
     }
     
     /**

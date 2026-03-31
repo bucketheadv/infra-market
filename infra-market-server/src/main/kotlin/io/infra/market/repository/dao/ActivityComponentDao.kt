@@ -53,6 +53,6 @@ class ActivityComponentDao : ServiceImpl<ActivityComponentMapper, ActivityCompon
     override fun list(): List<ActivityComponent> {
         val queryBuilder = query()
         queryBuilder.orderBy("create_time DESC")
-        return mapper.selectListByQuery(queryBuilder)
+        return mapper.selectListByQuery(queryBuilder) ?: emptyList()
     }
 }
