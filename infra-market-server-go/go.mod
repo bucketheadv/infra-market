@@ -1,8 +1,6 @@
 module github.com/bucketheadv/infra-market
 
-go 1.24.0
-
-toolchain go1.24.11
+go 1.26.1
 
 require (
 	github.com/PaesslerAG/jsonpath v0.1.1

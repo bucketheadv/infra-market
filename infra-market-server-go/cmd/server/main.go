@@ -3,13 +3,17 @@ package main
 import (
 	"flag"
 	"log"
+	"runtime"
 
 	"github.com/bucketheadv/infra-market/internal/config"
 	"github.com/bucketheadv/infra-market/internal/database"
 	"github.com/bucketheadv/infra-market/internal/router"
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
+	log.Printf("Go 版本: %s", runtime.Version())
+
 	// 解析命令行参数
 	var configPath string
 	flag.StringVar(&configPath, "config", "config.toml", "配置文件路径")
@@ -27,6 +31,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("数据库初始化失败: %v", err)
 	}
+
+	gin.SetMode(gin.ReleaseMode)
 
 	// 初始化路由
 	r, err := router.SetupRouter(db, cfg)

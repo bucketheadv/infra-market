@@ -1,7 +1,7 @@
 package io.infra.market.service
 
 import io.infra.market.util.JwtUtil
-import io.infra.structure.redis.core.JedisTemplate
+import io.infra.structure.redis.replication.core.JedisTemplate
 import org.springframework.stereotype.Service
 
 @Service
