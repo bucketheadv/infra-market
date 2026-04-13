@@ -1,0 +1,11 @@
+server.port=8080
+server.mode=release
+gorm.log-level=info
+
+# go-spring gorm starter
+spring.gorm.main.url=root:your_password@tcp(localhost:3306)/infra_market?charset=utf8mb4&parseTime=True&loc=Local
+
+# go-spring redis starter
+spring.go-redis.main.addr=localhost:6379
+spring.go-redis.main.password=
+spring.go-redis.main.db=0

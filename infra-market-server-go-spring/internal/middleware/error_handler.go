@@ -1,13 +1,14 @@
 package middleware
 
 import (
-	"log"
+	"errors"
 	"net/http"
 
 	"github.com/bucketheadv/infra-market/internal/dto"
 	"github.com/bucketheadv/infra-market/internal/enums"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	"github.com/go-spring/log"
 )
 
 // ErrorHandler 全局错误处理中间件
@@ -20,13 +21,13 @@ func ErrorHandler() gin.HandlerFunc {
 			err := c.Errors.Last()
 
 			// 处理验证错误
-			if validationErr, ok := err.Err.(validator.ValidationErrors); ok {
+			if validationErr, ok := errors.AsType[validator.ValidationErrors](err.Err); ok {
 				handleValidationError(c, validationErr)
 				return
 			}
 
 			// 处理其他错误
-			log.Printf("Error: %v", err)
+			log.Errorf(c.Request.Context(), log.TagAppDef, "Error: %v", err)
 			c.JSON(http.StatusInternalServerError, dto.Error[any](
 				string(enums.ErrorMessageSystemError),
 				http.StatusInternalServerError,

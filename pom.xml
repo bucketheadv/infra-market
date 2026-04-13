@@ -67,6 +67,10 @@
             <groupId>com.github.bucketheadv.infra-parent</groupId>
             <artifactId>infra-script</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.github.bucketheadv.infra-parent</groupId>
+            <artifactId>infra-rocketmq</artifactId>
+        </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.fusesource.jansi/jansi -->
         <dependency>
