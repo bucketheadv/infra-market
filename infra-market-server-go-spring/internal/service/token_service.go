@@ -10,7 +10,7 @@ import (
 )
 
 type TokenService struct {
-	redisClient *redis.Client
+	redisClient *redis.Client `autowire:""`
 }
 
 func NewTokenService(redisClient *redis.Client) *TokenService {

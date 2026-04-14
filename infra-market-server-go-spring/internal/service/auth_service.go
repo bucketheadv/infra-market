@@ -55,8 +55,7 @@ func (s *AuthService) Login(req dto.LoginRequest) dto.ApiData[dto.LoginResponse]
 	}
 
 	// 更新登录时间
-	now := time.Now().UnixMilli()
-	user.LastLoginTime = &now
+	user.LastLoginTime = new(time.Now().UnixMilli())
 	_ = s.userRepo.Update(user)
 
 	// 获取用户权限
@@ -423,8 +422,7 @@ func (s *AuthService) buildPermissionTree(permissions []entity.Permission) []dto
 func (s *AuthService) convertUserToDto(user *entity.User, roleIds []uint64) dto.UserDto {
 	var lastLoginTime *string
 	if user.LastLoginTime != nil {
-		formatted := util.Format(user.LastLoginTime)
-		lastLoginTime = &formatted
+		lastLoginTime = new(util.Format(user.LastLoginTime))
 	}
 
 	return dto.UserDto{
