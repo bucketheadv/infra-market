@@ -1,0 +1,15 @@
+# go-spring 会自动加载 ./config/log.yaml
+# 当前先将控制台日志切换为结构化 JSON 输出，便于查看和采集。
+# 如果要输出json日志，layout.type 设置为 JSONLayout
+appender:
+  console:
+    type: Console
+    layout:
+      type: TextLayout
+      fileLineLength: 96
+
+rootLogger:
+  type: Root
+  level: info
+  appenderRef:
+    ref: console
