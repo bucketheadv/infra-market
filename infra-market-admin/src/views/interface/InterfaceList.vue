@@ -659,7 +659,7 @@ onMounted(() => {
 
 .recommend-content {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 12px;
 }
 
@@ -682,6 +682,8 @@ onMounted(() => {
   display: flex;
   align-items: center;
   margin-bottom: 8px;
+  gap: 8px;
+  min-width: 0;
 }
 
 .recommend-item-name {
@@ -689,6 +691,7 @@ onMounted(() => {
   color: #333;
   font-size: 14px;
   flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -698,6 +701,7 @@ onMounted(() => {
   font-size: 12px;
   color: #666;
   margin-bottom: 4px;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -706,20 +710,19 @@ onMounted(() => {
 .recommend-item-desc {
   font-size: 12px;
   color: #999;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-@media (max-width: 1200px) {
-  .recommend-content {
-    grid-template-columns: repeat(2, 1fr);
-  }
+.recommend-item-header :deep(.ant-tag) {
+  flex-shrink: 0;
 }
 
 @media (max-width: 768px) {
   .recommend-content {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
