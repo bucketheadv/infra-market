@@ -656,11 +656,9 @@ func (s *ApiInterfaceService) convertToEntity(form *dto.ApiInterfaceFormDto) *en
 		if err != nil {
 			log.Errorf(context.Background(), log.TagAppDef, "序列化参数失败: %v\n", err)
 			// 如果序列化失败，使用空字符串
-			emptyStr := "[]"
-			paramsJSON = &emptyStr
+			paramsJSON = new("[]")
 		} else {
-			jsonStr := string(jsonBytes)
-			paramsJSON = &jsonStr
+			paramsJSON = new(string(jsonBytes))
 		}
 	}
 

@@ -6,7 +6,7 @@ type Activity struct {
 	BaseEntity
 	Name        string  `gorm:"column:name;type:varchar(100);not null;index:idx_name" json:"name"`
 	Description *string `gorm:"column:description;type:varchar(500)" json:"description"`
-	TemplateID  uint64  `gorm:"column:template_id;not null;index:idx_template_id" json:"templateId"`
+	TemplateID  uint64  `gorm:"column:template_id;type:int;not null;index:idx_template_id" json:"templateId"`
 	ConfigData  *string `gorm:"column:config_data;type:longtext" json:"configData"`
 	Status      int     `gorm:"column:status;type:int;not null;default:1;index:idx_status" json:"status"`
 }

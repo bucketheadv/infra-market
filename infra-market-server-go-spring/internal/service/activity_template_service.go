@@ -232,8 +232,7 @@ func (s *ActivityTemplateService) serializeFields(fields []dto.ActivityTemplateF
 		return nil, err
 	}
 
-	jsonStr := string(jsonBytes)
-	return &jsonStr, nil
+	return new(string(jsonBytes)), nil
 }
 
 // parseFields 解析字段配置JSON字符串

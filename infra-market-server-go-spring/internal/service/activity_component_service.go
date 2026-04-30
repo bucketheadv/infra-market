@@ -227,8 +227,7 @@ func (s *ActivityComponentService) serializeFields(fields []dto.ActivityComponen
 		return nil, err
 	}
 
-	jsonStr := string(jsonBytes)
-	return &jsonStr, nil
+	return new(string(jsonBytes)), nil
 }
 
 // parseFields 解析字段/组件配置JSON字符串

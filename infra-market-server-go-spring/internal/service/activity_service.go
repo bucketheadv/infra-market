@@ -265,8 +265,7 @@ func (s *ActivityService) serializeConfigData(configData map[string]any) (*strin
 		return nil, err
 	}
 
-	jsonStr := string(jsonBytes)
-	return &jsonStr, nil
+	return new(string(jsonBytes)), nil
 }
 
 // parseConfigData 解析配置数据JSON字符串

@@ -13,9 +13,9 @@ import (
 )
 
 type ActivityService struct {
-	db                *gorm.DB
-	activityRepo      *repository.ActivityRepository
-	templateRepo      *repository.ActivityTemplateRepository
+	db           *gorm.DB
+	activityRepo *repository.ActivityRepository
+	templateRepo *repository.ActivityTemplateRepository
 }
 
 func NewActivityService(
@@ -24,9 +24,9 @@ func NewActivityService(
 	templateRepo *repository.ActivityTemplateRepository,
 ) *ActivityService {
 	return &ActivityService{
-		db:                db,
-		activityRepo:      activityRepo,
-		templateRepo:      templateRepo,
+		db:           db,
+		activityRepo: activityRepo,
+		templateRepo: templateRepo,
 	}
 }
 
@@ -264,8 +264,7 @@ func (s *ActivityService) serializeConfigData(configData map[string]any) (*strin
 		return nil, err
 	}
 
-	jsonStr := string(jsonBytes)
-	return &jsonStr, nil
+	return new(string(jsonBytes)), nil
 }
 
 // parseConfigData 解析配置数据JSON字符串

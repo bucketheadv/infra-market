@@ -8,7 +8,7 @@ import (
 
 // BaseEntity 基础实体，包含公共字段
 type BaseEntity struct {
-	ID         uint64 `gorm:"primaryKey;autoIncrement;column:id" json:"id"`
+	ID         uint64 `gorm:"column:id;primaryKey;autoIncrement" json:"id"`
 	CreateTime int64  `gorm:"column:create_time;not null;default:0" json:"createTime"`
 	UpdateTime int64  `gorm:"column:update_time;not null;default:0" json:"updateTime"`
 }
