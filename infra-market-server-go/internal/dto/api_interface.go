@@ -44,6 +44,12 @@ type ApiInterfaceQueryDto struct {
 	Pagination
 }
 
+// ApiInterfaceMostUsedQueryDto 最热门接口查询DTO
+type ApiInterfaceMostUsedQueryDto struct {
+	Days  *int `form:"days" binding:"omitempty,min=1"`
+	Limit *int `form:"limit" binding:"omitempty,min=1"`
+}
+
 // ApiParamDto 接口参数DTO
 type ApiParamDto struct {
 	Name         *string           `json:"name"`

@@ -1,8 +1,6 @@
 package controller
 
 import (
-	"strconv"
-
 	"github.com/bucketheadv/infra-market/internal/dto"
 	"github.com/bucketheadv/infra-market/internal/service"
 	"github.com/gin-gonic/gin"
@@ -48,8 +46,16 @@ func (c *ApiInterfaceExecutionRecordController) GetByExecutorID(ctx *gin.Context
 		return
 	}
 
-	limitStr := ctx.DefaultQuery("limit", "10")
-	limit, _ := strconv.Atoi(limitStr)
+	var query dto.ApiInterfaceExecutionRecordLimitQueryDto
+	if err := ctx.ShouldBindQuery(&query); err != nil {
+		ctx.JSON(400, dto.Error[any]("参数校验失败", 400))
+		return
+	}
+
+	limit := 10
+	if query.Limit != nil {
+		limit = *query.Limit
+	}
 
 	result := c.service.FindByExecutorID(uriParam.ExecutorID, limit)
 	ctx.JSON(200, result)
@@ -69,34 +75,24 @@ func (c *ApiInterfaceExecutionRecordController) GetExecutionStats(ctx *gin.Conte
 
 // GetExecutionCount 获取执行记录数量统计
 func (c *ApiInterfaceExecutionRecordController) GetExecutionCount(ctx *gin.Context) {
-	startTimeStr := ctx.Query("startTime")
-	endTimeStr := ctx.Query("endTime")
-
-	startTime, err := strconv.ParseInt(startTimeStr, 10, 64)
-	if err != nil {
-		ctx.JSON(400, dto.Error[any]("无效的开始时间", 400))
+	var query dto.ApiInterfaceExecutionCountQueryDto
+	if err := ctx.ShouldBindQuery(&query); err != nil {
+		ctx.JSON(400, dto.Error[any]("参数校验失败", 400))
 		return
 	}
 
-	endTime, err := strconv.ParseInt(endTimeStr, 10, 64)
-	if err != nil {
-		ctx.JSON(400, dto.Error[any]("无效的结束时间", 400))
-		return
-	}
-
-	result := c.service.CountByTimeRange(startTime, endTime)
+	result := c.service.CountByTimeRange(*query.StartTime, *query.EndTime)
 	ctx.JSON(200, result)
 }
 
 // CleanupOldRecords 删除指定时间之前的记录
 func (c *ApiInterfaceExecutionRecordController) CleanupOldRecords(ctx *gin.Context) {
-	beforeTimeStr := ctx.Query("beforeTime")
-	beforeTime, err := strconv.ParseInt(beforeTimeStr, 10, 64)
-	if err != nil {
+	var query dto.ApiInterfaceExecutionCleanupQueryDto
+	if err := ctx.ShouldBindQuery(&query); err != nil {
 		ctx.JSON(400, dto.Error[any]("无效的时间", 400))
 		return
 	}
 
-	result := c.service.DeleteByTimeBefore(beforeTime)
+	result := c.service.DeleteByTimeBefore(*query.BeforeTime)
 	ctx.JSON(200, result)
 }

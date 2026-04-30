@@ -57,6 +57,11 @@ type StatusUpdateDto struct {
 	Status string `json:"status" binding:"required"`
 }
 
+// StatusQueryDto 状态查询参数
+type StatusQueryDto struct {
+	Status *int `form:"status" binding:"required,oneof=0 1"`
+}
+
 // IDUriParam ID路径参数
 type IDUriParam struct {
 	ID uint64 `uri:"id" binding:"required,min=1"`

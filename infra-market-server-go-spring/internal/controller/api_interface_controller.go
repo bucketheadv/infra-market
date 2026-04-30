@@ -1,8 +1,6 @@
 package controller
 
 import (
-	"strconv"
-
 	"github.com/bucketheadv/infra-market/internal/dto"
 	"github.com/bucketheadv/infra-market/internal/middleware"
 	"github.com/bucketheadv/infra-market/internal/service"
@@ -91,14 +89,13 @@ func (c *ApiInterfaceController) UpdateStatus(ctx *gin.Context) {
 		return
 	}
 
-	statusStr := ctx.Query("status")
-	status, err := strconv.Atoi(statusStr)
-	if err != nil {
-		ctx.JSON(400, dto.Error[any]("无效的状态值", 400))
+	var query dto.StatusQueryDto
+	if err := ctx.ShouldBindQuery(&query); err != nil {
+		ctx.JSON(400, dto.Error[any]("参数校验失败", 400))
 		return
 	}
 
-	result := c.apiInterfaceService.UpdateStatus(uriParam.ID, status)
+	result := c.apiInterfaceService.UpdateStatus(uriParam.ID, *query.Status)
 	ctx.JSON(200, result)
 }
 
@@ -116,17 +113,20 @@ func (c *ApiInterfaceController) Copy(ctx *gin.Context) {
 
 // GetMostUsed 获取最近最热门的接口
 func (c *ApiInterfaceController) GetMostUsed(ctx *gin.Context) {
-	daysStr := ctx.DefaultQuery("days", "30")
-	limitStr := ctx.DefaultQuery("limit", "5")
-
-	days, err := strconv.Atoi(daysStr)
-	if err != nil {
-		days = 30
+	var query dto.ApiInterfaceMostUsedQueryDto
+	if err := ctx.ShouldBindQuery(&query); err != nil {
+		ctx.JSON(400, dto.Error[any]("参数校验失败", 400))
+		return
 	}
 
-	limit, err := strconv.Atoi(limitStr)
-	if err != nil {
-		limit = 5
+	days := 30
+	if query.Days != nil {
+		days = *query.Days
+	}
+
+	limit := 5
+	if query.Limit != nil {
+		limit = *query.Limit
 	}
 
 	result := c.apiInterfaceService.FindMostUsedInterfaces(days, limit)

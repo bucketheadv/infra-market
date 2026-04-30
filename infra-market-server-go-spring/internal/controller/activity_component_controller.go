@@ -106,19 +106,13 @@ func (c *ActivityComponentController) UpdateStatus(ctx *gin.Context) {
 		return
 	}
 
-	statusStr := ctx.Query("status")
-	if statusStr == "" {
-		ctx.JSON(400, dto.Error[any]("状态参数不能为空", 400))
+	var query dto.StatusQueryDto
+	if err := ctx.ShouldBindQuery(&query); err != nil {
+		ctx.JSON(400, dto.Error[any]("参数校验失败", 400))
 		return
 	}
 
-	// 将状态字符串转换为整数
-	status := 0
-	if statusStr == "1" {
-		status = 1
-	}
-
-	result := c.componentService.UpdateActivityComponentStatus(uriParam.ID, status)
+	result := c.componentService.UpdateActivityComponentStatus(uriParam.ID, *query.Status)
 	ctx.JSON(200, result)
 }
 

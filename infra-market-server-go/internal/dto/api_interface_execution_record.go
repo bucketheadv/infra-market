@@ -37,6 +37,22 @@ type ApiInterfaceExecutionRecordQueryDto struct {
 	Pagination
 }
 
+// ApiInterfaceExecutionRecordLimitQueryDto 执行记录数量限制查询DTO
+type ApiInterfaceExecutionRecordLimitQueryDto struct {
+	Limit *int `form:"limit" binding:"omitempty,min=1"`
+}
+
+// ApiInterfaceExecutionCountQueryDto 执行记录数量统计查询DTO
+type ApiInterfaceExecutionCountQueryDto struct {
+	StartTime *int64 `form:"startTime" binding:"required"`
+	EndTime   *int64 `form:"endTime" binding:"required"`
+}
+
+// ApiInterfaceExecutionCleanupQueryDto 执行记录清理查询DTO
+type ApiInterfaceExecutionCleanupQueryDto struct {
+	BeforeTime *int64 `form:"beforeTime" binding:"required"`
+}
+
 // ApiInterfaceExecutionRecordStatsDto 执行记录统计DTO
 type ApiInterfaceExecutionRecordStatsDto struct {
 	InterfaceID       *uint64 `json:"interfaceId"`
