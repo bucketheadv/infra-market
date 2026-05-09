@@ -1,15 +1,16 @@
 package service
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
 
 	"github.com/PaesslerAG/jsonpath"
+	"github.com/bucketheadv/infra-go/applog"
 	"github.com/bucketheadv/infra-market/internal/dto"
 	"github.com/bucketheadv/infra-market/internal/entity"
 	"github.com/bucketheadv/infra-market/internal/repository"
@@ -105,7 +106,7 @@ func (s *ApiInterfaceService) Save(form dto.ApiInterfaceFormDto) dto.ApiData[dto
 		if form.Name != nil {
 			name = *form.Name
 		}
-		log.Printf("创建接口失败，接口名称: %s, 错误: %v\n", name, err)
+		applog.Errorf(context.Background(), applog.NameApp, "创建接口失败，接口名称: %s, 错误: %v\n", name, err)
 		return dto.Error[dto.ApiInterfaceDto]("创建接口失败", http.StatusInternalServerError)
 	}
 
@@ -132,7 +133,7 @@ func (s *ApiInterfaceService) Update(id uint64, form dto.ApiInterfaceFormDto) dt
 	apiInterface.Status = existing.Status
 
 	if err := s.apiInterfaceRepo.Update(apiInterface); err != nil {
-		log.Printf("更新接口失败，接口ID: %d, 错误: %v\n", id, err)
+		applog.Errorf(context.Background(), applog.NameApp, "更新接口失败，接口ID: %d, 错误: %v\n", id, err)
 		return dto.Error[dto.ApiInterfaceDto]("更新接口失败", http.StatusInternalServerError)
 	}
 
@@ -143,7 +144,7 @@ func (s *ApiInterfaceService) Update(id uint64, form dto.ApiInterfaceFormDto) dt
 // Delete 删除接口
 func (s *ApiInterfaceService) Delete(id uint64) dto.ApiData[any] {
 	if err := s.apiInterfaceRepo.Delete(id); err != nil {
-		log.Printf("删除接口失败，接口ID: %d, 错误: %v\n", id, err)
+		applog.Errorf(context.Background(), applog.NameApp, "删除接口失败，接口ID: %d, 错误: %v\n", id, err)
 		return dto.Error[any]("删除接口失败", http.StatusInternalServerError)
 	}
 	return dto.Success[any](nil)
@@ -160,7 +161,7 @@ func (s *ApiInterfaceService) UpdateStatus(id uint64, status int) dto.ApiData[dt
 	apiInterface.UpdateTime = time.Now().UnixMilli()
 
 	if err := s.apiInterfaceRepo.Update(apiInterface); err != nil {
-		log.Printf("更新接口状态失败，接口ID: %d, 状态: %d, 错误: %v\n", id, status, err)
+		applog.Errorf(context.Background(), applog.NameApp, "更新接口状态失败，接口ID: %d, 状态: %d, 错误: %v\n", id, status, err)
 		return dto.Error[dto.ApiInterfaceDto]("更新状态失败", http.StatusInternalServerError)
 	}
 
@@ -211,7 +212,7 @@ func (s *ApiInterfaceService) Execute(req dto.ApiExecuteRequestDto, executorID u
 
 	apiInterface, err := s.apiInterfaceRepo.FindByID(*req.InterfaceID)
 	if err != nil {
-		log.Printf("执行接口失败，接口ID: %d, 错误: %v\n", *req.InterfaceID, err)
+		applog.Errorf(context.Background(), applog.NameApp, "执行接口失败，接口ID: %d, 错误: %v\n", *req.InterfaceID, err)
 		return dto.Error[dto.ApiExecuteResponseDto]("接口不存在", http.StatusNotFound)
 	}
 
@@ -401,14 +402,14 @@ func (s *ApiInterfaceService) extractValueByPath(jsonString, path string) *strin
 	// 先将JSON字符串解析为any
 	var data any
 	if err := json.Unmarshal([]byte(jsonString), &data); err != nil {
-		log.Printf("JSON解析失败: %v\n", err)
+		applog.Errorf(context.Background(), applog.NameApp, "JSON解析失败: %v\n", err)
 		return nil
 	}
 
 	// 使用JSONPath提取值
 	result, err := jsonpath.Get(path, data)
 	if err != nil {
-		log.Printf("JSONPath提取失败: %v, 路径: %s\n", err, path)
+		applog.Errorf(context.Background(), applog.NameApp, "JSONPath提取失败: %v, 路径: %s\n", err, path)
 		return nil
 	}
 
@@ -424,7 +425,7 @@ func (s *ApiInterfaceService) extractValueByPath(jsonString, path string) *strin
 	case []any, map[string]any:
 		jsonBytes, err := json.Marshal(v)
 		if err != nil {
-			log.Printf("JSON序列化失败: %v\n", err)
+			applog.Errorf(context.Background(), applog.NameApp, "JSON序列化失败: %v\n", err)
 			resultStr = fmt.Sprintf("%v", v)
 		} else {
 			resultStr = string(jsonBytes)
@@ -449,24 +450,24 @@ func (s *ApiInterfaceService) saveExecutionRecord(
 	// 序列化请求参数
 	requestParamsJSON, err := json.Marshal(request.URLParams)
 	if err != nil {
-		log.Printf("序列化请求参数失败: %v\n", err)
+		applog.Errorf(context.Background(), applog.NameApp, "序列化请求参数失败: %v\n", err)
 		requestParamsJSON = []byte("{}")
 	}
 	requestHeadersJSON, err := json.Marshal(request.Headers)
 	if err != nil {
-		log.Printf("序列化请求头失败: %v\n", err)
+		applog.Errorf(context.Background(), applog.NameApp, "序列化请求头失败: %v\n", err)
 		requestHeadersJSON = []byte("{}")
 	}
 	requestBodyJSON, err := json.Marshal(request.BodyParams)
 	if err != nil {
-		log.Printf("序列化请求体失败: %v\n", err)
+		applog.Errorf(context.Background(), applog.NameApp, "序列化请求体失败: %v\n", err)
 		requestBodyJSON = []byte("{}")
 	}
 
 	// 序列化响应头
 	responseHeadersJSON, err := json.Marshal(response.Headers)
 	if err != nil {
-		log.Printf("序列化响应头失败: %v\n", err)
+		applog.Errorf(context.Background(), applog.NameApp, "序列化响应头失败: %v\n", err)
 		responseHeadersJSON = []byte("{}")
 	}
 
@@ -489,7 +490,7 @@ func (s *ApiInterfaceService) saveExecutionRecord(
 	}
 
 	if err := s.apiInterfaceExecutionRecordRepo.Create(record); err != nil {
-		log.Printf("保存接口执行记录失败: %v\n", err)
+		applog.Errorf(context.Background(), applog.NameApp, "保存接口执行记录失败: %v\n", err)
 	}
 }
 
@@ -517,7 +518,7 @@ func (s *ApiInterfaceService) validateRequiredParams(apiInterface *entity.ApiInt
 
 	var params []dto.ApiParamDto
 	if err := json.Unmarshal([]byte(*apiInterface.Params), &params); err != nil {
-		log.Printf("解析接口参数失败: %v\n", err)
+		applog.Errorf(context.Background(), applog.NameApp, "解析接口参数失败: %v\n", err)
 		return nil
 	}
 
@@ -578,13 +579,13 @@ func (s *ApiInterfaceService) convertToDto(entity *entity.ApiInterface) dto.ApiI
 	var urlParams, headerParams, bodyParams []dto.ApiParamDto
 	if entity.Params != nil && *entity.Params != "" {
 		if err := json.Unmarshal([]byte(*entity.Params), &urlParams); err != nil {
-			log.Printf("解析URL参数失败: %v\n", err)
+			applog.Errorf(context.Background(), applog.NameApp, "解析URL参数失败: %v\n", err)
 		}
 		if err := json.Unmarshal([]byte(*entity.Params), &headerParams); err != nil {
-			log.Printf("解析Header参数失败: %v\n", err)
+			applog.Errorf(context.Background(), applog.NameApp, "解析Header参数失败: %v\n", err)
 		}
 		if err := json.Unmarshal([]byte(*entity.Params), &bodyParams); err != nil {
-			log.Printf("解析Body参数失败: %v\n", err)
+			applog.Errorf(context.Background(), applog.NameApp, "解析Body参数失败: %v\n", err)
 		}
 
 		// 过滤参数类型
@@ -653,7 +654,7 @@ func (s *ApiInterfaceService) convertToEntity(form *dto.ApiInterfaceFormDto) *en
 	if len(allParams) > 0 {
 		jsonBytes, err := json.Marshal(allParams)
 		if err != nil {
-			log.Printf("序列化参数失败: %v\n", err)
+			applog.Errorf(context.Background(), applog.NameApp, "序列化参数失败: %v\n", err)
 			// 如果序列化失败，使用空字符串
 			paramsJSON = new("[]")
 		} else {

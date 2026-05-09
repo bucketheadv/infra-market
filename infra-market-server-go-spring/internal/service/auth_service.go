@@ -5,12 +5,12 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/bucketheadv/infra-go/applog"
 	"github.com/bucketheadv/infra-market/internal/dto"
 	"github.com/bucketheadv/infra-market/internal/entity"
 	"github.com/bucketheadv/infra-market/internal/enums"
 	"github.com/bucketheadv/infra-market/internal/repository"
 	"github.com/bucketheadv/infra-market/internal/util"
-	"github.com/go-spring/log"
 )
 
 type AuthService struct {
@@ -64,7 +64,7 @@ func (s *AuthService) Login(req dto.LoginRequest) dto.ApiData[dto.LoginResponse]
 	// 生成JWT token
 	token, err := util.GenerateToken(user.ID, user.Username)
 	if err != nil {
-		log.Errorf(context.Background(), log.TagAppDef, "用户登录失败，生成token失败，用户名: %s, 错误: %v\n", req.Username, err)
+		applog.Errorf(context.Background(), applog.NameApp, "用户登录失败，生成token失败，用户名: %s, 错误: %v\n", req.Username, err)
 		return dto.Error[dto.LoginResponse]("生成token失败", http.StatusInternalServerError)
 	}
 
@@ -91,7 +91,7 @@ func (s *AuthService) Logout(uid uint64) dto.ApiData[any] {
 func (s *AuthService) GetCurrentUser(uid uint64) dto.ApiData[dto.LoginResponse] {
 	user, err := s.userRepo.FindByUID(uid)
 	if err != nil {
-		log.Errorf(context.Background(), log.TagAppDef, "获取当前用户信息失败，用户ID: %d, 错误: %v\n", uid, err)
+		applog.Errorf(context.Background(), applog.NameApp, "获取当前用户信息失败，用户ID: %d, 错误: %v\n", uid, err)
 		return dto.Error[dto.LoginResponse]("用户不存在", http.StatusNotFound)
 	}
 
@@ -115,7 +115,7 @@ func (s *AuthService) GetCurrentUser(uid uint64) dto.ApiData[dto.LoginResponse] 
 func (s *AuthService) GetUserMenus(uid uint64) dto.ApiData[[]dto.PermissionDto] {
 	user, err := s.userRepo.FindByUID(uid)
 	if err != nil {
-		log.Errorf(context.Background(), log.TagAppDef, "获取用户菜单失败，用户ID: %d, 错误: %v\n", uid, err)
+		applog.Errorf(context.Background(), applog.NameApp, "获取用户菜单失败，用户ID: %d, 错误: %v\n", uid, err)
 		return dto.Error[[]dto.PermissionDto]("用户不存在", http.StatusNotFound)
 	}
 
@@ -237,7 +237,7 @@ func (s *AuthService) RefreshToken(uid uint64) dto.ApiData[map[string]string] {
 
 	token, err := util.GenerateToken(user.ID, user.Username)
 	if err != nil {
-		log.Errorf(context.Background(), log.TagAppDef, "刷新token失败，生成token失败，用户ID: %d, 错误: %v\n", uid, err)
+		applog.Errorf(context.Background(), applog.NameApp, "刷新token失败，生成token失败，用户ID: %d, 错误: %v\n", uid, err)
 		return dto.Error[map[string]string]("生成token失败", http.StatusInternalServerError)
 	}
 
@@ -261,13 +261,13 @@ func (s *AuthService) ChangePassword(uid uint64, req dto.ChangePasswordRequest) 
 	// 加密新密码
 	encryptedPassword, err := util.Encrypt(req.NewPassword)
 	if err != nil {
-		log.Errorf(context.Background(), log.TagAppDef, "修改密码失败，密码加密失败，用户ID: %d, 错误: %v\n", uid, err)
+		applog.Errorf(context.Background(), applog.NameApp, "修改密码失败，密码加密失败，用户ID: %d, 错误: %v\n", uid, err)
 		return dto.Error[any]("密码加密失败", http.StatusInternalServerError)
 	}
 
 	user.Password = encryptedPassword
 	if err := s.userRepo.Update(user); err != nil {
-		log.Errorf(context.Background(), log.TagAppDef, "修改密码失败，更新密码失败，用户ID: %d, 错误: %v\n", uid, err)
+		applog.Errorf(context.Background(), applog.NameApp, "修改密码失败，更新密码失败，用户ID: %d, 错误: %v\n", uid, err)
 		return dto.Error[any]("更新密码失败", http.StatusInternalServerError)
 	}
 

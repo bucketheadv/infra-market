@@ -2,15 +2,18 @@ package bootstrap
 
 import (
 	"context"
+	"net"
 	"net/http"
+	"path/filepath"
 	"strings"
+	"time"
 
+	"github.com/bucketheadv/infra-go/applog"
 	"github.com/bucketheadv/infra-market/internal/config"
 	"github.com/bucketheadv/infra-market/internal/controller"
 	"github.com/bucketheadv/infra-market/internal/repository"
 	"github.com/bucketheadv/infra-market/internal/router"
 	"github.com/bucketheadv/infra-market/internal/service"
-	"github.com/go-spring/log"
 	"github.com/go-spring/spring-core/gs"
 	_ "github.com/go-spring/starter-go-redis"
 	_ "github.com/go-spring/starter-gorm-mysql"
@@ -22,6 +25,9 @@ type GinServer struct {
 	server *http.Server
 }
 
+// registerStartedAt 在 Register 入口记录，用于统计到 HTTP 监听就绪的耗时。
+var registerStartedAt time.Time
+
 type GormLoggerRunner struct {
 	DB       *gorm.DB `autowire:""`
 	LogLevel string   `value:"${gorm.log-level:=info}"`
@@ -32,8 +38,12 @@ func (r *GormLoggerRunner) Run() error {
 		return nil
 	}
 	level := parseGormLogLevel(r.LogLevel)
-	r.DB.Config.Logger = gormLogger.Default.LogMode(level)
-	log.Infof(context.Background(), log.TagAppDef, "gorm sql log level=%s", strings.ToLower(r.LogLevel))
+	r.DB.Config.Logger = applog.NewGormLogger(applog.GormLoggerConfig{
+		LoggerName:                applog.NameGorm,
+		SlowThreshold:             200 * time.Millisecond,
+		IgnoreRecordNotFoundError: true,
+	}).LogMode(level)
+	applog.Infof(context.Background(), applog.NameApp, "gorm sql log level=%s (applog logger=%s)", strings.ToLower(r.LogLevel), applog.NameGorm)
 	return nil
 }
 
@@ -60,17 +70,31 @@ func NewGinServer(engine http.Handler, cfg *config.AppConfig) *GinServer {
 }
 
 func (s *GinServer) ListenAndServe(sig gs.ReadySignal) error {
-	log.Infof(context.Background(), log.TagAppDef, "infra-market-go-spring listening at %s", s.server.Addr)
 	<-sig.TriggerAndWait()
-	return s.server.ListenAndServe()
+	ln, err := net.Listen("tcp", s.server.Addr)
+	if err != nil {
+		return err
+	}
+	readyAt := time.Now()
+	applog.Infof(context.Background(), applog.NameApp,
+		"infra-market-go-spring listen ready addr=%s startupAt=%s sinceRegister=%s",
+		ln.Addr().String(),
+		readyAt.Format("2006-01-02 15:04:05.000"),
+		readyAt.Sub(registerStartedAt).String(),
+	)
+	return s.server.Serve(ln)
 }
 
 func (s *GinServer) Shutdown(ctx context.Context) error {
-	log.Infof(ctx, log.TagAppDef, "infra-market-go-spring shutting down")
+	applog.Infof(ctx, applog.NameApp, "infra-market-go-spring shutting down")
+	applog.Close()
 	return s.server.Shutdown(ctx)
 }
 
 func Register() {
+	registerStartedAt = time.Now()
+	applog.MustLoad(filepath.Join("config", "applog.yaml"))
+	applog.InstallGinWriters(applog.GinWritersConfig{})
 	gs.Object(new(config.AppConfig))
 	gs.Object(new(GormLoggerRunner)).AsRunner()
 

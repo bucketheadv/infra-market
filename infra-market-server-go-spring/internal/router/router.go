@@ -1,6 +1,7 @@
 package router
 
 import (
+	"github.com/bucketheadv/infra-go/applog"
 	"github.com/bucketheadv/infra-market/internal/config"
 	"github.com/bucketheadv/infra-market/internal/controller"
 	"github.com/bucketheadv/infra-market/internal/middleware"
@@ -24,9 +25,9 @@ func NewRouter(
 ) *gin.Engine {
 	gin.SetMode(cfg.Server.GinMode())
 	engine := gin.New()
-	engine.Use(gin.Recovery())
+	engine.Use(applog.GinLogger(applog.GinLoggerConfig{}))
+	engine.Use(applog.GinRecovery(applog.GinRecoveryConfig{}))
 	engine.Use(middleware.CORSMiddleware())
-	engine.Use(middleware.RequestLogMiddleware())
 	engine.Use(middleware.ErrorHandler())
 
 	engine.POST("/auth/login", authController.Login)

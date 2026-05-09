@@ -1,0 +1,73 @@
+# 应用日志（独立于 go-spring/log）。
+#
+# layout:
+#   - text   : 固定方括号格式（旧版兼容）
+#   - pattern: 由 pattern 定义，类似 Spring logging.pattern.console
+#   - json   : 单行 JSON
+#
+# pattern 占位符（%% 表示字面量 %）:
+#   %d / %date           时间，默认 2006-01-02T15:04:05.000；可写 %d{2006-01-02 15:04:05.000}（Go 参考时间布局）
+#   %level / %p          级别大写
+#   %fileLine / %F       file:line（宽度见 callerFileMaxLen）
+#   %logger / %c         logger 名称
+#   %pid / %processId    进程 PID
+#   %msg / %m            消息
+#   %n                   换行
+#
+# fieldColors: 按「字段」着色（颜色名 green、SGR 数字 32、或完整 ANSI 序列）。未配置级别的字段不着色。
+# level 字段: 若未配置 fieldColors.level，则使用 levelColors 按日志级别着色；若配置了 fieldColors.level，则级别一律使用该色。
+
+callerFileMaxLen: 96
+
+appenders:
+  stdConsole:
+    type: console
+    colored: true
+    layout: pattern
+    pattern: "%d{2006-01-02 15:04:05.000} %clr(%pid){blue} %clr(%5level){magenta} %clr(%fileLine){cyan} %clr([%logger]){yellow} %clr(-){faint} %msg%n"
+    levelColors:
+      warn: yellow
+      error: red
+      fatal: magenta
+    fieldColors:
+      date: green
+      # level 不写则走 levelColors；若写 level: blue 则所有级别同为蓝色
+      fileLine: cyan
+      logger: yellow
+      msg: white
+  appFile:
+    type: rollingFile
+    path: logs/application.log
+    layout: pattern
+    pattern: "%d{2006-01-02T15:04:05.000} [%pid] [%level] [%fileLine] [%logger] %msg%n"
+    colored: false
+    maxLinesPerFile: 50000
+    retentionDays: 14
+
+root:
+  level: info
+  appenders:
+    - stdConsole
+    - appFile
+
+loggers:
+  app:
+    level: info
+    appenders:
+      - stdConsole
+      - appFile
+  access:
+    level: info
+    appenders:
+      - stdConsole
+  # GORM SQL：与 gorm.log-level 配合；level 建议与 SQL 详细程度一致（info 打印成功 SQL，warn 仅慢查询与警告，error 仅错误）
+  gorm:
+    level: info
+    appenders:
+      - stdConsole
+      - appFile
+  gin:
+    level: info
+    appenders:
+      - stdConsole
+      - appFile

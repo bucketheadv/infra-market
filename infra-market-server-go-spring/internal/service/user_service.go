@@ -6,12 +6,12 @@ import (
 	"math/big"
 	"net/http"
 
+	"github.com/bucketheadv/infra-go/applog"
 	"github.com/bucketheadv/infra-market/internal/dto"
 	"github.com/bucketheadv/infra-market/internal/entity"
 	"github.com/bucketheadv/infra-market/internal/enums"
 	"github.com/bucketheadv/infra-market/internal/repository"
 	"github.com/bucketheadv/infra-market/internal/util"
-	"github.com/go-spring/log"
 	"gorm.io/gorm"
 )
 
@@ -71,7 +71,7 @@ func (s *UserService) GetUsers(query dto.UserQueryDto) dto.ApiData[dto.PageResul
 func (s *UserService) GetUser(id uint64) dto.ApiData[dto.UserDto] {
 	user, err := s.userRepo.FindByUID(id)
 	if err != nil {
-		log.Errorf(context.Background(), log.TagAppDef, "获取用户详情失败，用户ID: %d, 错误: %v\n", id, err)
+		applog.Errorf(context.Background(), applog.NameApp, "获取用户详情失败，用户ID: %d, 错误: %v\n", id, err)
 		return dto.Error[dto.UserDto]("用户不存在", http.StatusNotFound)
 	}
 
@@ -115,7 +115,7 @@ func (s *UserService) CreateUser(form dto.UserFormDto) dto.ApiData[dto.UserDto] 
 	}
 	encryptedPassword, err := util.Encrypt(password)
 	if err != nil {
-		log.Errorf(context.Background(), log.TagAppDef, "创建用户失败，密码加密失败，用户名: %s, 错误: %v\n", form.Username, err)
+		applog.Errorf(context.Background(), applog.NameApp, "创建用户失败，密码加密失败，用户名: %s, 错误: %v\n", form.Username, err)
 		return dto.Error[dto.UserDto]("密码加密失败", http.StatusInternalServerError)
 	}
 
@@ -153,7 +153,7 @@ func (s *UserService) CreateUser(form dto.UserFormDto) dto.ApiData[dto.UserDto] 
 	})
 
 	if err != nil {
-		log.Errorf(context.Background(), log.TagAppDef, "创建用户失败，用户名: %s, 错误: %v\n", form.Username, err)
+		applog.Errorf(context.Background(), applog.NameApp, "创建用户失败，用户名: %s, 错误: %v\n", form.Username, err)
 		return dto.Error[dto.UserDto]("创建用户失败", http.StatusInternalServerError)
 	}
 
@@ -165,7 +165,7 @@ func (s *UserService) CreateUser(form dto.UserFormDto) dto.ApiData[dto.UserDto] 
 func (s *UserService) UpdateUser(id uint64, form dto.UserUpdateDto) dto.ApiData[dto.UserDto] {
 	user, err := s.userRepo.FindByUID(id)
 	if err != nil {
-		log.Errorf(context.Background(), log.TagAppDef, "更新用户失败，用户ID: %d, 错误: %v\n", id, err)
+		applog.Errorf(context.Background(), applog.NameApp, "更新用户失败，用户ID: %d, 错误: %v\n", id, err)
 		return dto.Error[dto.UserDto]("用户不存在", http.StatusNotFound)
 	}
 
@@ -196,7 +196,7 @@ func (s *UserService) UpdateUser(id uint64, form dto.UserUpdateDto) dto.ApiData[
 	if form.Password != nil && *form.Password != "" {
 		encryptedPassword, err := util.Encrypt(*form.Password)
 		if err != nil {
-			log.Errorf(context.Background(), log.TagAppDef, "更新用户失败，密码加密失败，用户ID: %d, 错误: %v\n", id, err)
+			applog.Errorf(context.Background(), applog.NameApp, "更新用户失败，密码加密失败，用户ID: %d, 错误: %v\n", id, err)
 			return dto.Error[dto.UserDto]("密码加密失败", http.StatusInternalServerError)
 		}
 		user.Password = encryptedPassword
@@ -233,7 +233,7 @@ func (s *UserService) UpdateUser(id uint64, form dto.UserUpdateDto) dto.ApiData[
 	})
 
 	if err != nil {
-		log.Errorf(context.Background(), log.TagAppDef, "更新用户失败，用户ID: %d, 错误: %v\n", id, err)
+		applog.Errorf(context.Background(), applog.NameApp, "更新用户失败，用户ID: %d, 错误: %v\n", id, err)
 		return dto.Error[dto.UserDto]("更新用户失败", http.StatusInternalServerError)
 	}
 
@@ -245,7 +245,7 @@ func (s *UserService) UpdateUser(id uint64, form dto.UserUpdateDto) dto.ApiData[
 func (s *UserService) DeleteUser(id uint64) dto.ApiData[any] {
 	user, err := s.userRepo.FindByUID(id)
 	if err != nil {
-		log.Errorf(context.Background(), log.TagAppDef, "删除用户失败，用户ID: %d, 错误: %v\n", id, err)
+		applog.Errorf(context.Background(), applog.NameApp, "删除用户失败，用户ID: %d, 错误: %v\n", id, err)
 		return dto.Error[any]("用户不存在", http.StatusNotFound)
 	}
 
@@ -259,7 +259,7 @@ func (s *UserService) DeleteUser(id uint64) dto.ApiData[any] {
 
 	user.Status = enums.StatusDeleted.Code()
 	if err := s.userRepo.Update(user); err != nil {
-		log.Errorf(context.Background(), log.TagAppDef, "删除用户失败，用户ID: %d, 错误: %v\n", id, err)
+		applog.Errorf(context.Background(), applog.NameApp, "删除用户失败，用户ID: %d, 错误: %v\n", id, err)
 		return dto.Error[any]("删除用户失败", http.StatusInternalServerError)
 	}
 
@@ -270,7 +270,7 @@ func (s *UserService) DeleteUser(id uint64) dto.ApiData[any] {
 func (s *UserService) UpdateUserStatus(id uint64, status string) dto.ApiData[any] {
 	user, err := s.userRepo.FindByUID(id)
 	if err != nil {
-		log.Errorf(context.Background(), log.TagAppDef, "更新用户状态失败，用户ID: %d, 错误: %v\n", id, err)
+		applog.Errorf(context.Background(), applog.NameApp, "更新用户状态失败，用户ID: %d, 错误: %v\n", id, err)
 		return dto.Error[any]("用户不存在", http.StatusNotFound)
 	}
 
@@ -288,7 +288,7 @@ func (s *UserService) UpdateUserStatus(id uint64, status string) dto.ApiData[any
 
 	user.Status = status
 	if err := s.userRepo.Update(user); err != nil {
-		log.Errorf(context.Background(), log.TagAppDef, "更新用户状态失败，用户ID: %d, 状态: %s, 错误: %v\n", id, status, err)
+		applog.Errorf(context.Background(), applog.NameApp, "更新用户状态失败，用户ID: %d, 状态: %s, 错误: %v\n", id, status, err)
 		return dto.Error[any]("更新状态失败", http.StatusInternalServerError)
 	}
 
@@ -299,7 +299,7 @@ func (s *UserService) UpdateUserStatus(id uint64, status string) dto.ApiData[any
 func (s *UserService) ResetPassword(id uint64) dto.ApiData[map[string]string] {
 	user, err := s.userRepo.FindByUID(id)
 	if err != nil {
-		log.Errorf(context.Background(), log.TagAppDef, "重置密码失败，用户ID: %d, 错误: %v\n", id, err)
+		applog.Errorf(context.Background(), applog.NameApp, "重置密码失败，用户ID: %d, 错误: %v\n", id, err)
 		return dto.Error[map[string]string]("用户不存在", http.StatusNotFound)
 	}
 
@@ -307,13 +307,13 @@ func (s *UserService) ResetPassword(id uint64) dto.ApiData[map[string]string] {
 	newPassword := generateRandomPassword()
 	encryptedPassword, err := util.Encrypt(newPassword)
 	if err != nil {
-		log.Errorf(context.Background(), log.TagAppDef, "重置密码失败，密码加密失败，用户ID: %d, 错误: %v\n", id, err)
+		applog.Errorf(context.Background(), applog.NameApp, "重置密码失败，密码加密失败，用户ID: %d, 错误: %v\n", id, err)
 		return dto.Error[map[string]string]("密码加密失败", http.StatusInternalServerError)
 	}
 
 	user.Password = encryptedPassword
 	if err := s.userRepo.Update(user); err != nil {
-		log.Errorf(context.Background(), log.TagAppDef, "重置密码失败，用户ID: %d, 错误: %v\n", id, err)
+		applog.Errorf(context.Background(), applog.NameApp, "重置密码失败，用户ID: %d, 错误: %v\n", id, err)
 		return dto.Error[map[string]string]("重置密码失败", http.StatusInternalServerError)
 	}
 
@@ -328,7 +328,7 @@ func (s *UserService) BatchDeleteUsers(ids []uint64) dto.ApiData[any] {
 
 	users, err := s.userRepo.FindByUIDs(ids)
 	if err != nil || len(users) != len(ids) {
-		log.Errorf(context.Background(), log.TagAppDef, "批量删除用户失败，查询用户失败，错误: %v\n", err)
+		applog.Errorf(context.Background(), applog.NameApp, "批量删除用户失败，查询用户失败，错误: %v\n", err)
 		return dto.Error[any]("部分用户不存在", http.StatusBadRequest)
 	}
 
@@ -352,7 +352,7 @@ func (s *UserService) BatchDeleteUsers(ids []uint64) dto.ApiData[any] {
 	})
 
 	if err != nil {
-		log.Errorf(context.Background(), log.TagAppDef, "批量删除用户失败，错误: %v\n", err)
+		applog.Errorf(context.Background(), applog.NameApp, "批量删除用户失败，错误: %v\n", err)
 		return dto.Error[any]("批量删除用户失败", http.StatusInternalServerError)
 	}
 

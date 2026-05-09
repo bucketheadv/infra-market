@@ -1,10 +1,11 @@
 package service
 
 import (
-	"log"
+	"context"
 	"net/http"
 	"sort"
 
+	"github.com/bucketheadv/infra-go/applog"
 	"github.com/bucketheadv/infra-market/internal/dto"
 	"github.com/bucketheadv/infra-market/internal/entity"
 	"github.com/bucketheadv/infra-market/internal/enums"
@@ -31,7 +32,7 @@ func NewPermissionService(
 func (s *PermissionService) GetPermissions(query dto.PermissionQueryDto) dto.ApiData[dto.PageResult[dto.PermissionDto]] {
 	permissions, total, err := s.permissionRepo.Page(query)
 	if err != nil {
-		log.Printf("获取权限列表失败: %v\n", err)
+		applog.Errorf(context.Background(), applog.NameApp, "获取权限列表失败: %v\n", err)
 		return dto.Error[dto.PageResult[dto.PermissionDto]]("查询失败", http.StatusInternalServerError)
 	}
 
@@ -125,7 +126,7 @@ func (s *PermissionService) GetPermissionTree() dto.ApiData[[]dto.PermissionDto]
 func (s *PermissionService) GetPermission(id uint64) dto.ApiData[dto.PermissionDto] {
 	permission, err := s.permissionRepo.FindByID(id)
 	if err != nil {
-		log.Printf("获取权限详情失败，权限ID: %d, 错误: %v\n", id, err)
+		applog.Errorf(context.Background(), applog.NameApp, "获取权限详情失败，权限ID: %d, 错误: %v\n", id, err)
 		return dto.Error[dto.PermissionDto]("权限不存在", http.StatusNotFound)
 	}
 
@@ -152,7 +153,7 @@ func (s *PermissionService) CreatePermission(form dto.PermissionFormDto) dto.Api
 	}
 
 	if err := s.permissionRepo.Create(permission); err != nil {
-		log.Printf("创建权限失败，权限编码: %s, 错误: %v\n", form.Code, err)
+		applog.Errorf(context.Background(), applog.NameApp, "创建权限失败，权限编码: %s, 错误: %v\n", form.Code, err)
 		return dto.Error[dto.PermissionDto]("创建权限失败", http.StatusInternalServerError)
 	}
 
@@ -164,7 +165,7 @@ func (s *PermissionService) CreatePermission(form dto.PermissionFormDto) dto.Api
 func (s *PermissionService) UpdatePermission(id uint64, form dto.PermissionFormDto) dto.ApiData[dto.PermissionDto] {
 	permission, err := s.permissionRepo.FindByID(id)
 	if err != nil {
-		log.Printf("更新权限失败，权限ID: %d, 错误: %v\n", id, err)
+		applog.Errorf(context.Background(), applog.NameApp, "更新权限失败，权限ID: %d, 错误: %v\n", id, err)
 		return dto.Error[dto.PermissionDto]("权限不存在", http.StatusNotFound)
 	}
 
@@ -181,7 +182,7 @@ func (s *PermissionService) UpdatePermission(id uint64, form dto.PermissionFormD
 	permission.Sort = form.Sort
 
 	if err := s.permissionRepo.Update(permission); err != nil {
-		log.Printf("更新权限失败，权限ID: %d, 错误: %v\n", id, err)
+		applog.Errorf(context.Background(), applog.NameApp, "更新权限失败，权限ID: %d, 错误: %v\n", id, err)
 		return dto.Error[dto.PermissionDto]("更新权限失败", http.StatusInternalServerError)
 	}
 
@@ -193,7 +194,7 @@ func (s *PermissionService) UpdatePermission(id uint64, form dto.PermissionFormD
 func (s *PermissionService) DeletePermission(id uint64) dto.ApiData[any] {
 	permission, err := s.permissionRepo.FindByID(id)
 	if err != nil {
-		log.Printf("删除权限失败，权限ID: %d, 错误: %v\n", id, err)
+		applog.Errorf(context.Background(), applog.NameApp, "删除权限失败，权限ID: %d, 错误: %v\n", id, err)
 		return dto.Error[any]("权限不存在", http.StatusNotFound)
 	}
 
@@ -209,7 +210,7 @@ func (s *PermissionService) DeletePermission(id uint64) dto.ApiData[any] {
 
 	permission.Status = enums.StatusDeleted.Code()
 	if err := s.permissionRepo.Update(permission); err != nil {
-		log.Printf("删除权限失败，权限ID: %d, 错误: %v\n", id, err)
+		applog.Errorf(context.Background(), applog.NameApp, "删除权限失败，权限ID: %d, 错误: %v\n", id, err)
 		return dto.Error[any]("删除权限失败", http.StatusInternalServerError)
 	}
 
@@ -220,7 +221,7 @@ func (s *PermissionService) DeletePermission(id uint64) dto.ApiData[any] {
 func (s *PermissionService) UpdatePermissionStatus(id uint64, status string) dto.ApiData[any] {
 	permission, err := s.permissionRepo.FindByID(id)
 	if err != nil {
-		log.Printf("更新权限状态失败，权限ID: %d, 错误: %v\n", id, err)
+		applog.Errorf(context.Background(), applog.NameApp, "更新权限状态失败，权限ID: %d, 错误: %v\n", id, err)
 		return dto.Error[any]("权限不存在", http.StatusNotFound)
 	}
 
@@ -238,7 +239,7 @@ func (s *PermissionService) UpdatePermissionStatus(id uint64, status string) dto
 
 	permission.Status = status
 	if err := s.permissionRepo.Update(permission); err != nil {
-		log.Printf("更新权限状态失败，权限ID: %d, 状态: %s, 错误: %v\n", id, status, err)
+		applog.Errorf(context.Background(), applog.NameApp, "更新权限状态失败，权限ID: %d, 状态: %s, 错误: %v\n", id, status, err)
 		return dto.Error[any]("更新状态失败", http.StatusInternalServerError)
 	}
 

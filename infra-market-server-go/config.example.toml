@@ -1,5 +1,6 @@
 # 基础设施市场应用配置文件示例
 # 复制此文件为 config.toml 并修改相应的配置值
+# 日志：在进程工作目录下使用 config/applog.yaml（与 github.com/bucketheadv/infra-go/applog 配套）
 
 [server]
 port = "8080"

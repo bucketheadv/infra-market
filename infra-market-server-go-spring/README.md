@@ -6,7 +6,7 @@
 
 - 业务分层保持不变：`controller -> service -> repository -> gorm`
 - 路由与接口保持一致（用户、角色、权限、接口管理、执行记录、仪表盘、活动等）
-- 中间件保持并增强：`CORS`、`Auth`、`ErrorHandler`、`RequestLogMiddleware`
+- 中间件保持并增强：`CORS`、`Auth`、`ErrorHandler`；HTTP 访问日志与 Recovery 使用 `infra-go/applog` 的 `GinLogger` / `GinRecovery`（与 gin 默认行为兼容）
 - 配置格式切换为 `config/app.properties`
 
 ## go-spring 使用点
