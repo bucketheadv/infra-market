@@ -1,0 +1,15 @@
+---
+description: Infra Market 项目关键业务与编码约束
+globs: infra-market-server/src/main/kotlin/**/*.kt
+alwaysApply: false
+---
+
+# 项目关键约束
+
+- ORM 统一使用 MyBatis-Flex，优先复用已有 DAO/Mapper 查询模式。
+- 实体表字段遵循下划线命名，主键统一为 `id`（BIGINT），时间字段使用 `create_time`、`update_time`。
+- 时间日期计算与格式化统一使用 Joda Time，避免引入 `java.time`。
+- 控制器请求/响应参数使用对象封装，避免散落的原始参数拼装。
+- 保持 Kotlin 空安全语义，避免滥用 `!!`。
+- 发现重复逻辑时优先提取复用方法，避免复制粘贴。
+- 方法命名应清晰表达业务语义，不生成未使用的方法。

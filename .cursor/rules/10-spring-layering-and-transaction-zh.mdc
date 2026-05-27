@@ -1,0 +1,27 @@
+---
+description: Kotlin Spring 分层、包结构与事务边界规范
+globs: infra-market-server/src/main/kotlin/**/*.kt
+alwaysApply: false
+---
+
+# Spring 分层与事务
+
+- 严格遵循 `controller -> service -> repository/dao` 分层，禁止跨层直连。
+- 包结构保持在 `io.infra.market` 下，按 `controller/service/repository/dto/config/util` 分层组织。
+- Controller 仅处理参数校验、鉴权入口、响应组装，不承载核心业务逻辑。
+- Service 承载业务编排与领域规则，DAO 只负责数据访问与查询拼装。
+- 事务优先放在 Service 层，避免在 Controller 或 DAO 层声明事务。
+- 对外 DTO 与持久化对象解耦，避免直接暴露数据库实体。
+
+## 注解与命名
+
+- Controller 使用 `@RestController` + `@RequestMapping`。
+- Service 使用 `@Service`，DAO 使用 `@Repository`，配置类使用 `@Configuration`。
+- 类名使用 PascalCase，函数与变量使用 camelCase，常量使用 UPPER_SNAKE_CASE。
+- 包名使用全小写。
+
+## 导入规范
+
+- 禁止 `import *`，必须显式导入。
+- 无同名冲突时禁止使用全限定类名。
+- 导入顺序：标准库 -> 第三方库 -> 项目内部。

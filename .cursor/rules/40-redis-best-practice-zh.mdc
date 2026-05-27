@@ -1,0 +1,14 @@
+---
+description: Redis Key 设计、TTL、一致性与防穿透规范
+globs: infra-market-server/src/main/kotlin/**/*.kt
+alwaysApply: false
+---
+
+# Redis 规范
+
+- Key 按业务命名空间设计：`模块.场景.实体.标识`，避免无前缀裸 Key。
+- 除明确要求外，缓存 Key 必须设置 TTL，防止无界增长。
+- 优先采用 cache-aside（旁路缓存）模式，读写路径保持一致。
+- 写数据库后同步删除或更新缓存，避免长期脏读。
+- 防止缓存穿透/击穿：空值短 TTL、热点 Key 互斥重建或逻辑过期。
+- 避免存储大 Key 与超大集合，必要时拆分并监控热点。
