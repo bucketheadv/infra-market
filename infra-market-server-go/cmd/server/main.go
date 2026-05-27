@@ -9,7 +9,7 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/bucketheadv/infra-go/applog"
+	"github.com/bucketheadv/infra-go/logx"
 	"github.com/bucketheadv/infra-market/internal/config"
 	"github.com/bucketheadv/infra-market/internal/database"
 	"github.com/bucketheadv/infra-market/internal/router"
@@ -23,21 +23,21 @@ func main() {
 	flag.Parse()
 	startupBegin := time.Now()
 
-	applog.MustLoad(filepath.Join("config", "applog.yaml"))
-	applog.InstallGinWriters(applog.GinWritersConfig{})
+	logx.MustLoad(filepath.Join("config", "logx.yaml"))
+	logx.InstallGinWriters(logx.GinWritersConfig{})
 
 	ctx := context.Background()
-	applog.Infof(ctx, applog.NameApp, "Go 版本: %s", runtime.Version())
+	logx.Infof(ctx, logx.NameApp, "Go 版本: %s", runtime.Version())
 
 	cfg, err := config.Load(configPath)
 	if err != nil {
-		applog.Errorf(ctx, applog.NameApp, "加载配置失败: %v", err)
+		logx.Errorf(ctx, logx.NameApp, "加载配置失败: %v", err)
 		os.Exit(1)
 	}
 
 	db, err := database.InitDB(cfg.Database)
 	if err != nil {
-		applog.Errorf(ctx, applog.NameApp, "数据库初始化失败: %v", err)
+		logx.Errorf(ctx, logx.NameApp, "数据库初始化失败: %v", err)
 		os.Exit(1)
 	}
 
@@ -45,18 +45,18 @@ func main() {
 
 	r, err := router.SetupRouter(db, cfg)
 	if err != nil {
-		applog.Errorf(ctx, applog.NameApp, "路由初始化失败: %v", err)
+		logx.Errorf(ctx, logx.NameApp, "路由初始化失败: %v", err)
 		os.Exit(1)
 	}
 
 	ln, err := net.Listen("tcp", ":"+cfg.Server.Port)
 	if err != nil {
-		applog.Errorf(ctx, applog.NameApp, "监听端口失败: %v", err)
+		logx.Errorf(ctx, logx.NameApp, "监听端口失败: %v", err)
 		os.Exit(1)
 	}
-	applog.Infof(ctx, applog.NameApp, "HTTP 监听 %s，启动耗时 %v", ln.Addr(), time.Since(startupBegin))
+	logx.Infof(ctx, logx.NameApp, "HTTP 监听 %s，启动耗时 %v", ln.Addr(), time.Since(startupBegin))
 	if err := r.RunListener(ln); err != nil {
-		applog.Errorf(ctx, applog.NameApp, "服务器运行异常: %v", err)
+		logx.Errorf(ctx, logx.NameApp, "服务器运行异常: %v", err)
 		os.Exit(1)
 	}
 }

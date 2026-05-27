@@ -1,11 +1,12 @@
 package service
 
 import (
+	"github.com/bucketheadv/infra-go/basic"
 	"context"
 	"encoding/json"
 	"net/http"
 
-	"github.com/bucketheadv/infra-go/applog"
+	"github.com/bucketheadv/infra-go/logx"
 	"github.com/bucketheadv/infra-market/internal/dto"
 	"github.com/bucketheadv/infra-market/internal/entity"
 	"github.com/bucketheadv/infra-market/internal/repository"
@@ -57,7 +58,7 @@ func (s *ActivityComponentService) GetAllActivityComponents() dto.ApiData[[]dto.
 func (s *ActivityComponentService) GetActivityComponent(id uint64) dto.ApiData[dto.ActivityComponentDto] {
 	component, err := s.componentRepo.FindByID(id)
 	if err != nil {
-		applog.Errorf(context.Background(), applog.NameApp, "获取活动组件详情失败，组件ID: %d, 错误: %v\n", id, err)
+		logx.Errorf(context.Background(), logx.NameApp, "获取活动组件详情失败，组件ID: %d, 错误: %v\n", id, err)
 		return dto.Error[dto.ActivityComponentDto]("活动组件不存在", http.StatusNotFound)
 	}
 
@@ -70,7 +71,7 @@ func (s *ActivityComponentService) CreateActivityComponent(form dto.ActivityComp
 	// 序列化字段/组件配置
 	fieldsJSON, err := s.serializeFields(form.Fields)
 	if err != nil {
-		applog.Errorf(context.Background(), applog.NameApp, "序列化字段/组件配置失败: %v\n", err)
+		logx.Errorf(context.Background(), logx.NameApp, "序列化字段/组件配置失败: %v\n", err)
 		return dto.Error[dto.ActivityComponentDto]("字段/组件配置格式错误", http.StatusBadRequest)
 	}
 
@@ -87,7 +88,7 @@ func (s *ActivityComponentService) CreateActivityComponent(form dto.ActivityComp
 	}
 
 	if err := s.componentRepo.Create(component); err != nil {
-		applog.Errorf(context.Background(), applog.NameApp, "创建活动组件失败: %v\n", err)
+		logx.Errorf(context.Background(), logx.NameApp, "创建活动组件失败: %v\n", err)
 		return dto.Error[dto.ActivityComponentDto]("创建活动组件失败", http.StatusInternalServerError)
 	}
 
@@ -99,7 +100,7 @@ func (s *ActivityComponentService) CreateActivityComponent(form dto.ActivityComp
 func (s *ActivityComponentService) UpdateActivityComponent(id uint64, form dto.ActivityComponentFormDto) dto.ApiData[dto.ActivityComponentDto] {
 	component, err := s.componentRepo.FindByID(id)
 	if err != nil {
-		applog.Errorf(context.Background(), applog.NameApp, "更新活动组件失败，组件ID: %d, 错误: %v\n", id, err)
+		logx.Errorf(context.Background(), logx.NameApp, "更新活动组件失败，组件ID: %d, 错误: %v\n", id, err)
 		return dto.Error[dto.ActivityComponentDto]("活动组件不存在", http.StatusNotFound)
 	}
 
@@ -108,7 +109,7 @@ func (s *ActivityComponentService) UpdateActivityComponent(id uint64, form dto.A
 	if form.Fields != nil {
 		jsonStr, err := s.serializeFields(form.Fields)
 		if err != nil {
-			applog.Errorf(context.Background(), applog.NameApp, "序列化字段/组件配置失败: %v\n", err)
+			logx.Errorf(context.Background(), logx.NameApp, "序列化字段/组件配置失败: %v\n", err)
 			return dto.Error[dto.ActivityComponentDto]("字段/组件配置格式错误", http.StatusBadRequest)
 		}
 		fieldsJSON = jsonStr
@@ -126,7 +127,7 @@ func (s *ActivityComponentService) UpdateActivityComponent(id uint64, form dto.A
 	}
 
 	if err := s.componentRepo.Update(component); err != nil {
-		applog.Errorf(context.Background(), applog.NameApp, "更新活动组件失败，组件ID: %d, 错误: %v\n", id, err)
+		logx.Errorf(context.Background(), logx.NameApp, "更新活动组件失败，组件ID: %d, 错误: %v\n", id, err)
 		return dto.Error[dto.ActivityComponentDto]("更新活动组件失败", http.StatusInternalServerError)
 	}
 
@@ -138,12 +139,12 @@ func (s *ActivityComponentService) UpdateActivityComponent(id uint64, form dto.A
 func (s *ActivityComponentService) DeleteActivityComponent(id uint64) dto.ApiData[any] {
 	_, err := s.componentRepo.FindByID(id)
 	if err != nil {
-		applog.Errorf(context.Background(), applog.NameApp, "删除活动组件失败，组件ID: %d, 错误: %v\n", id, err)
+		logx.Errorf(context.Background(), logx.NameApp, "删除活动组件失败，组件ID: %d, 错误: %v\n", id, err)
 		return dto.Error[any]("活动组件不存在", http.StatusNotFound)
 	}
 
 	if err := s.componentRepo.Delete(id); err != nil {
-		applog.Errorf(context.Background(), applog.NameApp, "删除活动组件失败，组件ID: %d, 错误: %v\n", id, err)
+		logx.Errorf(context.Background(), logx.NameApp, "删除活动组件失败，组件ID: %d, 错误: %v\n", id, err)
 		return dto.Error[any]("删除活动组件失败", http.StatusInternalServerError)
 	}
 
@@ -154,13 +155,13 @@ func (s *ActivityComponentService) DeleteActivityComponent(id uint64) dto.ApiDat
 func (s *ActivityComponentService) UpdateActivityComponentStatus(id uint64, status int) dto.ApiData[dto.ActivityComponentDto] {
 	component, err := s.componentRepo.FindByID(id)
 	if err != nil {
-		applog.Errorf(context.Background(), applog.NameApp, "更新活动组件状态失败，组件ID: %d, 错误: %v\n", id, err)
+		logx.Errorf(context.Background(), logx.NameApp, "更新活动组件状态失败，组件ID: %d, 错误: %v\n", id, err)
 		return dto.Error[dto.ActivityComponentDto]("活动组件不存在", http.StatusNotFound)
 	}
 
 	component.Status = status
 	if err := s.componentRepo.Update(component); err != nil {
-		applog.Errorf(context.Background(), applog.NameApp, "更新活动组件状态失败，组件ID: %d, 状态: %d, 错误: %v\n", id, status, err)
+		logx.Errorf(context.Background(), logx.NameApp, "更新活动组件状态失败，组件ID: %d, 状态: %d, 错误: %v\n", id, status, err)
 		return dto.Error[dto.ActivityComponentDto]("更新状态失败", http.StatusInternalServerError)
 	}
 
@@ -172,7 +173,7 @@ func (s *ActivityComponentService) UpdateActivityComponentStatus(id uint64, stat
 func (s *ActivityComponentService) CopyActivityComponent(id uint64) dto.ApiData[dto.ActivityComponentDto] {
 	component, err := s.componentRepo.FindByID(id)
 	if err != nil {
-		applog.Errorf(context.Background(), applog.NameApp, "复制活动组件失败，组件ID: %d, 错误: %v\n", id, err)
+		logx.Errorf(context.Background(), logx.NameApp, "复制活动组件失败，组件ID: %d, 错误: %v\n", id, err)
 		return dto.Error[dto.ActivityComponentDto]("活动组件不存在", http.StatusNotFound)
 	}
 
@@ -184,7 +185,7 @@ func (s *ActivityComponentService) CopyActivityComponent(id uint64) dto.ApiData[
 	}
 
 	if err := s.componentRepo.Create(newComponent); err != nil {
-		applog.Errorf(context.Background(), applog.NameApp, "复制活动组件失败: %v\n", err)
+		logx.Errorf(context.Background(), logx.NameApp, "复制活动组件失败: %v\n", err)
 		return dto.Error[dto.ActivityComponentDto]("复制活动组件失败", http.StatusInternalServerError)
 	}
 
@@ -227,7 +228,7 @@ func (s *ActivityComponentService) serializeFields(fields []dto.ActivityComponen
 		return nil, err
 	}
 
-	return new(string(jsonBytes)), nil
+	return basic.Ptr(string(jsonBytes)), nil
 }
 
 // parseFields 解析字段/组件配置JSON字符串
@@ -238,7 +239,7 @@ func (s *ActivityComponentService) parseFields(fieldsJSON *string) []dto.Activit
 
 	var fields []dto.ActivityComponentFieldDto
 	if err := json.Unmarshal([]byte(*fieldsJSON), &fields); err != nil {
-		applog.Errorf(context.Background(), applog.NameApp, "解析字段/组件配置失败: %v\n", err)
+		logx.Errorf(context.Background(), logx.NameApp, "解析字段/组件配置失败: %v\n", err)
 		return nil
 	}
 

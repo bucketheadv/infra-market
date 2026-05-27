@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/bucketheadv/infra-go/applog"
+	"github.com/bucketheadv/infra-go/logx"
 	"github.com/bucketheadv/infra-market/internal/dto"
 	"github.com/bucketheadv/infra-market/internal/enums"
 	"github.com/gin-gonic/gin"
@@ -27,7 +27,7 @@ func ErrorHandler() gin.HandlerFunc {
 			}
 
 			// 处理其他错误
-			applog.Errorf(c.Request.Context(), applog.NameApp, "Error: %v", err)
+			logx.Errorf(c.Request.Context(), logx.NameApp, "Error: %v", err)
 			c.JSON(http.StatusInternalServerError, dto.Error[any](
 				string(enums.ErrorMessageSystemError),
 				http.StatusInternalServerError,

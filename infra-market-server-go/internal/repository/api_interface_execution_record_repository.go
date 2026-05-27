@@ -3,9 +3,9 @@ package repository
 import (
 	"time"
 
+	"github.com/bucketheadv/infra-go/stringx"
 	"github.com/bucketheadv/infra-market/internal/dto"
 	"github.com/bucketheadv/infra-market/internal/entity"
-	"github.com/bucketheadv/infra-market/internal/util"
 	"gorm.io/gorm"
 )
 
@@ -38,7 +38,7 @@ func (r *ApiInterfaceExecutionRecordRepository) Page(query dto.ApiInterfaceExecu
 	}
 
 	// 关键字查询：在执行人姓名、错误信息、备注等字段中搜索
-	if util.IsNotBlank(query.Keyword) {
+	if !stringx.IsEmpty(query.Keyword) {
 		keyword := "%" + *query.Keyword + "%"
 		db = db.Where("executor_name LIKE ? OR error_message LIKE ? OR remark LIKE ?", keyword, keyword, keyword)
 	}
@@ -46,7 +46,7 @@ func (r *ApiInterfaceExecutionRecordRepository) Page(query dto.ApiInterfaceExecu
 	if query.ExecutorID != nil {
 		db = db.Where("executor_id = ?", *query.ExecutorID)
 	}
-	if util.IsNotBlank(query.ExecutorName) {
+	if !stringx.IsEmpty(query.ExecutorName) {
 		db = db.Where("executor_name LIKE ?", "%"+*query.ExecutorName+"%")
 	}
 	if query.Success != nil {

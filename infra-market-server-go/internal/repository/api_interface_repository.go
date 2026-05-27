@@ -1,9 +1,9 @@
 package repository
 
 import (
+	"github.com/bucketheadv/infra-go/stringx"
 	"github.com/bucketheadv/infra-market/internal/dto"
 	"github.com/bucketheadv/infra-market/internal/entity"
-	"github.com/bucketheadv/infra-market/internal/util"
 	"gorm.io/gorm"
 )
 
@@ -41,16 +41,16 @@ func (r *ApiInterfaceRepository) Page(query dto.ApiInterfaceQueryDto) ([]entity.
 
 	db := r.db.Model(&entity.ApiInterface{})
 
-	if util.IsNotBlank(query.Name) {
+	if !stringx.IsEmpty(query.Name) {
 		db = db.Where("name LIKE ?", "%"+*query.Name+"%")
 	}
-	if util.IsNotBlank(query.Method) {
+	if !stringx.IsEmpty(query.Method) {
 		db = db.Where("method = ?", *query.Method)
 	}
 	if query.Status != nil {
 		db = db.Where("status = ?", *query.Status)
 	}
-	if util.IsNotBlank(query.Environment) {
+	if !stringx.IsEmpty(query.Environment) {
 		db = db.Where("environment = ?", *query.Environment)
 	}
 

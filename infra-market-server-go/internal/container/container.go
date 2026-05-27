@@ -1,7 +1,7 @@
 package container
 
 import (
-	"github.com/bucketheadv/infra-go/applog"
+	"github.com/bucketheadv/infra-go/logx"
 	"github.com/bucketheadv/infra-market/internal/config"
 	"github.com/bucketheadv/infra-market/internal/controller"
 	"github.com/bucketheadv/infra-market/internal/middleware"
@@ -153,8 +153,8 @@ func (c *Container) SetupRouter() (*gin.Engine, error) {
 		tokenService *service.TokenService,
 	) {
 		router = gin.New()
-		router.Use(applog.GinLogger(applog.GinLoggerConfig{}))
-		router.Use(applog.GinRecovery(applog.GinRecoveryConfig{}))
+		router.Use(logx.GinLogger(logx.GinLoggerConfig{}))
+		router.Use(logx.GinRecovery(logx.GinRecoveryConfig{}))
 
 		// 全局中间件
 		router.Use(middleware.CORSMiddleware())

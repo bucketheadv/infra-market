@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bucketheadv/infra-go/applog"
+	"github.com/bucketheadv/infra-go/logx"
 	"github.com/bucketheadv/infra-market/internal/config"
 	"github.com/bucketheadv/infra-market/internal/controller"
 	"github.com/bucketheadv/infra-market/internal/repository"
@@ -38,12 +38,12 @@ func (r *GormLoggerRunner) Run() error {
 		return nil
 	}
 	level := parseGormLogLevel(r.LogLevel)
-	r.DB.Config.Logger = applog.NewGormLogger(applog.GormLoggerConfig{
-		LoggerName:                applog.NameGorm,
+	r.DB.Config.Logger = logx.NewGormLogger(logx.GormLoggerConfig{
+		LoggerName:                logx.NameGorm,
 		SlowThreshold:             200 * time.Millisecond,
 		IgnoreRecordNotFoundError: true,
 	}).LogMode(level)
-	applog.Infof(context.Background(), applog.NameApp, "gorm sql log level=%s (applog logger=%s)", strings.ToLower(r.LogLevel), applog.NameGorm)
+	logx.Infof(context.Background(), logx.NameApp, "gorm sql log level=%s (applog logger=%s)", strings.ToLower(r.LogLevel), logx.NameGorm)
 	return nil
 }
 
@@ -76,7 +76,7 @@ func (s *GinServer) ListenAndServe(sig gs.ReadySignal) error {
 		return err
 	}
 	readyAt := time.Now()
-	applog.Infof(context.Background(), applog.NameApp,
+	logx.Infof(context.Background(), logx.NameApp,
 		"infra-market-go-spring listen ready addr=%s startupAt=%s sinceRegister=%s",
 		ln.Addr().String(),
 		readyAt.Format("2006-01-02 15:04:05.000"),
@@ -86,15 +86,15 @@ func (s *GinServer) ListenAndServe(sig gs.ReadySignal) error {
 }
 
 func (s *GinServer) Shutdown(ctx context.Context) error {
-	applog.Infof(ctx, applog.NameApp, "infra-market-go-spring shutting down")
-	applog.Close()
+	logx.Infof(ctx, logx.NameApp, "infra-market-go-spring shutting down")
+	logx.Close()
 	return s.server.Shutdown(ctx)
 }
 
 func Register() {
 	registerStartedAt = time.Now()
-	applog.MustLoad(filepath.Join("config", "applog.yaml"))
-	applog.InstallGinWriters(applog.GinWritersConfig{})
+	logx.MustLoad(filepath.Join("config", "logx.yaml"))
+	logx.InstallGinWriters(logx.GinWritersConfig{})
 	gs.Object(new(config.AppConfig))
 	gs.Object(new(GormLoggerRunner)).AsRunner()
 

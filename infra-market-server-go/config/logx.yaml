@@ -1,4 +1,4 @@
-# 应用日志（与 infra-go/logx 配套）。工作目录为进程 cwd 时，由 main 固定加载 config/applog.yaml。
+# 应用日志（与 infra-go/logx 配套）。工作目录为进程 cwd 时，由 main 固定加载 config/logx.yaml。
 #
 # layout:
 #   - text   : 固定方括号格式（旧版兼容）

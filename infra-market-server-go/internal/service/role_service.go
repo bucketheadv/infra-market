@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/bucketheadv/infra-go/applog"
+	"github.com/bucketheadv/infra-go/logx"
 	"github.com/bucketheadv/infra-market/internal/dto"
 	"github.com/bucketheadv/infra-market/internal/entity"
 	"github.com/bucketheadv/infra-market/internal/enums"
@@ -69,7 +69,7 @@ func (s *RoleService) convertRolesToDtos(roles []entity.Role) []dto.RoleDto {
 func (s *RoleService) GetRoles(query dto.RoleQueryDto) dto.ApiData[dto.PageResult[dto.RoleDto]] {
 	roles, total, err := s.roleRepo.Page(query)
 	if err != nil {
-		applog.Errorf(context.Background(), applog.NameApp, "获取角色列表失败: %v\n", err)
+		logx.Errorf(context.Background(), logx.NameApp, "获取角色列表失败: %v\n", err)
 		return dto.Error[dto.PageResult[dto.RoleDto]]("查询失败", http.StatusInternalServerError)
 	}
 
@@ -89,7 +89,7 @@ func (s *RoleService) GetRoles(query dto.RoleQueryDto) dto.ApiData[dto.PageResul
 func (s *RoleService) GetAllRoles() dto.ApiData[[]dto.RoleDto] {
 	roles, err := s.roleRepo.FindByStatus(enums.StatusActive.Code())
 	if err != nil {
-		applog.Errorf(context.Background(), applog.NameApp, "获取所有激活角色失败: %v\n", err)
+		logx.Errorf(context.Background(), logx.NameApp, "获取所有激活角色失败: %v\n", err)
 		return dto.Error[[]dto.RoleDto]("查询失败", http.StatusInternalServerError)
 	}
 
@@ -101,7 +101,7 @@ func (s *RoleService) GetAllRoles() dto.ApiData[[]dto.RoleDto] {
 func (s *RoleService) GetRole(id uint64) dto.ApiData[dto.RoleDto] {
 	role, err := s.roleRepo.FindByID(id)
 	if err != nil {
-		applog.Errorf(context.Background(), applog.NameApp, "获取角色详情失败，角色ID: %d, 错误: %v\n", id, err)
+		logx.Errorf(context.Background(), logx.NameApp, "获取角色详情失败，角色ID: %d, 错误: %v\n", id, err)
 		return dto.Error[dto.RoleDto]("角色不存在", http.StatusNotFound)
 	}
 
@@ -155,7 +155,7 @@ func (s *RoleService) CreateRole(form dto.RoleFormDto) dto.ApiData[dto.RoleDto] 
 	})
 
 	if err != nil {
-		applog.Errorf(context.Background(), applog.NameApp, "创建角色失败，角色编码: %s, 错误: %v\n", form.Code, err)
+		logx.Errorf(context.Background(), logx.NameApp, "创建角色失败，角色编码: %s, 错误: %v\n", form.Code, err)
 		return dto.Error[dto.RoleDto]("创建角色失败", http.StatusInternalServerError)
 	}
 
@@ -167,7 +167,7 @@ func (s *RoleService) CreateRole(form dto.RoleFormDto) dto.ApiData[dto.RoleDto] 
 func (s *RoleService) UpdateRole(id uint64, form dto.RoleFormDto) dto.ApiData[dto.RoleDto] {
 	role, err := s.roleRepo.FindByID(id)
 	if err != nil {
-		applog.Errorf(context.Background(), applog.NameApp, "更新角色失败，角色ID: %d, 错误: %v\n", id, err)
+		logx.Errorf(context.Background(), logx.NameApp, "更新角色失败，角色ID: %d, 错误: %v\n", id, err)
 		return dto.Error[dto.RoleDto]("角色不存在", http.StatusNotFound)
 	}
 
@@ -210,7 +210,7 @@ func (s *RoleService) UpdateRole(id uint64, form dto.RoleFormDto) dto.ApiData[dt
 	})
 
 	if err != nil {
-		applog.Errorf(context.Background(), applog.NameApp, "更新角色失败，角色ID: %d, 错误: %v\n", id, err)
+		logx.Errorf(context.Background(), logx.NameApp, "更新角色失败，角色ID: %d, 错误: %v\n", id, err)
 		return dto.Error[dto.RoleDto]("更新角色失败", http.StatusInternalServerError)
 	}
 
@@ -222,7 +222,7 @@ func (s *RoleService) UpdateRole(id uint64, form dto.RoleFormDto) dto.ApiData[dt
 func (s *RoleService) DeleteRole(id uint64) dto.ApiData[any] {
 	role, err := s.roleRepo.FindByID(id)
 	if err != nil {
-		applog.Errorf(context.Background(), applog.NameApp, "删除角色失败，角色ID: %d, 错误: %v\n", id, err)
+		logx.Errorf(context.Background(), logx.NameApp, "删除角色失败，角色ID: %d, 错误: %v\n", id, err)
 		return dto.Error[any]("角色不存在", http.StatusNotFound)
 	}
 
@@ -238,7 +238,7 @@ func (s *RoleService) DeleteRole(id uint64) dto.ApiData[any] {
 
 	role.Status = enums.StatusDeleted.Code()
 	if err := s.roleRepo.Update(role); err != nil {
-		applog.Errorf(context.Background(), applog.NameApp, "删除角色失败，角色ID: %d, 错误: %v\n", id, err)
+		logx.Errorf(context.Background(), logx.NameApp, "删除角色失败，角色ID: %d, 错误: %v\n", id, err)
 		return dto.Error[any]("删除角色失败", http.StatusInternalServerError)
 	}
 
@@ -249,7 +249,7 @@ func (s *RoleService) DeleteRole(id uint64) dto.ApiData[any] {
 func (s *RoleService) UpdateRoleStatus(id uint64, status string) dto.ApiData[any] {
 	role, err := s.roleRepo.FindByID(id)
 	if err != nil {
-		applog.Errorf(context.Background(), applog.NameApp, "更新角色状态失败，角色ID: %d, 错误: %v\n", id, err)
+		logx.Errorf(context.Background(), logx.NameApp, "更新角色状态失败，角色ID: %d, 错误: %v\n", id, err)
 		return dto.Error[any]("角色不存在", http.StatusNotFound)
 	}
 
@@ -267,7 +267,7 @@ func (s *RoleService) UpdateRoleStatus(id uint64, status string) dto.ApiData[any
 
 	role.Status = status
 	if err := s.roleRepo.Update(role); err != nil {
-		applog.Errorf(context.Background(), applog.NameApp, "更新角色状态失败，角色ID: %d, 状态: %s, 错误: %v\n", id, status, err)
+		logx.Errorf(context.Background(), logx.NameApp, "更新角色状态失败，角色ID: %d, 状态: %s, 错误: %v\n", id, status, err)
 		return dto.Error[any]("更新状态失败", http.StatusInternalServerError)
 	}
 

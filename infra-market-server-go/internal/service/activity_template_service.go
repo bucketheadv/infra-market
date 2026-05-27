@@ -1,11 +1,12 @@
 package service
 
 import (
+	"github.com/bucketheadv/infra-go/basic"
 	"context"
 	"encoding/json"
 	"net/http"
 
-	"github.com/bucketheadv/infra-go/applog"
+	"github.com/bucketheadv/infra-go/logx"
 	"github.com/bucketheadv/infra-market/internal/dto"
 	"github.com/bucketheadv/infra-market/internal/entity"
 	"github.com/bucketheadv/infra-market/internal/repository"
@@ -71,7 +72,7 @@ func (s *ActivityTemplateService) GetAllActivityTemplates() dto.ApiData[[]dto.Ac
 func (s *ActivityTemplateService) GetActivityTemplate(id uint64) dto.ApiData[dto.ActivityTemplateDto] {
 	template, err := s.templateRepo.FindByID(id)
 	if err != nil {
-		applog.Errorf(context.Background(), applog.NameApp, "获取活动模板详情失败，模板ID: %d, 错误: %v\n", id, err)
+		logx.Errorf(context.Background(), logx.NameApp, "获取活动模板详情失败，模板ID: %d, 错误: %v\n", id, err)
 		return dto.Error[dto.ActivityTemplateDto]("活动模板不存在", http.StatusNotFound)
 	}
 
@@ -84,7 +85,7 @@ func (s *ActivityTemplateService) CreateActivityTemplate(form dto.ActivityTempla
 	// 序列化字段配置
 	fieldsJSON, err := s.serializeFields(form.Fields)
 	if err != nil {
-		applog.Errorf(context.Background(), applog.NameApp, "序列化字段配置失败: %v\n", err)
+		logx.Errorf(context.Background(), logx.NameApp, "序列化字段配置失败: %v\n", err)
 		return dto.Error[dto.ActivityTemplateDto]("字段配置格式错误", http.StatusBadRequest)
 	}
 
@@ -101,7 +102,7 @@ func (s *ActivityTemplateService) CreateActivityTemplate(form dto.ActivityTempla
 	}
 
 	if err := s.templateRepo.Create(template); err != nil {
-		applog.Errorf(context.Background(), applog.NameApp, "创建活动模板失败: %v\n", err)
+		logx.Errorf(context.Background(), logx.NameApp, "创建活动模板失败: %v\n", err)
 		return dto.Error[dto.ActivityTemplateDto]("创建活动模板失败", http.StatusInternalServerError)
 	}
 
@@ -113,7 +114,7 @@ func (s *ActivityTemplateService) CreateActivityTemplate(form dto.ActivityTempla
 func (s *ActivityTemplateService) UpdateActivityTemplate(id uint64, form dto.ActivityTemplateFormDto) dto.ApiData[dto.ActivityTemplateDto] {
 	template, err := s.templateRepo.FindByID(id)
 	if err != nil {
-		applog.Errorf(context.Background(), applog.NameApp, "更新活动模板失败，模板ID: %d, 错误: %v\n", id, err)
+		logx.Errorf(context.Background(), logx.NameApp, "更新活动模板失败，模板ID: %d, 错误: %v\n", id, err)
 		return dto.Error[dto.ActivityTemplateDto]("活动模板不存在", http.StatusNotFound)
 	}
 
@@ -122,7 +123,7 @@ func (s *ActivityTemplateService) UpdateActivityTemplate(id uint64, form dto.Act
 	if form.Fields != nil {
 		jsonStr, err := s.serializeFields(form.Fields)
 		if err != nil {
-			applog.Errorf(context.Background(), applog.NameApp, "序列化字段配置失败: %v\n", err)
+			logx.Errorf(context.Background(), logx.NameApp, "序列化字段配置失败: %v\n", err)
 			return dto.Error[dto.ActivityTemplateDto]("字段配置格式错误", http.StatusBadRequest)
 		}
 		fieldsJSON = jsonStr
@@ -140,7 +141,7 @@ func (s *ActivityTemplateService) UpdateActivityTemplate(id uint64, form dto.Act
 	}
 
 	if err := s.templateRepo.Update(template); err != nil {
-		applog.Errorf(context.Background(), applog.NameApp, "更新活动模板失败，模板ID: %d, 错误: %v\n", id, err)
+		logx.Errorf(context.Background(), logx.NameApp, "更新活动模板失败，模板ID: %d, 错误: %v\n", id, err)
 		return dto.Error[dto.ActivityTemplateDto]("更新活动模板失败", http.StatusInternalServerError)
 	}
 
@@ -152,12 +153,12 @@ func (s *ActivityTemplateService) UpdateActivityTemplate(id uint64, form dto.Act
 func (s *ActivityTemplateService) DeleteActivityTemplate(id uint64) dto.ApiData[any] {
 	_, err := s.templateRepo.FindByID(id)
 	if err != nil {
-		applog.Errorf(context.Background(), applog.NameApp, "删除活动模板失败，模板ID: %d, 错误: %v\n", id, err)
+		logx.Errorf(context.Background(), logx.NameApp, "删除活动模板失败，模板ID: %d, 错误: %v\n", id, err)
 		return dto.Error[any]("活动模板不存在", http.StatusNotFound)
 	}
 
 	if err := s.templateRepo.Delete(id); err != nil {
-		applog.Errorf(context.Background(), applog.NameApp, "删除活动模板失败，模板ID: %d, 错误: %v\n", id, err)
+		logx.Errorf(context.Background(), logx.NameApp, "删除活动模板失败，模板ID: %d, 错误: %v\n", id, err)
 		return dto.Error[any]("删除活动模板失败", http.StatusInternalServerError)
 	}
 
@@ -168,13 +169,13 @@ func (s *ActivityTemplateService) DeleteActivityTemplate(id uint64) dto.ApiData[
 func (s *ActivityTemplateService) UpdateActivityTemplateStatus(id uint64, status int) dto.ApiData[dto.ActivityTemplateDto] {
 	template, err := s.templateRepo.FindByID(id)
 	if err != nil {
-		applog.Errorf(context.Background(), applog.NameApp, "更新活动模板状态失败，模板ID: %d, 错误: %v\n", id, err)
+		logx.Errorf(context.Background(), logx.NameApp, "更新活动模板状态失败，模板ID: %d, 错误: %v\n", id, err)
 		return dto.Error[dto.ActivityTemplateDto]("活动模板不存在", http.StatusNotFound)
 	}
 
 	template.Status = status
 	if err := s.templateRepo.Update(template); err != nil {
-		applog.Errorf(context.Background(), applog.NameApp, "更新活动模板状态失败，模板ID: %d, 状态: %d, 错误: %v\n", id, status, err)
+		logx.Errorf(context.Background(), logx.NameApp, "更新活动模板状态失败，模板ID: %d, 状态: %d, 错误: %v\n", id, status, err)
 		return dto.Error[dto.ActivityTemplateDto]("更新状态失败", http.StatusInternalServerError)
 	}
 
@@ -186,7 +187,7 @@ func (s *ActivityTemplateService) UpdateActivityTemplateStatus(id uint64, status
 func (s *ActivityTemplateService) CopyActivityTemplate(id uint64) dto.ApiData[dto.ActivityTemplateDto] {
 	template, err := s.templateRepo.FindByID(id)
 	if err != nil {
-		applog.Errorf(context.Background(), applog.NameApp, "复制活动模板失败，模板ID: %d, 错误: %v\n", id, err)
+		logx.Errorf(context.Background(), logx.NameApp, "复制活动模板失败，模板ID: %d, 错误: %v\n", id, err)
 		return dto.Error[dto.ActivityTemplateDto]("活动模板不存在", http.StatusNotFound)
 	}
 
@@ -198,7 +199,7 @@ func (s *ActivityTemplateService) CopyActivityTemplate(id uint64) dto.ApiData[dt
 	}
 
 	if err := s.templateRepo.Create(newTemplate); err != nil {
-		applog.Errorf(context.Background(), applog.NameApp, "复制活动模板失败: %v\n", err)
+		logx.Errorf(context.Background(), logx.NameApp, "复制活动模板失败: %v\n", err)
 		return dto.Error[dto.ActivityTemplateDto]("复制活动模板失败", http.StatusInternalServerError)
 	}
 
@@ -232,7 +233,7 @@ func (s *ActivityTemplateService) serializeFields(fields []dto.ActivityTemplateF
 		return nil, err
 	}
 
-	return new(string(jsonBytes)), nil
+	return basic.Ptr(string(jsonBytes)), nil
 }
 
 // parseFields 解析字段配置JSON字符串
@@ -243,7 +244,7 @@ func (s *ActivityTemplateService) parseFields(fieldsJSON *string) []dto.Activity
 
 	var fields []dto.ActivityTemplateFieldDto
 	if err := json.Unmarshal([]byte(*fieldsJSON), &fields); err != nil {
-		applog.Errorf(context.Background(), applog.NameApp, "解析字段配置失败: %v\n", err)
+		logx.Errorf(context.Background(), logx.NameApp, "解析字段配置失败: %v\n", err)
 		return nil
 	}
 

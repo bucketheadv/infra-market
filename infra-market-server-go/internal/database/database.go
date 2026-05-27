@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/bucketheadv/infra-go/applog"
+	"github.com/bucketheadv/infra-go/logx"
 	"github.com/bucketheadv/infra-market/internal/config"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -14,13 +14,13 @@ import (
 // InitDB 初始化数据库连接
 func InitDB(cfg config.DatabaseConfig) (*gorm.DB, error) {
 	db, err := gorm.Open(mysql.Open(cfg.DSN), &gorm.Config{
-		Logger: applog.NewGormLogger(applog.GormLoggerConfig{}).LogMode(glog.Info),
+		Logger: logx.NewGormLogger(logx.GormLoggerConfig{}).LogMode(glog.Info),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("连接数据库失败: %w", err)
 	}
 
-	applog.Infof(context.Background(), applog.NameApp, "数据库连接成功")
+	logx.Infof(context.Background(), logx.NameApp, "数据库连接成功")
 	return db, nil
 }
 

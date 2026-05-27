@@ -1,5 +1,7 @@
 package enums
 
+import "github.com/bucketheadv/infra-go/basic"
+
 // Status 状态枚举
 type Status string
 
@@ -20,7 +22,7 @@ func StatusFromCode(code string) *Status {
 		"deleted":  StatusDeleted,
 	}
 	if status, ok := statuses[code]; ok {
-		return &status
+		return basic.Ptr(status)
 	}
 	return nil
 }

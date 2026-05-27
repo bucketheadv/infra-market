@@ -1,20 +1,20 @@
 package repository
 
 import (
+	"github.com/bucketheadv/infra-go/stringx"
 	"github.com/bucketheadv/infra-market/internal/dto"
-	"github.com/bucketheadv/infra-market/internal/util"
 	"gorm.io/gorm"
 )
 
 // ApplyCommonFilters 应用通用查询条件（Name、Code、Status）
 func ApplyCommonFilters(db *gorm.DB, name, code, status *string) *gorm.DB {
-	if util.IsNotBlank(name) {
+	if !stringx.IsEmpty(name) {
 		db = db.Where("name LIKE ?", "%"+*name+"%")
 	}
-	if util.IsNotBlank(code) {
+	if !stringx.IsEmpty(code) {
 		db = db.Where("code LIKE ?", "%"+*code+"%")
 	}
-	if util.IsNotBlank(status) {
+	if !stringx.IsEmpty(status) {
 		db = db.Where("status = ?", *status)
 	}
 	return db
@@ -22,7 +22,7 @@ func ApplyCommonFilters(db *gorm.DB, name, code, status *string) *gorm.DB {
 
 // ApplyNameStatusFilters 应用通用查询条件（Name、Status[int]）
 func ApplyNameStatusFilters(db *gorm.DB, name *string, status *int) *gorm.DB {
-	if util.IsNotBlank(name) {
+	if !stringx.IsEmpty(name) {
 		db = db.Where("name LIKE ?", "%"+*name+"%")
 	}
 	if status != nil {

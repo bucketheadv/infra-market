@@ -37,3 +37,4 @@ func PageResultBuilder[E any, D any](
 
 	return dto.Success(result)
 }
+

@@ -1,9 +1,9 @@
 package repository
 
 import (
+	"github.com/bucketheadv/infra-go/stringx"
 	"github.com/bucketheadv/infra-market/internal/dto"
 	"github.com/bucketheadv/infra-market/internal/entity"
-	"github.com/bucketheadv/infra-market/internal/util"
 	"gorm.io/gorm"
 )
 
@@ -66,7 +66,7 @@ func (r *PermissionRepository) Page(query dto.PermissionQueryDto) ([]entity.Perm
 	db := r.db.Model(&entity.Permission{}).Where("status != ?", "deleted")
 	db = ApplyCommonFilters(db, query.Name, query.Code, query.Status)
 	
-	if util.IsNotBlank(query.Type) {
+	if !stringx.IsEmpty(query.Type) {
 		db = db.Where("type = ?", *query.Type)
 	}
 

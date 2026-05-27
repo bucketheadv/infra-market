@@ -1,11 +1,12 @@
 package service
 
 import (
+	"github.com/bucketheadv/infra-go/basic"
 	"context"
 	"encoding/json"
 	"net/http"
 
-	"github.com/bucketheadv/infra-go/applog"
+	"github.com/bucketheadv/infra-go/logx"
 	"github.com/bucketheadv/infra-market/internal/dto"
 	"github.com/bucketheadv/infra-market/internal/entity"
 	"github.com/bucketheadv/infra-market/internal/repository"
@@ -77,7 +78,7 @@ func (s *ActivityService) GetActivities(query dto.ActivityQueryDto) dto.ApiData[
 func (s *ActivityService) GetActivity(id uint64) dto.ApiData[dto.ActivityDto] {
 	activity, err := s.activityRepo.FindByID(id)
 	if err != nil {
-		applog.Errorf(context.Background(), applog.NameApp, "获取活动详情失败，活动ID: %d, 错误: %v\n", id, err)
+		logx.Errorf(context.Background(), logx.NameApp, "获取活动详情失败，活动ID: %d, 错误: %v\n", id, err)
 		return dto.Error[dto.ActivityDto]("活动不存在", http.StatusNotFound)
 	}
 
@@ -108,7 +109,7 @@ func (s *ActivityService) CreateActivity(form dto.ActivityFormDto) dto.ApiData[d
 	// 序列化配置数据
 	configDataJSON, err := s.serializeConfigData(form.ConfigData)
 	if err != nil {
-		applog.Errorf(context.Background(), applog.NameApp, "序列化配置数据失败: %v\n", err)
+		logx.Errorf(context.Background(), logx.NameApp, "序列化配置数据失败: %v\n", err)
 		return dto.Error[dto.ActivityDto]("配置数据格式错误", http.StatusBadRequest)
 	}
 
@@ -126,7 +127,7 @@ func (s *ActivityService) CreateActivity(form dto.ActivityFormDto) dto.ApiData[d
 	}
 
 	if err := s.activityRepo.Create(activity); err != nil {
-		applog.Errorf(context.Background(), applog.NameApp, "创建活动失败: %v\n", err)
+		logx.Errorf(context.Background(), logx.NameApp, "创建活动失败: %v\n", err)
 		return dto.Error[dto.ActivityDto]("创建活动失败", http.StatusInternalServerError)
 	}
 
@@ -138,7 +139,7 @@ func (s *ActivityService) CreateActivity(form dto.ActivityFormDto) dto.ApiData[d
 func (s *ActivityService) UpdateActivity(id uint64, form dto.ActivityFormDto) dto.ApiData[dto.ActivityDto] {
 	activity, err := s.activityRepo.FindByID(id)
 	if err != nil {
-		applog.Errorf(context.Background(), applog.NameApp, "更新活动失败，活动ID: %d, 错误: %v\n", id, err)
+		logx.Errorf(context.Background(), logx.NameApp, "更新活动失败，活动ID: %d, 错误: %v\n", id, err)
 		return dto.Error[dto.ActivityDto]("活动不存在", http.StatusNotFound)
 	}
 
@@ -160,7 +161,7 @@ func (s *ActivityService) UpdateActivity(id uint64, form dto.ActivityFormDto) dt
 	if form.ConfigData != nil {
 		jsonStr, err := s.serializeConfigData(form.ConfigData)
 		if err != nil {
-			applog.Errorf(context.Background(), applog.NameApp, "序列化配置数据失败: %v\n", err)
+			logx.Errorf(context.Background(), logx.NameApp, "序列化配置数据失败: %v\n", err)
 			return dto.Error[dto.ActivityDto]("配置数据格式错误", http.StatusBadRequest)
 		}
 		configDataJSON = jsonStr
@@ -181,7 +182,7 @@ func (s *ActivityService) UpdateActivity(id uint64, form dto.ActivityFormDto) dt
 	}
 
 	if err := s.activityRepo.Update(activity); err != nil {
-		applog.Errorf(context.Background(), applog.NameApp, "更新活动失败，活动ID: %d, 错误: %v\n", id, err)
+		logx.Errorf(context.Background(), logx.NameApp, "更新活动失败，活动ID: %d, 错误: %v\n", id, err)
 		return dto.Error[dto.ActivityDto]("更新活动失败", http.StatusInternalServerError)
 	}
 
@@ -200,12 +201,12 @@ func (s *ActivityService) UpdateActivity(id uint64, form dto.ActivityFormDto) dt
 func (s *ActivityService) DeleteActivity(id uint64) dto.ApiData[any] {
 	_, err := s.activityRepo.FindByID(id)
 	if err != nil {
-		applog.Errorf(context.Background(), applog.NameApp, "删除活动失败，活动ID: %d, 错误: %v\n", id, err)
+		logx.Errorf(context.Background(), logx.NameApp, "删除活动失败，活动ID: %d, 错误: %v\n", id, err)
 		return dto.Error[any]("活动不存在", http.StatusNotFound)
 	}
 
 	if err := s.activityRepo.Delete(id); err != nil {
-		applog.Errorf(context.Background(), applog.NameApp, "删除活动失败，活动ID: %d, 错误: %v\n", id, err)
+		logx.Errorf(context.Background(), logx.NameApp, "删除活动失败，活动ID: %d, 错误: %v\n", id, err)
 		return dto.Error[any]("删除活动失败", http.StatusInternalServerError)
 	}
 
@@ -216,13 +217,13 @@ func (s *ActivityService) DeleteActivity(id uint64) dto.ApiData[any] {
 func (s *ActivityService) UpdateActivityStatus(id uint64, status int) dto.ApiData[dto.ActivityDto] {
 	activity, err := s.activityRepo.FindByID(id)
 	if err != nil {
-		applog.Errorf(context.Background(), applog.NameApp, "更新活动状态失败，活动ID: %d, 错误: %v\n", id, err)
+		logx.Errorf(context.Background(), logx.NameApp, "更新活动状态失败，活动ID: %d, 错误: %v\n", id, err)
 		return dto.Error[dto.ActivityDto]("活动不存在", http.StatusNotFound)
 	}
 
 	activity.Status = status
 	if err := s.activityRepo.Update(activity); err != nil {
-		applog.Errorf(context.Background(), applog.NameApp, "更新活动状态失败，活动ID: %d, 状态: %d, 错误: %v\n", id, status, err)
+		logx.Errorf(context.Background(), logx.NameApp, "更新活动状态失败，活动ID: %d, 状态: %d, 错误: %v\n", id, status, err)
 		return dto.Error[dto.ActivityDto]("更新状态失败", http.StatusInternalServerError)
 	}
 
@@ -265,7 +266,7 @@ func (s *ActivityService) serializeConfigData(configData map[string]any) (*strin
 		return nil, err
 	}
 
-	return new(string(jsonBytes)), nil
+	return basic.Ptr(string(jsonBytes)), nil
 }
 
 // parseConfigData 解析配置数据JSON字符串
@@ -276,7 +277,7 @@ func (s *ActivityService) parseConfigData(configDataJSON *string) map[string]any
 
 	var configData map[string]any
 	if err := json.Unmarshal([]byte(*configDataJSON), &configData); err != nil {
-		applog.Errorf(context.Background(), applog.NameApp, "解析配置数据失败: %v\n", err)
+		logx.Errorf(context.Background(), logx.NameApp, "解析配置数据失败: %v\n", err)
 		return nil
 	}
 
@@ -291,7 +292,7 @@ func (s *ActivityService) validateConfigData(configData map[string]any, template
 
 	var fields []dto.ActivityTemplateFieldDto
 	if err := json.Unmarshal([]byte(*template.Fields), &fields); err != nil {
-		applog.Errorf(context.Background(), applog.NameApp, "解析模板字段配置失败: %v\n", err)
+		logx.Errorf(context.Background(), logx.NameApp, "解析模板字段配置失败: %v\n", err)
 		return nil
 	}
 

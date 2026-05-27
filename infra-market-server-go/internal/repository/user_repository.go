@@ -1,9 +1,9 @@
 package repository
 
 import (
+	"github.com/bucketheadv/infra-go/stringx"
 	"github.com/bucketheadv/infra-market/internal/dto"
 	"github.com/bucketheadv/infra-market/internal/entity"
-	"github.com/bucketheadv/infra-market/internal/util"
 	"gorm.io/gorm"
 )
 
@@ -68,10 +68,10 @@ func (r *UserRepository) Page(query dto.UserQueryDto) ([]entity.User, int64, err
 
 	db := r.db.Model(&entity.User{}).Where("status != ?", "deleted")
 
-	if util.IsNotBlank(query.Username) {
+	if !stringx.IsEmpty(query.Username) {
 		db = db.Where("username LIKE ?", "%"+*query.Username+"%")
 	}
-	if util.IsNotBlank(query.Status) {
+	if !stringx.IsEmpty(query.Status) {
 		db = db.Where("status = ?", *query.Status)
 	}
 

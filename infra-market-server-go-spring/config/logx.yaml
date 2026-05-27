@@ -1,4 +1,4 @@
-# 应用日志（与 infra-go/logx 配套）。工作目录为进程 cwd 时，由 main 固定加载 config/applog.yaml。
+# 应用日志（独立于 go-spring/log）。
 #
 # layout:
 #   - text   : 固定方括号格式（旧版兼容）
@@ -31,6 +31,7 @@ appenders:
       fatal: magenta
     fieldColors:
       date: green
+      # level 不写则走 levelColors；若写 level: blue 则所有级别同为蓝色
       fileLine: cyan
       logger: yellow
       msg: white
@@ -59,6 +60,7 @@ loggers:
     level: info
     appenders:
       - stdConsole
+  # GORM SQL：与 gorm.log-level 配合；level 建议与 SQL 详细程度一致（info 打印成功 SQL，warn 仅慢查询与警告，error 仅错误）
   gorm:
     level: info
     appenders:
